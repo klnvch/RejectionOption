@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 Three gaussian distributed classes, two non-separable and one separable
     add_noise=None - no outliers
     add_noise=1    - just display and return
-    add_noise=2    - add noise to the classes with minimal output
+    add_noise=2    - add noise as no class
     add_noise=3    - add noise as additional class
 """
 def create_gaussian_data_2(size=100, add_noise=None, max_output=1.0, min_output=0.0, noise_output=0.0, graphics=False):
@@ -236,10 +236,17 @@ def get_data(i):
         ValueError: unknown error with data.
 
     """
-    if i == 1: return read_letter_recognition_image_data()
-    elif i == 2: return read_iris_data()
-    elif i == 3: return read_glass_identification_data()
-    elif i == 4: return read_image_segmentation_data()
+    ds_x = None
+    ds_y = None
+    if   i == 1: ds_x, ds_y = read_letter_recognition_image_data()
+    elif i == 2: ds_x, ds_y = read_iris_data()
+    elif i == 3: ds_x, ds_y = read_glass_identification_data()
+    elif i == 4: ds_x, ds_y = read_image_segmentation_data()
     else: raise ValueError("unknown dataset: " + i)
+    
+    # between 0.25 and 0.75
+    ds_x = 0.25 + 0.5 * (ds_x - ds_x.min(axis=0)) / (ds_x.max(axis=0)-ds_x.min(axis=0))
+    
+    return ds_x, ds_y
     
     

@@ -19,6 +19,8 @@ from Graphics import draw_x_vs_y
     add_noise=None - no noise
     add_noise=1    - add noise to the training set
     add_noise=2    - add noise as a class
+    
+    add_noise=11   - add noise to the training set with sigmoid with outputs 0.1 and 0.9
 """
 def test(num_hidden=3, num_steps=40001, size=400, activation_function='sigmoid', early_stopping=None, add_noise=None, graphics=True):
     trn_x=None
@@ -46,6 +48,13 @@ def test(num_hidden=3, num_steps=40001, size=400, activation_function='sigmoid',
         trn_x, trn_y, _ = create_gaussian_data_2(size, add_noise=3, graphics=False)
         vld_x, vld_y, _ = create_gaussian_data_2(size, add_noise=3, graphics=False)
         tst_x, tst_y, _ = create_gaussian_data_2(1000, add_noise=3, graphics=graphics)
+    elif add_noise==11:
+        if activation_function=='softmax':
+            assert False
+        else:
+            trn_x, trn_y, _            = create_gaussian_data_2(size, add_noise=2, max_output=0.9, min_output=0.1, noise_output=0.1, graphics=False)
+            vld_x, vld_y, _            = create_gaussian_data_2(size, add_noise=None, graphics=False)
+            tst_x, tst_y, tst_outliers = create_gaussian_data_2(1000, add_noise=1,    graphics=graphics)
     else:
         assert False
 
@@ -187,8 +196,10 @@ def generate_table_class_size(activation_function='sigmoid', early_stopping=None
 #generate_table_hidden(activation_function='softmax', early_stopping=50)
 
 #generate_table_hidden(activation_function='sigmoid', early_stopping=None, add_noise=1)
+generate_table_hidden(activation_function='sigmoid', early_stopping=None, add_noise=11)
 #generate_table_hidden(activation_function='softmax', early_stopping=None, add_noise=1)
 #generate_table_hidden(activation_function='sigmoid', early_stopping=50,   add_noise=1)
+#generate_table_hidden(activation_function='sigmoid', early_stopping=50, add_noise=11)
 #generate_table_hidden(activation_function='softmax', early_stopping=50,   add_noise=1)
 
 #generate_table_hidden(activation_function='sigmoid', early_stopping=None, add_noise=2)
@@ -212,7 +223,7 @@ def generate_table_class_size(activation_function='sigmoid', early_stopping=None
 #generate_table_class_size(activation_function='sigmoid', early_stopping=None, add_noise=1)
 #generate_table_class_size(activation_function='softmax', early_stopping=None, add_noise=1)
 #generate_table_class_size(activation_function='sigmoid', early_stopping=50,   add_noise=1)
-generate_table_class_size(activation_function='softmax', early_stopping=50,   add_noise=1)
+#generate_table_class_size(activation_function='softmax', early_stopping=50,   add_noise=1)
 
 #generate_table_class_size(activation_function='sigmoid', early_stopping=None, add_noise=2)
 #generate_table_class_size(activation_function='softmax', early_stopping=None, add_noise=2)
