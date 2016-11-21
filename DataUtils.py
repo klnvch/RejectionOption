@@ -7,15 +7,6 @@ Created on Oct 26, 2016
 import numpy as np
 import random
 
-def shuffle(a, b):
-    if a.shape[0] != b.shape[0]: raise ValueError('sizes are different: a: ' + str(a.size) + ' and b: ' + str(b.size))
-    
-    ds = list(zip(a, b))
-    random.shuffle(ds)
-    ds = list(zip(*ds))
-    
-    return np.array(ds[0]), np.array(ds[1])
-
 def split(ds_x, ds_y):
     if ds_x.shape[0] != ds_y.shape[0]: raise ValueError('sizes are different: a: ' + str(ds_x.size) + ' and b: ' + str(ds_y.size))
     a1 = []

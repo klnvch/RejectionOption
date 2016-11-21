@@ -7,7 +7,7 @@ Created on Oct 26, 2016
 import time, os
 import numpy as np
 import tensorflow as tf
-from DataUtils import shuffle
+from sklearn.utils import shuffle
 
 class MLP:
     
@@ -50,17 +50,15 @@ class MLP:
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc, best_area0, best_area1 and best_area2
         """
         self.clean_model_dir()
-        self.log_init(steps, logging)
+        self.log_init(steps, logging, early_stopping)
         
-        trn_acc = 0
-        vld_acc = 0
-        loss = 0
         #       [model_file, step, loss, trn_acc, vld_acc, area]
-        result=[['saver/model_best_vld_acc.ckpt', 0, 0, 0, 0, 0],
-                ['saver/model_best_area_0.ckpt',  0, 0, 0, 0, 0],
-                ['saver/model_best_area_1.ckpt',  0, 0, 0, 0, 0],
-                ['saver/model_best_area_2.ckpt',  0, 0, 0, 0, 0]]
-        counter = [0, 0, 0, 0]
+        if early_stopping is not None:
+            result=[['saver/model_best_vld_acc.ckpt', 0, 0, 0, 0, 0],
+                    ['saver/model_best_area_0.ckpt',  0, 0, 0, 0, 0],
+                    ['saver/model_best_area_1.ckpt',  0, 0, 0, 0, 0],
+                    ['saver/model_best_area_2.ckpt',  0, 0, 0, 0, 0]]
+            counter = [0, 0, 0, 0]
 
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -69,15 +67,15 @@ class MLP:
             for step in range(steps):
                 batch_x, batch_y = shuffle(trn_x, trn_y)
                 _, loss = sess.run([self.train_step, self.cross_entropy], feed_dict={self.x: batch_x, self.y_: batch_y})
-                if step%100 == 0:
+                if step%1000 == 0:
                     trn_acc = sess.run(self.accuracy, feed_dict={self.x: trn_x, self.y_: trn_y})
-                    vld_acc = sess.run(self.accuracy, feed_dict={self.x: vld_x, self.y_: vld_y})
-                    r_0, c_0, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, outliers=None, threshold_method=0, rejection_rate_limit=50)
-                    r_1, c_1, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, outliers=None, threshold_method=1, rejection_rate_limit=50)
-                    r_2, c_2, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, outliers=None, threshold_method=2, rejection_rate_limit=50)
-                    areas = [vld_acc, np.trapz(c_0, r_0), np.trapz(c_1, r_1), np.trapz(c_2, r_2)]
-                    mark = ''
-                    if early_stopping is not None and step > 5000:
+                    if early_stopping is not None and step > 0:
+                        vld_acc = sess.run(self.accuracy, feed_dict={self.x: vld_x, self.y_: vld_y})
+                        r_0, c_0, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 0, 100)
+                        r_1, c_1, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 1, 100)
+                        r_2, c_2, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 2, 100)
+                        areas = [vld_acc, np.trapz(c_0, r_0), np.trapz(c_1, r_1), np.trapz(c_2, r_2)]
+                        mark=''
                         for i in [0,1,2,3]:
                             if counter[i] is not None:
                                 if areas[i] > result[i][5]:
@@ -92,17 +90,18 @@ class MLP:
                                     mark += '-'
                             else:
                                 mark += '.'
+                        self.log_accuracy(step, loss, trn_acc, vld_acc, areas, mark, logging)
                         if counter == [None, None, None, None]:
                             break
-                                    
-                    self.log_accuracy(step, loss, trn_acc, vld_acc, areas, mark, logging)
+                    else:
+                        self.log_accuracy(step, loss, trn_acc, logging=logging)
         
             if early_stopping is None:
                 saver.save(sess, 'saver/model.ckpt', write_meta_graph=False) 
         self.log_finish(logging)
     
         if early_stopping is None:
-            return trn_acc, 0, loss
+            return ['saver/model.ckpt', steps, loss, trn_acc]
         else:
             return result
     
@@ -231,22 +230,30 @@ class MLP:
         for fileName in fileList:
             os.remove(dirPath+"/"+fileName)
     
-    def log_init(self, steps, logging):
+    def log_init(self, steps, logging, early_stopping):
         
         self.log_file = None
         if logging: 
             self.log_file = open("tests/test_%g_%d_%s_%d.txt"%(self.learning_rate, steps, self.dataset_name, int(time.time())), "w+")
     
-        log_msg = "learing rate: %g; steps: %d"%(self.learning_rate, steps)
+        log_msg = 'learing rate: {:f}; steps: {:d}'.format(self.learning_rate, steps)
+        if early_stopping is not None:
+            log_msg += '; early_stopping: {:d}'.format(early_stopping)
         if logging: print(log_msg, file=self.log_file)
-        else:       print(log_msg)
+        print(log_msg)
             
-    def log_accuracy(self, i, loss, trn_acc, vld_acc, areas=[0,0,0], mark='', logging=True):
+    def log_accuracy(self, i, loss, trn_acc, vld_acc=None, areas=None, mark=None, logging=True):
         
         if vld_acc != 0:
-            log_msg = 'step{:8d}, loss:{:9f}, trn_acc:{:9f}, vld_acc{:9f}, r0:{:12f}, r1:{:12f}, r2:{:12f}, {:s}'.format(i, loss, trn_acc, vld_acc, areas[1], areas[2], areas[3], mark)
+            log_msg = 'step{:8d}, loss:{:9f}, trn_acc:{:9f}'.format(i, loss, trn_acc)
+            if vld_acc is not None:
+                log_msg += ', vld_acc{:9f}'.format(vld_acc)
+            if areas is not None:
+                log_msg += ', r0:{:12f}, r1:{:12f}, r2:{:12f}'.format(areas[1], areas[2], areas[3])
+            if mark is not None:
+                log_msg += ', {:s}'.format(mark)
             if logging: print(log_msg, file=self.log_file)
-            else:       print(log_msg)
+            print(log_msg)
         else:
             log_msg = "step %d; loss %g; train accuracy: %g"%(i, loss, trn_acc)
             if logging: print(log_msg, file=self.log_file)
