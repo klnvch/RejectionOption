@@ -17,7 +17,7 @@ from itertools import cycle
 
 
 def main(unused_argv):
-    x, y, n_classes = get_data(3, False, 3)
+    x, y, n_classes = get_data(3, False, 0)
     print_frequencies(y)
     x_trn, x_tst, y_trn, y_tst = train_test_split(x, y, test_size=.2, random_state=42)
     print_frequencies(y_trn)

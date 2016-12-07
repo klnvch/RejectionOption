@@ -11,6 +11,8 @@ from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
 from DataUtils import count_distribution
 
+DATA_DIR = '/home/anton/Desktop/diploma_text/datasets/'
+
 """
 Three gaussian distributed classes, two non-separable and one separable
     add_noise=None - no outliers
@@ -121,7 +123,7 @@ def read_letter_recognition_image_data():
     x = []
     y = []
     classes = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
-    with open("/home/anton/Desktop/diploma/data sets/Letter recognition/letter-recognition.data", "r") as filestream:
+    with open(DATA_DIR + 'Letter recognition/letter-recognition.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             x.append([float(i) for i in currentline[1:17]])
@@ -137,7 +139,7 @@ def read_glass_identification_data():
     x = []
     y = []
     classes = [1,2,3,5,6,7]
-    with open('/home/anton/Desktop/diploma/data sets/Glass identification/glass.data', 'r') as filestream:
+    with open(DATA_DIR + 'Glass identification/glass.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             x.append([float(i) for i in currentline[1:10]])
@@ -149,14 +151,14 @@ def read_image_segmentation_data():
     x = []
     y = []
     classes = ['BRICKFACE','SKY','FOLIAGE','CEMENT','WINDOW','PATH','GRASS']
-    with open('/home/anton/Desktop/diploma/data sets/Image segmentation/segmentation.data', 'r') as filestream:
+    with open(DATA_DIR + 'Image segmentation/segmentation.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
             x.append([float(i) for i in currentline[1:20]])
             y.append(classes.index(currentline[0]))
             
-    with open('/home/anton/Desktop/diploma/data sets/Image segmentation/segmentation.test', 'r') as filestream:
+    with open(DATA_DIR + 'Image segmentation/segmentation.test', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
@@ -197,5 +199,7 @@ def get_data(i, binarize=False, preprocess=0):
         x = preprocessing.minmax_scale(x)
     elif preprocess == 3:
         x = preprocessing.normalize(x)
+    elif preprocess == 4:
+        x = preprocessing.robust_scale(x)
     
     return np.array(x), np.array(y), n_classes
