@@ -6,7 +6,9 @@ Created on Oct 26, 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn import datasets
 from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import label_binarize
 from DataUtils import count_distribution
 
 """
@@ -116,111 +118,58 @@ def create_gaussian_data_3(size=100, add_noise=None, max_output=1.0, min_output=
         return a, b, noise
 
 def read_letter_recognition_image_data():
-    a = []
-    b = []
+    x = []
+    y = []
     with open("/home/anton/Desktop/diploma/data sets/Letter recognition/letter-recognition.data", "r") as filestream:
         for line in filestream:
             currentline = line.split(',')
+            x.append([float(i) for i in currentline[1:17]])
+            y.append(currentline[0])
             
-            a.append([float(i) for i in currentline[1:17]])
+    y = label_binarize(y, ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'], 0, 1, False)
             
-            if   currentline[0]== 'A': b.append([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'B': b.append([0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'C': b.append([0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'D': b.append([0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'E': b.append([0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'F': b.append([0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'G': b.append([0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'H': b.append([0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'I': b.append([0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'J': b.append([0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'K': b.append([0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'L': b.append([0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'M': b.append([0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'N': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'O': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'P': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'Q': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'R': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0])
-            elif currentline[0]== 'S': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0])
-            elif currentline[0]== 'T': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0])
-            elif currentline[0]== 'U': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0])
-            elif currentline[0]== 'V': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0])
-            elif currentline[0]== 'W': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0])
-            elif currentline[0]== 'X': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0])
-            elif currentline[0]== 'Y': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0])
-            elif currentline[0]== 'Z': b.append([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1])
-            else: raise ValueError("unknown class: " + currentline[0])
-    return np.array(a), np.array(b)
+    return np.array(x), y
 
 def read_iris_data():
-    a = []
-    b = []
-    with open("/home/anton/Desktop/diploma/data sets/Iris/iris.data", "r") as filestream:
-        for line in filestream:
-            currentline = line.split(',')
-            if len(currentline) != 5: continue
-
-            a.append([float(i) for i in currentline[0:4]])
-            
-            if   currentline[4].startswith('Iris-setosa'):     b.append([1, 0, 0])
-            elif currentline[4].startswith('Iris-versicolor'): b.append([0, 1, 0])
-            elif currentline[4].startswith('Iris-virginica'):  b.append([0, 0, 1])
-            else: raise ValueError("unknown class: " + currentline[4])
-    return np.array(a), np.array(b)
+    iris = datasets.load_iris()
+    x = iris.data
+    y = iris.target
+    y = label_binarize(y, [0, 1, 2], 0, 1, False)
+    return x, y
 
 def read_glass_identification_data():
-    a = []
-    b = []
+    x = []
+    y = []
     with open('/home/anton/Desktop/diploma/data sets/Glass identification/glass.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
+            x.append([float(i) for i in currentline[1:10]])
+            y.append(int(currentline[10]))
             
-            a.append([float(i) for i in currentline[1:10]])
+    y = label_binarize(y, [1,2,3,5,6,7], 0, 1, False)
             
-            if   int(currentline[10])== 1: b.append([1,0,0,0,0,0])
-            elif int(currentline[10])== 2: b.append([0,1,0,0,0,0])
-            elif int(currentline[10])== 3: b.append([0,0,1,0,0,0])
-            elif int(currentline[10])== 5: b.append([0,0,0,1,0,0])
-            elif int(currentline[10])== 6: b.append([0,0,0,0,1,0])
-            elif int(currentline[10])== 7: b.append([0,0,0,0,0,1])
-            else: raise ValueError("unknown class: " + currentline[4])
-    return minmax_scale(np.array(a), (0,1), 0, False), np.array(b)
+    return minmax_scale(np.array(x), (0,1), 0, False), y
 
 def read_image_segmentation_data():
-    a = []
-    b = []
+    x = []
+    y = []
     with open('/home/anton/Desktop/diploma/data sets/Image segmentation/segmentation.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
+            x.append([float(i) for i in currentline[1:20]])
+            y.append(currentline[0])
             
-            a.append([float(i) for i in currentline[1:20]])
-            
-            if   currentline[0]== 'BRICKFACE': b.append([1,0,0,0,0,0,0])
-            elif currentline[0]== 'SKY':       b.append([0,1,0,0,0,0,0])
-            elif currentline[0]== 'FOLIAGE':   b.append([0,0,1,0,0,0,0])
-            elif currentline[0]== 'CEMENT':    b.append([0,0,0,1,0,0,0])
-            elif currentline[0]== 'WINDOW':    b.append([0,0,0,0,1,0,0])
-            elif currentline[0]== 'PATH':      b.append([0,0,0,0,0,1,0])
-            elif currentline[0]== 'GRASS':     b.append([0,0,0,0,0,0,1])
-            else: raise ValueError("unknown class: " + currentline[0])
     with open('/home/anton/Desktop/diploma/data sets/Image segmentation/segmentation.test', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
-            
-            a.append([float(i) for i in currentline[1:20]])
-            
-            if   currentline[0]== 'BRICKFACE': b.append([1,0,0,0,0,0,0])
-            elif currentline[0]== 'SKY':       b.append([0,1,0,0,0,0,0])
-            elif currentline[0]== 'FOLIAGE':   b.append([0,0,1,0,0,0,0])
-            elif currentline[0]== 'CEMENT':    b.append([0,0,0,1,0,0,0])
-            elif currentline[0]== 'WINDOW':    b.append([0,0,0,0,1,0,0])
-            elif currentline[0]== 'PATH':      b.append([0,0,0,0,0,1,0])
-            elif currentline[0]== 'GRASS':     b.append([0,0,0,0,0,0,1])
-            else: raise ValueError("unknown class: " + currentline[0])
-    return np.array(a), np.array(b)
+            x.append([float(i) for i in currentline[1:20]])
+            y.append(currentline[0])
+    
+    y = label_binarize(y, ['BRICKFACE','SKY','FOLIAGE','CEMENT','WINDOW','PATH','GRASS'], 0, 1, False)        
+    
+    return np.array(x), y
 
 def get_data(i):
     """Returns choosen dataset.
@@ -238,16 +187,12 @@ def get_data(i):
         ValueError: unknown error with data.
 
     """
-    ds_x = None
-    ds_y = None
-    if   i == 1: ds_x, ds_y = read_letter_recognition_image_data()
-    elif i == 2: ds_x, ds_y = read_iris_data()
-    elif i == 3: ds_x, ds_y = read_glass_identification_data()
-    elif i == 4: ds_x, ds_y = read_image_segmentation_data()
+    if   i == 1: x, y = read_letter_recognition_image_data()
+    elif i == 2: x, y = read_iris_data()
+    elif i == 3: x, y = read_glass_identification_data()
+    elif i == 4: x, y = read_image_segmentation_data()
     else: raise ValueError("unknown dataset: " + i)
     
-    count_distribution(ds_y)
+    count_distribution(y)
     
-    return ds_x, ds_y
-    
-    
+    return x, y
