@@ -6,6 +6,8 @@ Created on Oct 26, 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import minmax_scale
+from DataUtils import count_distribution
 
 """
 Three gaussian distributed classes, two non-separable and one separable
@@ -120,7 +122,7 @@ def read_letter_recognition_image_data():
         for line in filestream:
             currentline = line.split(',')
             
-            a.append([int(i) for i in currentline[1:17]])
+            a.append([float(i) for i in currentline[1:17]])
             
             if   currentline[0]== 'A': b.append([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
             elif currentline[0]== 'B': b.append([0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
@@ -183,7 +185,7 @@ def read_glass_identification_data():
             elif int(currentline[10])== 6: b.append([0,0,0,0,1,0])
             elif int(currentline[10])== 7: b.append([0,0,0,0,0,1])
             else: raise ValueError("unknown class: " + currentline[4])
-    return np.array(a), np.array(b)
+    return minmax_scale(np.array(a), (0,1), 0, False), np.array(b)
 
 def read_image_segmentation_data():
     a = []
@@ -244,8 +246,7 @@ def get_data(i):
     elif i == 4: ds_x, ds_y = read_image_segmentation_data()
     else: raise ValueError("unknown dataset: " + i)
     
-    # between 0.25 and 0.75
-    ds_x = 0.25 + 0.5 * (ds_x - ds_x.min(axis=0)) / (ds_x.max(axis=0)-ds_x.min(axis=0))
+    count_distribution(ds_y)
     
     return ds_x, ds_y
     

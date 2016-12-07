@@ -113,7 +113,6 @@ class MLP:
         
         
     def test_cer(self, x, y, outliers=None, threshold=0.0, threshold_method = 0, logging = True):
-        
         saver = tf.train.Saver()
         with tf.Session() as sess:
             saver.restore(sess, "saver/model.ckpt")
@@ -124,28 +123,26 @@ class MLP:
             if outliers is not None:
                 outliers_outputs = sess.run(self.y_final, feed_dict={self.x: outliers})
             
-            c, e, r_c, r_e = self.test_cer_internal(x, predictions, outputs, outliers, outliers_outputs, threshold, threshold_method, logging)
-        
-        return c, e, r_c, r_e
+            return self.test_cer_internal(x, predictions, outputs, outliers, outliers_outputs, threshold, threshold_method, logging)
     
-    """
-    Returns data for two graphics rejected vs correct and rejected errors vs rejected correct
-    """
     def test_rejection(self, x, y, outliers=None, threshold_method=0, rejection_rate_limit=100, filename='saver/model.ckpt'):
+        """
+        Returns data for two graphics rejected vs correct and rejected errors vs rejected correct
+        """
         saver = tf.train.Saver()
         with tf.Session() as sess:
             saver.restore(sess, filename)
             return self.test_rejection_internal(sess, x, y, outliers, threshold_method, rejection_rate_limit)
     
-    """
-    Returns data for two graphics rejected vs correct and rejected errors vs rejected correct
-    """
-    def test_rejection_internal(self, sess, data, labels, outliers=None, threshold_method=0, rejection_rate_limit=100):
-        rejected = []
-        correct = []
+    def test_rejection_internal(self, sess, data, labels, outliers=None, threshold_method=0, rejection_rate_limit=101):
+        x1 = [] # classfication rate
+        y1 = [] # rejection rate
         
-        rejected_errors = []
-        rejected_correct = []
+        x2 = [] # true rejection rate
+        y2 = [] # false rejection rate
+        
+        x3 = [] # detecion rate
+        y3 = [] # false alarm rate
             
         predictions, outputs = sess.run([self.correct_prediction, self.y_final], feed_dict={self.x:data, self.y_: labels})
             
@@ -154,56 +151,62 @@ class MLP:
             outliers_outputs = sess.run(self.y_final, feed_dict={self.x: outliers})
         
         for i in range(0, 101):
-            c, e, r_c, r_e = self.test_cer_internal(data, predictions, outputs, outliers, outliers_outputs, threshold=i*0.01, threshold_method=threshold_method, logging=False)
-            #
-            rejection_rate = 100.0 * (r_c.shape[0] + r_e.shape[0]) / (c.shape[0] + e.shape[0] + r_c.shape[0] + r_e.shape[0])
-            classification_rate = 0.0
-            if c.shape[0] + e.shape[0] != 0:
-                classification_rate = 100.0 * c.shape[0] / (c.shape[0] + e.shape[0])
+            c, e, r_c, r_e, o_c, o_e = self.test_cer_internal(data, predictions, outputs, outliers, outliers_outputs, i*0.01, threshold_method, False)
+            # the first curve
+            rejection_rate = 100.0 * (len(r_c) + len(r_e)) / (len(c) + len(e) + len(r_c) + len(r_e))
+            classification_rate = 100.0
+            if len(c) + len(e) != 0:
+                classification_rate = 100.0 * len(c) / (len(c) + len(e))
             if rejection_rate > rejection_rate_limit:
-                rejected.append(rejection_rate_limit)
-                correct.append(classification_rate)
+                x1.append(rejection_rate_limit)
+                y1.append(classification_rate)
                 break
             else:
-                rejected.append(rejection_rate)
-                correct.append(classification_rate)
-            #
-            if e.shape[0] + r_e.shape[0] == 0:
-                rejected_errors.append(100.0)
+                x1.append(rejection_rate)
+                y1.append(classification_rate)
+            # the second curve
+            if len(e) + len(r_e) == 0:
+                x2.append(100.0)
             else:
-                rejected_errors.append(100.0 * r_e.shape[0] / (e.shape[0] + r_e.shape[0]))
-            rejected_correct.append(100.0 * r_c.shape[0] / (c.shape[0] + r_c.shape[0]))
+                x2.append(100.0 * (len(r_e) + len(o_c)) / (len(e) + len(r_e) + len(o_e) + len(o_c)))
+            y2.append(100.0 * len(r_c) / (len(c) + len(r_c)))
+            # the third curve
+            if outliers is not None:
+                x3.append(100.0 * len(o_e) / (len(o_e) + len(o_c)))
+                y3.append(100.0 * (len(c) + len(e)) / (len(c) + len(e) + len(r_c) + len(r_e)))
                 
-        return rejected, correct, rejected_errors, rejected_correct
+        return x1, y1, x2, y2, x3, y3
     
     
     def test_cer_internal(self, data, predictions, outputs, outliers=None, outliers_outputs=None, threshold=0.0, threshold_method = 0, logging = True):
-        correct = []
-        error = []
-        reject_correct = []
-        reject_error = []
+        c = []   # correctly classified samples
+        e = []   # mislassified samples
+        r_c = [] # rejected corectly classified samples
+        r_e = [] # rejected misclassified samples
+        o_c = [] # rejected outliers
+        o_e = [] # not rejected outliers
             
         for sample, is_correct, output in zip(data, predictions, outputs):
             if is_correct:
                 if self.reject_method(output, threshold, threshold_method):
-                    reject_correct.append(sample)
+                    r_c.append(sample)
                 else:
-                    correct.append(sample)
+                    c.append(sample)
             else:
                 if self.reject_method(output, threshold, threshold_method):
-                    reject_error.append(sample)
+                    r_e.append(sample)
                 else:
-                    error.append(sample)
+                    e.append(sample)
             
         if outliers is not None:            
             for sample, output in zip(outliers, outliers_outputs):
                 if self.reject_method(output, threshold, threshold_method):
-                    reject_error.append(sample)
+                    o_c.append(sample)
                 else:
-                    error.append(sample)
+                    o_e.append(sample)
         
         #self.log_results(threshold, correct, error, reject_correct, reject_error, logging, self.log_file)      
-        return np.array(correct), np.array(error), np.array(reject_correct), np.array(reject_error)
+        return c, e, r_c, r_e, o_c, o_e
         
     
     def reject_method(self, y, threshold, i):
