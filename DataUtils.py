@@ -5,16 +5,21 @@ Created on Oct 26, 2016
 '''
 
 import numpy as np
+import heapq
+from collections import Counter
 
-def count_distribution(ds_y):
-    d = [0] * ds_y.shape[1]
+def count_distribution(y):
+    d = [0] * y.shape[1]
     
-    for y in ds_y:
-        d[y.argmax()] += 1
+    for i in y:
+        d[i.argmax()] += 1
         
     #d = np.asarray(d) / ds_y.shape[0]
     print(d)
     return d
+
+def print_frequencies(x):
+    print(Counter(x))
 
 def remove_class(ds_x, ds_y, i):
     new_ds_x = []
@@ -62,3 +67,21 @@ def add_noise_as_a_class(ds_x, ds_y, noise_size=None):
     
     assert new_ds_x.shape[0] == new_ds_y.shape[0]
     return new_ds_x, new_ds_y
+
+def rejection_score(outputs, rejection_method):
+    if rejection_method == 0:
+        return np.max(outputs, axis=1)
+    elif rejection_method == 1:
+        result = []
+        for o in outputs:
+            x = heapq.nlargest(2, o)
+            result.append(x[0] - x[1])
+        return result
+    elif rejection_method == 2:
+        result = []
+        for o in outputs:
+            x = heapq.nlargest(2, o)
+            result.append(1.0 - x[1] / x[0])
+        return result
+    else:
+        assert False

@@ -7,7 +7,7 @@ Created on Oct 26, 2016
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
-from sklearn.preprocessing import minmax_scale
+from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
 from DataUtils import count_distribution
 
@@ -120,58 +120,52 @@ def create_gaussian_data_3(size=100, add_noise=None, max_output=1.0, min_output=
 def read_letter_recognition_image_data():
     x = []
     y = []
+    classes = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
     with open("/home/anton/Desktop/diploma/data sets/Letter recognition/letter-recognition.data", "r") as filestream:
         for line in filestream:
             currentline = line.split(',')
             x.append([float(i) for i in currentline[1:17]])
-            y.append(currentline[0])
+            y.append(classes.index(currentline[0]))
             
-    y = label_binarize(y, ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'], 0, 1, False)
-            
-    return np.array(x), y
+    return x, y, 26
 
 def read_iris_data():
     iris = datasets.load_iris()
-    x = iris.data
-    y = iris.target
-    y = label_binarize(y, [0, 1, 2], 0, 1, False)
-    return x, y
+    return iris.data, iris.target, 3
 
 def read_glass_identification_data():
     x = []
     y = []
+    classes = [1,2,3,5,6,7]
     with open('/home/anton/Desktop/diploma/data sets/Glass identification/glass.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             x.append([float(i) for i in currentline[1:10]])
-            y.append(int(currentline[10]))
+            y.append(classes.index(int(currentline[10])))
             
-    y = label_binarize(y, [1,2,3,5,6,7], 0, 1, False)
-            
-    return minmax_scale(np.array(x), (0,1), 0, False), y
+    return x, y, 6
 
 def read_image_segmentation_data():
     x = []
     y = []
+    classes = ['BRICKFACE','SKY','FOLIAGE','CEMENT','WINDOW','PATH','GRASS']
     with open('/home/anton/Desktop/diploma/data sets/Image segmentation/segmentation.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
             x.append([float(i) for i in currentline[1:20]])
-            y.append(currentline[0])
+            y.append(classes.index(currentline[0]))
             
     with open('/home/anton/Desktop/diploma/data sets/Image segmentation/segmentation.test', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
             x.append([float(i) for i in currentline[1:20]])
-            y.append(currentline[0])
+            y.append(classes.index(currentline[0]))
     
-    y = label_binarize(y, ['BRICKFACE','SKY','FOLIAGE','CEMENT','WINDOW','PATH','GRASS'], 0, 1, False)        
-    
-    return np.array(x), y
+    return x, y, 7
 
-def get_data(i):
+def get_data(i, binarize=False, preprocess=0):
     """Returns choosen dataset.
 
     Args:
@@ -187,12 +181,21 @@ def get_data(i):
         ValueError: unknown error with data.
 
     """
-    if   i == 1: x, y = read_letter_recognition_image_data()
-    elif i == 2: x, y = read_iris_data()
-    elif i == 3: x, y = read_glass_identification_data()
-    elif i == 4: x, y = read_image_segmentation_data()
+    if   i == 1: x, y, n_classes = read_letter_recognition_image_data()
+    elif i == 2: x, y, n_classes = read_iris_data()
+    elif i == 3: x, y, n_classes = read_glass_identification_data()
+    elif i == 4: x, y, n_classes = read_image_segmentation_data()
     else: raise ValueError("unknown dataset: " + i)
     
-    count_distribution(y)
+    if binarize:
+        y = label_binarize(y, range(0, n_classes), 0, 1, False)
+        count_distribution(y)
     
-    return x, y
+    if preprocess == 1:
+        x = preprocessing.scale(x)
+    elif preprocess == 2:
+        x = preprocessing.minmax_scale(x)
+    elif preprocess == 3:
+        x = preprocessing.normalize(x)
+    
+    return np.array(x), np.array(y), n_classes
