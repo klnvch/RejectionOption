@@ -126,7 +126,7 @@ def read_letter_recognition_image_data():
     with open(DATA_DIR + 'Letter recognition/letter-recognition.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
-            x.append([float(i) for i in currentline[1:17]])
+            x.append([np.float32(i) for i in currentline[1:17]])
             y.append(classes.index(currentline[0]))
             
     return x, y, 26
@@ -142,7 +142,7 @@ def read_glass_identification_data():
     with open(DATA_DIR + 'Glass identification/glass.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
-            x.append([float(i) for i in currentline[1:10]])
+            x.append([np.float32(i) for i in currentline[1:10]])
             y.append(classes.index(int(currentline[10])))
             
     return x, y, 6
@@ -155,14 +155,14 @@ def read_image_segmentation_data():
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
-            x.append([float(i) for i in currentline[1:20]])
+            x.append([np.float32(i) for i in currentline[1:20]])
             y.append(classes.index(currentline[0]))
             
     with open(DATA_DIR + 'Image segmentation/segmentation.test', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
             if len(currentline) != 20: continue
-            x.append([float(i) for i in currentline[1:20]])
+            x.append([np.float32(i) for i in currentline[1:20]])
             y.append(classes.index(currentline[0]))
     
     return x, y, 7
