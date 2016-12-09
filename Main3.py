@@ -14,20 +14,30 @@ import tensorflow as tf
 from tensorflow.contrib import learn
 import matplotlib.pyplot as plt
 from itertools import cycle
+import itertools
 
+def input_fn(x, y, n_classes):
+    feature_cols = {str(k): tf.constant(x[:,k]) for k in range(0, n_classes)}
+    labels = tf.constant(y)
+    return feature_cols, labels
 
 def main(unused_argv):
-    x, y, n_classes = get_data(3, False, 0)
+    x, y, n_classes = get_data(2, False, 0)
     print_frequencies(y)
     x_trn, x_tst, y_trn, y_tst = train_test_split(x, y, test_size=.2, random_state=42)
     print_frequencies(y_trn)
     print_frequencies(y_tst)
     
-    feature_columns = learn.infer_real_valued_columns_from_input(x_trn)
-    classifier = learn.DNNClassifier(feature_columns=feature_columns, hidden_units=[10], n_classes=n_classes)
+    feature_columns = [tf.contrib.layers.real_valued_column(str(k)) for k in range(0, n_classes)]
+    classifier = learn.DNNClassifier(feature_columns=feature_columns, 
+                                     hidden_units=[10, 20, 10], 
+                                     n_classes=n_classes)
 
-    classifier.fit(x_trn, y_trn, steps=20000)
-    outputs = list(classifier.predict_proba(x_tst, as_iterable=True))
+    classifier.fit(input_fn=lambda: input_fn(x_trn, y_trn, n_classes), 
+                   steps=20000)
+    y = classifier.predict_proba(input_fn=lambda: input_fn(x_tst, y_tst, n_classes))
+    outputs = list(itertools.islice(y, x_tst.shape[0]))
+    
     predictions = [np.argmax(o) for o in outputs]
     score = metrics.accuracy_score(y_tst, predictions)
     print('Accuracy: {0:f}'.format(score))
