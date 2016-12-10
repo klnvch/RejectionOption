@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
-from DataUtils import count_distribution
+from data_utils import count_distribution
 
 DATA_DIR = '/home/anton/Desktop/diploma_text/datasets/'
 

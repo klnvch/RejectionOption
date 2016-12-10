@@ -5,15 +5,14 @@ Created on Dec 7, 2016
 '''
 
 import numpy as np
-from InputData import get_data
-from DataUtils import rejection_score
-from DataUtils import print_frequencies
+from input_data import get_data
+from data_utils import print_frequencies, calc_precision_recall
+from data_utils import calc_roc
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 import tensorflow as tf
 from tensorflow.contrib import learn
-import matplotlib.pyplot as plt
-from itertools import cycle
+from graphics import draw_roc, draw_precision_recall
 import itertools
 
 def input_fn(x, y, n_classes):
@@ -33,41 +32,19 @@ def main(unused_argv):
                                      hidden_units=[10, 20, 10], 
                                      n_classes=n_classes)
 
-    classifier.fit(input_fn=lambda: input_fn(x_trn, y_trn, n_classes), 
-                   steps=20000)
+    classifier.fit(input_fn=lambda: input_fn(x_trn, y_trn, n_classes), steps=20000)
     y = classifier.predict_proba(input_fn=lambda: input_fn(x_tst, y_tst, n_classes))
     outputs = list(itertools.islice(y, x_tst.shape[0]))
     
     predictions = [np.argmax(o) for o in outputs]
     score = metrics.accuracy_score(y_tst, predictions)
     print('Accuracy: {0:f}'.format(score))
-    
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
-    
-    y_true = y_tst - predictions
-    
-    for i in [0,1,2]:
-        y_score = rejection_score(outputs, i)
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score, pos_label=0)
-        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
-    
-    
-    plt.figure()
-    colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
-    for i, color in zip([0,1,2], colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=2, label='ROC curve of method {0} (area = {1:0.4f})'.format(i, roc_auc[i]))
-
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Some extension of Receiver operating characteristic to multi-class')
-    plt.legend(loc="lower right")
-    plt.show()
-    
+    #
+    fpr, tpr, roc_auc = calc_roc(y_tst, outputs)
+    draw_roc(fpr, tpr, roc_auc)
+    #
+    precision, recall, average_precision = calc_precision_recall(y_tst, outputs)
+    draw_precision_recall(precision, recall, average_precision)
     
 if __name__ == '__main__':
     tf.app.run()

@@ -7,6 +7,7 @@ Created on Oct 26, 2016
 import numpy as np
 import heapq
 from collections import Counter
+from sklearn import metrics
 
 def count_distribution(y):
     d = [0] * y.shape[1]
@@ -85,3 +86,36 @@ def rejection_score(outputs, rejection_method):
         return result
     else:
         assert False
+        
+def calc_roc(y, outputs):
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    
+    predictions = [np.argmax(o) for o in outputs]
+    #y_true = np.array(y) - np.array(predictions)
+    y_true = [a==b for a,b in zip(np.array(y),np.array(predictions))]
+    
+    for i in [0,1,2]:
+        y_score = rejection_score(outputs, i)
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score)
+        #roc_auc[i] = metrics.roc_auc_score(y_true, y_score)
+        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
+        
+    return fpr, tpr, roc_auc
+
+def calc_precision_recall(y, outputs):
+    precision = dict()
+    recall = dict()
+    average_precision = dict()
+    
+    predictions = [np.argmax(o) for o in outputs]
+    #y_true = np.array(y) - np.array(predictions)
+    y_true = [a==b for a,b in zip(np.array(y),np.array(predictions))]
+    
+    for i in [0,1,2]:
+        y_score = rejection_score(outputs, i)
+        precision[i], recall[i], _ = metrics.precision_recall_curve(y_true, y_score)
+        average_precision[i] = metrics.average_precision_score(y_true, y_score)
+        
+    return precision, recall, average_precision

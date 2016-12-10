@@ -6,6 +6,7 @@ Created on Oct 29, 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import cycle
 
 def draw(c, e, rc, re, axis=1):
     
@@ -39,4 +40,34 @@ def draw_x_vs_y(xs, ys, xlabel=None, ylabel=None, labels=None, colors=None, lege
     if xlabel is not None and ylabel is not None:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
+    plt.show()
+    
+def draw_roc(fpr, tpr, roc_auc):
+    plt.figure()
+    colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
+    for i, color in zip([0,1,2], colors):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2, label='ROC curve of method {0} (area = {1:0.4f})'.format(i, roc_auc[i]))
+
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Some extension of Receiver operating characteristic to multi-class')
+    plt.legend(loc="lower right")
+    plt.show()
+    
+    
+def draw_precision_recall(precision, recall, average_precision):
+    plt.figure()
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    for i, color in zip([0,1,2], colors):
+        plt.plot(recall[i], precision[i], color=color, lw=2, label='Precision-recall curve of class {0} (area = {1:0.4f})'.format(i, average_precision[i]))
+
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Extension of Precision-Recall curve to multi-class')
+    plt.legend(loc="lower right")
     plt.show()
