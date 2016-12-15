@@ -8,23 +8,30 @@ import time, os
 import numpy as np
 import tensorflow as tf
 from sklearn.utils import shuffle
+from sklearn import metrics
+from data_utils import rejection_score
+from tensorflow.examples.tutorials.mnist.mnist import loss
 
 class MLP:
     
-    def __init__(self, learning_rate, num_input, num_hidden, num_output, activation_function='softmax'):
-        print("learning rate: %g, layers: [%d, %d, %d], activation_function: %s" % (learning_rate, num_input, num_hidden, num_output, activation_function))
+    def __init__(self, learning_rate, layers, activation_function='softmax'):
+        print('init...')
+        print('learning rate: {:f}, activation function: {:s}'.format(learning_rate, activation_function))
+        print('layers: [{:d},{:d},{:d}]'.format(layers[0], layers[1], layers[2]))
         
         self.learning_rate = learning_rate
+        self.activation_function = activation_function
+        self.num_input = layers[0]
+        self.num_hidden = layers[1]
+        self.num_output = layers[2]
         
-        if num_hidden == -1: num_hidden = int((num_input + num_output) * 0.666)
-        
-        self.x = tf.placeholder(tf.float32, [None, num_input])
-        self.y_ = tf.placeholder(tf.float32, [None, num_output])
+        self.x = tf.placeholder(tf.float32, [None, self.num_input])
+        self.y_ = tf.placeholder(tf.float32, [None, self.num_output])
 
-        w_h = tf.Variable(tf.truncated_normal([num_input, num_hidden], stddev=0.1), name="hidden_weights")
-        b_h = tf.Variable(tf.constant(0.1, shape=[num_hidden]), name="hidden_biases")
-        w_o = tf.Variable(tf.truncated_normal([num_hidden, num_output], stddev=0.1), name="output_weights")
-        b_o = tf.Variable(tf.constant(0.1, shape=[num_output]), name="outputs_biases")
+        w_h = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden], stddev=0.1), name="hidden_weights")
+        b_h = tf.Variable(tf.constant(0.1, shape=[self.num_hidden]), name="hidden_biases")
+        w_o = tf.Variable(tf.truncated_normal([self.num_hidden, self.num_output], stddev=0.1), name="output_weights")
+        b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
 
         y = tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h) + b_h), w_o) + b_o
 
@@ -44,13 +51,13 @@ class MLP:
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
         
         
-    def train(self, steps, trn_x, trn_y, vld_x, vld_y, early_stopping=None, logging = True):
+    def train(self, steps, trn_x, trn_y, vld_x, vld_y, batch_size=None, early_stopping=None, logging=True):
         """
         if early stopping not None output is
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc, best_area0, best_area1 and best_area2
         """
         self.clean_model_dir()
-        self.log_init(steps, logging, early_stopping)
+        self.log_init(steps, batch_size, early_stopping, logging)
         
         #       [model_file, step, loss, trn_acc, vld_acc, area]
         if early_stopping is not None:
@@ -61,14 +68,24 @@ class MLP:
             counter = [0, 0, 0, 0]
 
         saver = tf.train.Saver()
+        train_time = 0
         with tf.Session() as sess:
-            tf.initialize_all_variables().run()
-
+            tf.global_variables_initializer().run()
             for step in range(steps):
-                batch_x, batch_y = shuffle(trn_x, trn_y)
-                _, loss = sess.run([self.train_step, self.cross_entropy], feed_dict={self.x: batch_x, self.y_: batch_y})
-                if step%1000 == 0:
-                    trn_acc = sess.run(self.accuracy, feed_dict={self.x: trn_x, self.y_: trn_y})
+                # train 
+                start_time = time.time()
+                x, y = shuffle(trn_x, trn_y)
+                if batch_size is None:
+                    sess.run(self.train_step, feed_dict={self.x: x, self.y_: y})
+                else:
+                    for i in range(0, trn_x.shape[0], batch_size):
+                        sess.run(self.train_step, feed_dict={self.x: x[i:i+batch_size], self.y_: y[i:i+batch_size]})
+                finish_time = time.time()
+                train_time += (finish_time - start_time)
+                if step%10 == 0:
+                    loss, trn_acc = self.log_step_info(sess, trn_x, trn_y, vld_x, vld_y, step, train_time, logging)
+                    train_time = 0
+                    
                     if early_stopping is not None and step > 0:
                         vld_acc = sess.run(self.accuracy, feed_dict={self.x: vld_x, self.y_: vld_y})
                         r_0, c_0, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 0, 100)
@@ -93,12 +110,10 @@ class MLP:
                         self.log_accuracy(step, loss, trn_acc, vld_acc, areas, mark, logging)
                         if counter == [None, None, None, None]:
                             break
-                    else:
-                        self.log_accuracy(step, loss, trn_acc, logging=logging)
         
             if early_stopping is None:
                 saver.save(sess, 'saver/model.ckpt', write_meta_graph=False) 
-        self.log_finish(logging)
+        self.log_finish()
     
         if early_stopping is None:
             return ['saver/model.ckpt', steps, loss, trn_acc]
@@ -124,17 +139,40 @@ class MLP:
         for fileName in fileList:
             os.remove(dirPath+"/"+fileName)
     
-    def log_init(self, steps, logging, early_stopping):
+    def log_init(self, steps, batch_size, early_stopping, logging):
         
         self.log_file = None
-        if logging: 
-            self.log_file = open("tests/test_%g_%d_%s_%d.txt"%(self.learning_rate, steps, self.dataset_name, int(time.time())), "w+")
+        if logging:
+            filename = 'tests/test_{:s}_{:f}_{:d}_{:d}_{:d}_{:d}.txt'.format(self.activation_function, self.learning_rate, steps, batch_size, self.num_hidden, int(time.time()))
+            self.log_file = open(filename, 'w+')
+            print('Step, Loss, Train accuracy,  Validation accuracy, Area under ROC for output threshold, Area under ROC for differential threshold, Area under ROC for ratio threshold, Time', file=self.log_file)
     
         log_msg = 'learing rate: {:f}; steps: {:d}'.format(self.learning_rate, steps)
+        if batch_size is not None:
+            log_msg += '; batch size: {:d}'.format(batch_size)
         if early_stopping is not None:
             log_msg += '; early_stopping: {:d}'.format(early_stopping)
+        print(log_msg)
+        
+    def log_step_info(self, sess, x_trn, y_trn, x_vld, y_vld, step, train_time, logging):
+        loss = sess.run(self.cross_entropy, feed_dict={self.x: x_trn, self.y_: y_trn})
+        trn_acc = sess.run(self.accuracy, feed_dict={self.x: x_trn, self.y_: y_trn})
+        vld_acc, outputs = sess.run([self.accuracy, self.y_final], feed_dict={self.x: x_vld, self.y_: y_vld})
+        #
+        predictions = [np.argmax(o) for o in outputs]
+        y = [np.argmax(o) for o in y_vld]
+        auc = dict()
+        y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
+        for i in [0,1,2]:
+            y_score = rejection_score(outputs, i)
+            auc[i] = metrics.roc_auc_score(y_true, y_score)
+        #
+        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:9f}, {:9f}, {:f}'.format(step, loss, trn_acc, vld_acc, auc[0], auc[1], auc[2], train_time)
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
+        #
+        return loss, trn_acc
+    
             
     def log_accuracy(self, i, loss, trn_acc, vld_acc=None, areas=None, mark=None, logging=True):
         
@@ -160,11 +198,5 @@ class MLP:
         else:       print(log_msg)
         
     
-    def log_finish(self, logging):
-    
-        log_msg = "train finished"
-        if logging: print(log_msg, file=self.log_file)
-        else:       print(log_msg)
-    
-    
-    ###########
+    def log_finish(self):
+        print('train finished')

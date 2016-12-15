@@ -93,13 +93,11 @@ def calc_roc(y, outputs):
     roc_auc = dict()
     
     predictions = [np.argmax(o) for o in outputs]
-    #y_true = np.array(y) - np.array(predictions)
-    y_true = [a==b for a,b in zip(np.array(y),np.array(predictions))]
+    y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
     
     for i in [0,1,2]:
         y_score = rejection_score(outputs, i)
         fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score)
-        #roc_auc[i] = metrics.roc_auc_score(y_true, y_score)
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         
     return fpr, tpr, roc_auc
@@ -110,8 +108,7 @@ def calc_precision_recall(y, outputs):
     average_precision = dict()
     
     predictions = [np.argmax(o) for o in outputs]
-    #y_true = np.array(y) - np.array(predictions)
-    y_true = [a==b for a,b in zip(np.array(y),np.array(predictions))]
+    y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
     
     for i in [0,1,2]:
         y_score = rejection_score(outputs, i)

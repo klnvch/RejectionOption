@@ -42,7 +42,7 @@ def draw_x_vs_y(xs, ys, xlabel=None, ylabel=None, labels=None, colors=None, lege
         plt.ylabel(ylabel)
     plt.show()
     
-def draw_roc(fpr, tpr, roc_auc):
+def draw_roc(fpr, tpr, roc_auc, filename=None):
     plt.figure()
     colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
     for i, color in zip([0,1,2], colors):
@@ -55,10 +55,14 @@ def draw_roc(fpr, tpr, roc_auc):
     plt.ylabel('True Positive Rate')
     plt.title('Some extension of Receiver operating characteristic to multi-class')
     plt.legend(loc="lower right")
-    plt.show()
+    #
+    if filename is None:
+        plt.show()
+    else:
+        plt.savefig(filename)
     
     
-def draw_precision_recall(precision, recall, average_precision):
+def draw_precision_recall(precision, recall, average_precision, filename=None):
     plt.figure()
     colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
     for i, color in zip([0,1,2], colors):
@@ -71,3 +75,8 @@ def draw_precision_recall(precision, recall, average_precision):
     plt.title('Extension of Precision-Recall curve to multi-class')
     plt.legend(loc="lower right")
     plt.show()
+    #
+    if filename is None:
+        plt.show()
+    else:
+        plt.savefig(filename)

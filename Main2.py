@@ -11,11 +11,12 @@ from graphics import draw_roc, draw_precision_recall
 from data_utils import calc_roc, calc_precision_recall
 from MLP import MLP
 import numpy as np
+import time
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
-def test(ds, num_steps=100001, num_hidden=2, activation_function='softmax', early_stopping=50, graphics=False):
-    print('learning rate {:f}; hidden_num {:d}'.format(0.1, num_hidden))
+def test(ds, learning_rate, num_steps=100001, num_hidden=2, activation_function='softmax', early_stopping=50, graphics=False):
+    print('learning rate {:f}; hidden_num {:d}'.format(learning_rate, num_hidden))
         
     if early_stopping is None:
         trn_x, trn_y, tst_x, tst_y, outliers = ds
@@ -24,8 +25,8 @@ def test(ds, num_steps=100001, num_hidden=2, activation_function='softmax', earl
     else:
         trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, outliers = ds
         
-    mlp = MLP(0.1, trn_x.shape[1], num_hidden, trn_y.shape[1], activation_function)
-    result = mlp.train(num_steps, trn_x, trn_y, vld_x, vld_y, early_stopping, False)
+    mlp = MLP(learning_rate, [trn_x.shape[1], num_hidden, trn_y.shape[1]], activation_function)
+    result = mlp.train(num_steps, trn_x, trn_y, vld_x, vld_y, batch_size=256, early_stopping=early_stopping, logging=True)
     
     if early_stopping is None:
         print(result)
@@ -54,17 +55,17 @@ def test(ds, num_steps=100001, num_hidden=2, activation_function='softmax', earl
         c2 = mlp.test_rejection(tst_x, tst_y, outliers, 1, 100, result[2][0])
         c3 = mlp.test_rejection(tst_x, tst_y, outliers, 2, 100, result[3][0])
     
-    #
-    fpr, tpr, roc_auc = calc_roc(y_true, outputs)
-    draw_roc(fpr, tpr, roc_auc)
-    #
-    precision, recall, average_precision = calc_precision_recall(y_true, outputs)
-    draw_precision_recall(precision, recall, average_precision)
-    #
+    if graphics:
+        fpr, tpr, roc_auc = calc_roc(y_true, outputs)
+        draw_roc(fpr, tpr, roc_auc, 'tests/roc_%d_%d.png'%(num_hidden, int(time.time())))
+        #
+        precision, recall, average_precision = calc_precision_recall(y_true, outputs)
+        draw_precision_recall(precision, recall, average_precision, 'tests/prr_%d_%d.png'%(num_hidden, int(time.time())))
+        #
     return ''
 
-def generate_table_hidden_size(num_steps=100001, activation_function='softmax', early_stopping=None, add_noise=None, graphics=False):
-    ds_x, ds_y, _ = get_data(4, binarize=True)
+def generate_table_hidden_size(learning_rate, num_steps=100001, activation_function='softmax', early_stopping=None, add_noise=None, graphics=False):
+    ds_x, ds_y, _ = get_data(1, binarize=True)
     
     for attempt in [1]:
         if add_noise==1:
@@ -74,7 +75,7 @@ def generate_table_hidden_size(num_steps=100001, activation_function='softmax', 
             outliers=None
 
         if early_stopping is None:
-            ds = train_test_split(ds_x, ds_y, test_size=0.5)
+            ds = train_test_split(ds_x, ds_y, test_size=0.5, random_state=42)
             if add_noise== 1:
                 if activation_function=='softmax':
                     ds[0], ds[2] = add_noise_as_no_class(ds[0], ds[2], 500, 1.0/ds_y.shape[1])
@@ -88,10 +89,9 @@ def generate_table_hidden_size(num_steps=100001, activation_function='softmax', 
             
         results=[]
             
-        #for num_hidden in [3, 4, 6, 8, 9, 10, 12]:
-        for num_hidden in [8]:
+        for num_hidden in [24, 28, 32, 36]:
             print('attempt: {:d}, hidden layer size: {:d}'.format(attempt, num_hidden))
-            result = test(ds, num_steps, num_hidden, activation_function, early_stopping, graphics)
+            result = test(ds, learning_rate, num_steps, num_hidden, activation_function, early_stopping, graphics)
             results.append(result)
             print(result)
             
@@ -106,7 +106,5 @@ def generate_table_hidden_size(num_steps=100001, activation_function='softmax', 
 
             
 
-#generate_table_hidden_size(100001, 'sigmoid', None, True)
-#generate_table_hidden_size(100001, 'softmax', None, True)
-#generate_table_hidden_size(100001, 'sigmoid', None, 1, True)
-generate_table_hidden_size(40001, 'sigmoid', None, None, True)
+#generate_table_hidden_size(0.1, 20001, 'sigmoid', None, None, False)
+generate_table_hidden_size(0.01, 10001, 'softmax', None, None, False)
