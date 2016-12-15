@@ -14,33 +14,53 @@ from tensorflow.examples.tutorials.mnist.mnist import loss
 
 class MLP:
     
-    def __init__(self, learning_rate, layers, activation_function='softmax'):
+    def __init__(self, learning_rate, layers, activation_function='softmax', optimizer='gradient'):
         print('init...')
-        print('learning rate: {:f}, activation function: {:s}'.format(learning_rate, activation_function))
-        print('layers: [{:d},{:d},{:d}]'.format(layers[0], layers[1], layers[2]))
+        print('learning rate: {:f}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer))
+        print('layers: {:s}'.format(str(layers)))
         
         self.learning_rate = learning_rate
+        self.optimizer = optimizer
         self.activation_function = activation_function
         self.num_input = layers[0]
-        self.num_hidden = layers[1]
-        self.num_output = layers[2]
+        self.num_hidden = layers[1:-1]
+        self.num_output = layers[-1]
         
         self.x = tf.placeholder(tf.float32, [None, self.num_input])
         self.y_ = tf.placeholder(tf.float32, [None, self.num_output])
 
-        w_h = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden], stddev=0.1), name="hidden_weights")
-        b_h = tf.Variable(tf.constant(0.1, shape=[self.num_hidden]), name="hidden_biases")
-        w_o = tf.Variable(tf.truncated_normal([self.num_hidden, self.num_output], stddev=0.1), name="output_weights")
-        b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
-
-        y = tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h) + b_h), w_o) + b_o
+        if len(self.num_hidden) == 1:
+            w_h = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_weights")
+            b_h = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_biases")
+            
+            w_o = tf.Variable(tf.truncated_normal([self.num_hidden[0], self.num_output], stddev=0.1), name="output_weights")
+            b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
+            
+            y = tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h) + b_h), w_o) + b_o
+        elif len(self.num_hidden) == 2:
+            w_h1 = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_1_weights")
+            b_h1 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_1_biases")
+            
+            w_h2 = tf.Variable(tf.truncated_normal([self.num_hidden[0], self.num_hidden[1]], stddev=0.1), name="hidden_2_weights")
+            b_h2 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[1]]), name="hidden_2_biases")
+            
+            w_o = tf.Variable(tf.truncated_normal([self.num_hidden[1], self.num_output], stddev=0.1), name="output_weights")
+            b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
+            
+            y = tf.matmul(tf.nn.sigmoid(tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h1) + b_h1), w_h2) + b_h2), w_o) + b_o
 
         self.cross_entropy = None
         if activation_function == 'softmax':
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, self.y_))
         elif activation_function == 'sigmoid':
             self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y, self.y_))
-        self.train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.cross_entropy)
+            
+        if optimizer == 'gradient':
+            self.train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.cross_entropy)
+        elif optimizer == 'adam':
+            self.train_step = tf.train.AdamOptimizer(learning_rate).minimize(self.cross_entropy)
+        elif optimizer == 'adagrad':
+            self.train_step = tf.train.AdagradOptimizer(learning_rate).minimize(self.cross_entropy)
     
         self.y_final = None
         if activation_function == 'softmax':
@@ -143,7 +163,7 @@ class MLP:
         
         self.log_file = None
         if logging:
-            filename = 'tests/test_{:s}_{:f}_{:d}_{:d}_{:d}_{:d}.txt'.format(self.activation_function, self.learning_rate, steps, batch_size, self.num_hidden, int(time.time()))
+            filename = 'tests/test_{:s}_{:s}_{:f}_{:d}_{:d}_{:s}_{:d}.txt'.format(self.activation_function, self.optimizer, self.learning_rate, steps, batch_size, str(self.num_hidden), int(time.time()))
             self.log_file = open(filename, 'w+')
             print('Step, Loss, Train accuracy,  Validation accuracy, Area under ROC for output threshold, Area under ROC for differential threshold, Area under ROC for ratio threshold, Time', file=self.log_file)
     

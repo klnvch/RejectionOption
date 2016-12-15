@@ -15,8 +15,8 @@ import time
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
-def test(ds, learning_rate, num_steps=100001, num_hidden=2, activation_function='softmax', early_stopping=50, graphics=False):
-    print('learning rate {:f}; hidden_num {:d}'.format(learning_rate, num_hidden))
+def test(ds, learning_rate, num_steps=100001, hidden_layer=[2], activation_function='softmax', early_stopping=50, graphics=False):
+    print('learning rate {:f}; hidden_num {:s}'.format(learning_rate, str(hidden_layer)))
         
     if early_stopping is None:
         trn_x, trn_y, tst_x, tst_y, outliers = ds
@@ -25,7 +25,7 @@ def test(ds, learning_rate, num_steps=100001, num_hidden=2, activation_function=
     else:
         trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, outliers = ds
         
-    mlp = MLP(learning_rate, [trn_x.shape[1], num_hidden, trn_y.shape[1]], activation_function)
+    mlp = MLP(learning_rate, [trn_x.shape[1]]+hidden_layer+[trn_y.shape[1]], activation_function, 'adagrad')
     result = mlp.train(num_steps, trn_x, trn_y, vld_x, vld_y, batch_size=256, early_stopping=early_stopping, logging=True)
     
     if early_stopping is None:
@@ -57,15 +57,15 @@ def test(ds, learning_rate, num_steps=100001, num_hidden=2, activation_function=
     
     if graphics:
         fpr, tpr, roc_auc = calc_roc(y_true, outputs)
-        draw_roc(fpr, tpr, roc_auc, 'tests/roc_%d_%d.png'%(num_hidden, int(time.time())))
+        draw_roc(fpr, tpr, roc_auc, 'tests/roc_{:s}_{:d}.png'.format(str(hidden_layer), int(time.time())))
         #
         precision, recall, average_precision = calc_precision_recall(y_true, outputs)
-        draw_precision_recall(precision, recall, average_precision, 'tests/prr_%d_%d.png'%(num_hidden, int(time.time())))
+        draw_precision_recall(precision, recall, average_precision, 'tests/prr_{:s}_{:d}.png'.format(str(hidden_layer), int(time.time())))
         #
     return ''
 
-def generate_table_hidden_size(learning_rate, num_steps=100001, activation_function='softmax', early_stopping=None, add_noise=None, graphics=False):
-    ds_x, ds_y, _ = get_data(1, binarize=True)
+def generate_table_hidden_size(learning_rate, num_steps=100001, activation_function='softmax', hidden_layers=[[2]], early_stopping=None, add_noise=None, graphics=False):
+    ds_x, ds_y, _ = get_data(1, binarize=True, preprocess=1)
     
     for attempt in [1]:
         if add_noise==1:
@@ -89,9 +89,9 @@ def generate_table_hidden_size(learning_rate, num_steps=100001, activation_funct
             
         results=[]
             
-        for num_hidden in [24, 28, 32, 36]:
-            print('attempt: {:d}, hidden layer size: {:d}'.format(attempt, num_hidden))
-            result = test(ds, learning_rate, num_steps, num_hidden, activation_function, early_stopping, graphics)
+        for hidden_layer in hidden_layers:
+            print('attempt: {:d}, hidden layer: {:s}'.format(attempt, str(hidden_layer)))
+            result = test(ds, learning_rate, num_steps, hidden_layer, activation_function, early_stopping, graphics)
             results.append(result)
             print(result)
             
@@ -107,4 +107,4 @@ def generate_table_hidden_size(learning_rate, num_steps=100001, activation_funct
             
 
 #generate_table_hidden_size(0.1, 20001, 'sigmoid', None, None, False)
-generate_table_hidden_size(0.01, 10001, 'softmax', None, None, False)
+generate_table_hidden_size(0.1, 10001, 'sigmoid', [[16,16]], None, None, False)
