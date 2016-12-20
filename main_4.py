@@ -52,7 +52,7 @@ def draw_curve(x, y, lgnd, use_max=True):
     return label
 
 def print_results(test, data):
-    line = '{:60s}'.format(test)
+    line = '| {:54s}'.format(test)
     line += ' | {:6d}'.format(data[-1,0].astype(np.int))
     line += ' | {:8f}'.format(data[-1,1].astype(np.float))
     line += ' | {:8f}'.format(data[-1,2].astype(np.float))
@@ -60,7 +60,8 @@ def print_results(test, data):
     line += ' | {:8f}'.format(data[-1,4].astype(np.float))
     line += ' | {:8f}'.format(data[-1,5].astype(np.float))
     line += ' | {:8f}'.format(data[-1,6].astype(np.float))
-    line += ' | {:8d}'.format(int(np.sum(data[1:,7].astype(np.float)) / 60.0))
+    line += ' | {:4d}'.format(int(np.sum(data[1:,7].astype(np.float)) / 60.0))
+    line += ' |'
     print(line)
 
 
