@@ -203,3 +203,12 @@ def get_data(i, binarize=False, preprocess=0):
         x = preprocessing.robust_scale(x)
     
     return np.array(x), np.array(y), n_classes
+
+def print_stats(x):
+    print(x.min(axis=0))
+    print(x.max(axis=0))
+    print(x.mean(axis=0))
+
+if __name__ == '__main__':
+    x, _, _ = get_data(3)
+    print_stats(x)

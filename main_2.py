@@ -6,7 +6,6 @@ Created on Nov 12, 2016
 from input_data import get_data
 from data_utils import remove_class
 from data_utils import add_noise_as_no_class
-from data_utils import add_noise_as_a_class
 from graphics import draw_roc, draw_precision_recall
 from data_utils import calc_roc, calc_precision_recall
 from MLP import MLP
@@ -15,18 +14,18 @@ import time
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
-def test(ds, learning_rate, num_steps=100001, hidden_layer=[2], activation_function='softmax', early_stopping=50, graphics=False):
-    print('learning rate {:f}; hidden_num {:s}'.format(learning_rate, str(hidden_layer)))
+def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0.1, steps=100001, batch_size=256, hidden_layer=[2], early_stopping=None, graphics=False):
+    print('learning rate {:g}; hidden_num {:s}'.format(learning_rate, str(hidden_layer)))
         
     if early_stopping is None:
-        trn_x, trn_y, tst_x, tst_y, outliers = ds
+        trn_x, trn_y, tst_x, tst_y, _ = ds
         vld_x = tst_x
         vld_y = tst_y
     else:
-        trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, outliers = ds
+        trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, _ = ds
         
-    mlp = MLP(learning_rate, [trn_x.shape[1]]+hidden_layer+[trn_y.shape[1]], activation_function, 'adagrad')
-    result = mlp.train(num_steps, trn_x, trn_y, vld_x, vld_y, batch_size=256, early_stopping=early_stopping, logging=True)
+    mlp = MLP(learning_rate, [trn_x.shape[1]]+hidden_layer+[trn_y.shape[1]], activation_function, optimizer)
+    result = mlp.train(steps, trn_x, trn_y, vld_x, vld_y, batch_size, early_stopping=early_stopping, logging=True)
     
     if early_stopping is None:
         print(result)
@@ -50,10 +49,6 @@ def test(ds, learning_rate, num_steps=100001, hidden_layer=[2], activation_funct
         tst_acc_2 = mlp.test(tst_x, tst_y, result[2][0], logging=True)
         tst_acc_3 = mlp.test(tst_x, tst_y, result[3][0], logging=True)
         print([tst_acc_0, tst_acc_1, tst_acc_2, tst_acc_3])
-    
-        c1 = mlp.test_rejection(tst_x, tst_y, outliers, 0, 100, result[1][0])
-        c2 = mlp.test_rejection(tst_x, tst_y, outliers, 1, 100, result[2][0])
-        c3 = mlp.test_rejection(tst_x, tst_y, outliers, 2, 100, result[3][0])
     
     if graphics:
         fpr, tpr, roc_auc = calc_roc(y_true, outputs)
@@ -104,7 +99,27 @@ def generate_table_hidden_size(learning_rate, num_steps=100001, activation_funct
             print('\hline', file=log_file)
             print('-------------------------------------------------------------------------------------------', file=log_file)
 
-            
 
-#generate_table_hidden_size(0.1, 20001, 'sigmoid', None, None, False)
-generate_table_hidden_size(0.1, 10001, 'sigmoid', [[16,16]], None, None, False)
+if __name__ == '__main__':
+    ds_x, ds_y, _ = get_data(1, binarize=True, preprocess=4)
+    ds = train_test_split(ds_x, ds_y, test_size=0.5, random_state=42)
+    ds = [ds[0], ds[2], ds[1], ds[3], None]
+    #
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 256, [28], graphics=False)
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 256, [36], graphics=False)
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 256, [40], graphics=False)
+    #
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 512, [28], graphics=False)
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 512, [32], graphics=False)
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 512, [36], graphics=False)
+    test(ds, 'sigmoid', 'adagrad', 0.01, 20000, 512, [40], graphics=False)
+    #
+    test(ds, 'softmax', 'adagrad', 0.01, 20000, 256, [28], graphics=False)
+    test(ds, 'softmax', 'adagrad', 0.01, 20000, 256, [32], graphics=False)
+    test(ds, 'softmax', 'adagrad', 0.01, 20000, 256, [36], graphics=False)
+    test(ds, 'softmax', 'adagrad', 0.01, 20000, 256, [40], graphics=False)
+    #
+    test(ds, 'sigmoid', 'gradient', 0.01, 20000, 256, [20,20], graphics=False)
+    test(ds, 'sigmoid',     'adam', 0.01, 20000, 256, [20,20], graphics=False)
+    test(ds, 'sigmoid',  'adagrad', 0.01, 20000, 256, [20,20], graphics=False)

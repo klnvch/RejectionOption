@@ -16,7 +16,7 @@ class MLP:
     
     def __init__(self, learning_rate, layers, activation_function='softmax', optimizer='gradient'):
         print('init...')
-        print('learning rate: {:f}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer))
+        print('learning rate: {:g}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer))
         print('layers: {:s}'.format(str(layers)))
         
         self.learning_rate = learning_rate
@@ -91,7 +91,7 @@ class MLP:
         train_time = 0
         with tf.Session() as sess:
             tf.global_variables_initializer().run()
-            for step in range(steps):
+            for step in range(steps+1):
                 # train 
                 start_time = time.time()
                 x, y = shuffle(trn_x, trn_y)
@@ -163,9 +163,9 @@ class MLP:
         
         self.log_file = None
         if logging:
-            filename = 'tests/test_{:s}_{:s}_{:f}_{:d}_{:d}_{:s}_{:d}.txt'.format(self.activation_function, self.optimizer, self.learning_rate, steps, batch_size, str(self.num_hidden), int(time.time()))
+            filename = 'tests/{:s}_{:s}_{:g}_{:d}_{:d}_{:s}_{:d}.csv'.format(self.activation_function, self.optimizer, self.learning_rate, steps, batch_size, str(self.num_hidden), int(time.time()))
             self.log_file = open(filename, 'w+')
-            print('Step, Loss, Train accuracy,  Validation accuracy, Area under ROC for output threshold, Area under ROC for differential threshold, Area under ROC for ratio threshold, Time', file=self.log_file)
+            print('Step,Loss,Train accuracy,Validation accuracy,ROC AUC: output threshold,ROC AUC: differential threshold,ROC AUC: ratio threshold,Time', file=self.log_file)
     
         log_msg = 'learing rate: {:f}; steps: {:d}'.format(self.learning_rate, steps)
         if batch_size is not None:
