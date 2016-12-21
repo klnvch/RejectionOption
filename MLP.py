@@ -14,7 +14,7 @@ from tensorflow.examples.tutorials.mnist.mnist import loss
 
 class MLP:
     
-    def __init__(self, learning_rate, layers, activation_function='softmax', optimizer='gradient'):
+    def __init__(self, learning_rate, layers, activation_function='softmax', optimizer='gradient', regularization_penalty=0.0):
         print('init...')
         print('learning rate: {:g}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer))
         print('layers: {:s}'.format(str(layers)))
@@ -37,6 +37,12 @@ class MLP:
             b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
             
             y = tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h) + b_h), w_o) + b_o
+            
+            if regularization_penalty > 0:
+                regularizer = regularization_penalty * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(b_h) + tf.nn.l2_loss(w_o) + tf.nn.l2_loss(b_o))
+            else:
+                regularizer = 0
+            
         elif len(self.num_hidden) == 2:
             w_h1 = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_1_weights")
             b_h1 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_1_biases")
@@ -48,10 +54,15 @@ class MLP:
             b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
             
             y = tf.matmul(tf.nn.sigmoid(tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h1) + b_h1), w_h2) + b_h2), w_o) + b_o
+            
+            if regularization_penalty > 0:
+                regularizer = regularization_penalty * (tf.nn.l2_loss(w_h1) + tf.nn.l2_loss(b_h1) + tf.nn.l2_loss(w_h2) + tf.nn.l2_loss(b_h2) + tf.nn.l2_loss(w_o) + tf.nn.l2_loss(b_o))
+            else:
+                regularizer = 0
 
         self.cross_entropy = None
         if activation_function == 'softmax':
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, self.y_))
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, self.y_)) + regularizer
         elif activation_function == 'sigmoid':
             self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y, self.y_))
             

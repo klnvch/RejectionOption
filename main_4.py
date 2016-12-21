@@ -10,7 +10,7 @@ import numpy as np
 
 DIR_TEST = 'tests/'
 
-FILE_TEST = ['sigmoid_gradient_0.1_20000_256_[24]_1481742134',
+FILE_TEST_OLD = ['sigmoid_gradient_0.1_20000_256_[24]_1481742134',
              'sigmoid_gradient_0.1_20000_256_[28]_1481744074',
              'sigmoid_adagrad_0.01_20000_256_[28]_rs_1482193004',
              'sigmoid_adagrad_0.01_20000_512_[28]_rs_1482200579',
@@ -42,6 +42,9 @@ FILE_TEST = ['sigmoid_gradient_0.1_20000_256_[24]_1481742134',
              'sigmoid_adam_0.01_2000_512_[20, 20]_rs_gpu_1482259458',
              'sigmoid_adam_0.01_2000_128_[20, 20]_rs_1482259957',
              'sigmoid_adam_0.01_2000_512_[20, 20]_rs_1482260557']
+
+FILE_TEST = ['sigmoid_adam_0.01_2000_128_[20, 20]_1482340044',
+             'sigmoid_adam_0.01_2000_128_[20, 20]_1482340285']
 
 def draw_curve(x, y, lgnd, use_max=True):
     if use_max: i = y.argmax()
@@ -88,8 +91,8 @@ if __name__ == '__main__':
             plt.title(test)
             #mng = plt.get_current_fig_manager()
             #mng.full_screen_toggle()
-            plt.show()
-            #plt.gcf().set_size_inches(11.69, 8.27)
-            #plt.savefig('/home/anton/workspace2/DiplomaWork/images/' + test + '.png')
+            #plt.show()
+            plt.gcf().set_size_inches(11.69, 8.27)
+            plt.savefig('/home/anton/workspace2/DiplomaWork/images/' + test + '.png')
         
         

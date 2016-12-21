@@ -12,7 +12,7 @@ import time
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
-def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0.1, steps=100001, batch_size=256, hidden_layer=[2], early_stopping=None, graphics=False):
+def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0.1, steps=100001, batch_size=256, hidden_layer=[2], regularization_penalty=0.0, early_stopping=None, graphics=False):
     print('learning rate {:g}; hidden_num {:s}'.format(learning_rate, str(hidden_layer)))
         
     if early_stopping is None:
@@ -22,7 +22,7 @@ def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0
     else:
         trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, _ = ds
         
-    mlp = MLP(learning_rate, [trn_x.shape[1]]+hidden_layer+[trn_y.shape[1]], activation_function, optimizer)
+    mlp = MLP(learning_rate, [trn_x.shape[1]]+hidden_layer+[trn_y.shape[1]], activation_function, optimizer, regularization_penalty)
     result = mlp.train(steps, trn_x, trn_y, vld_x, vld_y, batch_size, early_stopping=early_stopping, logging=True)
     
     if early_stopping is None:
@@ -82,5 +82,8 @@ if __name__ == '__main__':
     #test(ds, 'sigmoid',     'adam', 0.01, 20000, 256, [20,20], graphics=False)
     #test(ds, 'sigmoid',  'adagrad', 0.01, 20000, 256, [20,20], graphics=False)
     #
-    test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], graphics=False)
-    test(ds, 'sigmoid',     'adam', 0.01, 2000, 512, [20,20], graphics=False)
+    #test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], graphics=False)
+    #test(ds, 'sigmoid',     'adam', 0.01, 2000, 512, [20,20], graphics=False)
+    #
+    test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], 0.5, graphics=False)
+    test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], 1.0, graphics=False)
