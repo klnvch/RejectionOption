@@ -11,7 +11,7 @@ from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
 from data_utils import count_distribution
 
-DATA_DIR = '/home/anton/Desktop/diploma_text/datasets/'
+DATA_DIR = 'datasets/'
 
 """
 Three gaussian distributed classes, two non-separable and one separable

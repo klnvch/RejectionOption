@@ -8,7 +8,7 @@ from csv import reader
 import matplotlib.pyplot as plt
 import numpy as np
 
-DIR_TEST = '/home/anton/workspace2/DiplomaWork/tests/'
+DIR_TEST = 'tests/'
 
 FILE_TEST = ['sigmoid_gradient_0.1_20000_256_[24]_1481742134',
              'sigmoid_gradient_0.1_20000_256_[28]_1481744074',
@@ -88,8 +88,8 @@ if __name__ == '__main__':
             plt.title(test)
             #mng = plt.get_current_fig_manager()
             #mng.full_screen_toggle()
-            #plt.show()
-            plt.gcf().set_size_inches(11.69, 8.27)
-            plt.savefig('/home/anton/workspace2/DiplomaWork/images/' + test + '.png')
+            plt.show()
+            #plt.gcf().set_size_inches(11.69, 8.27)
+            #plt.savefig('/home/anton/workspace2/DiplomaWork/images/' + test + '.png')
         
         
