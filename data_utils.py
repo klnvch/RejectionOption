@@ -116,3 +116,59 @@ def calc_precision_recall(y, outputs):
         average_precision[i] = metrics.average_precision_score(y_true, y_score)
         
     return precision, recall, average_precision
+
+def roc_curve(y_true, y_score, pos_label=1, drop_intermediate=True):
+    fps, tps, thresholds = _binary_clf_curve(y_true, y_score, pos_label=pos_label)
+
+    # Attempt to drop thresholds corresponding to points in between and
+    # collinear with other points. These are always suboptimal and do not
+    # appear on a plotted ROC curve (and thus do not affect the AUC).
+    # Here np.diff(_, 2) is used as a "second derivative" to tell if there
+    # is a corner at the point. Both fps and tps must be tested to handle
+    # thresholds with multiple data points (which are combined in
+    # _binary_clf_curve). This keeps all cases where the point should be kept,
+    # but does not drop more complicated cases like fps = [1, 3, 7],
+    # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
+    if drop_intermediate and len(fps) > 2:
+        optimal_idxs = np.where(np.r_[True,
+                                      np.logical_or(np.diff(fps, 2),
+                                                    np.diff(tps, 2)),
+                                      True])[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
+
+    if tps.size == 0 or fps[0] != 0:
+        # Add an extra threshold position if necessary
+        tps = np.r_[0, tps]
+        fps = np.r_[0, fps]
+        thresholds = np.r_[thresholds[0] + 1, thresholds]
+
+    fpr = fps / fps[-1]
+    tpr = tps / tps[-1]
+
+    return fpr, tpr, thresholds
+
+def _binary_clf_curve(y_true, y_score, pos_label=1):
+    y_true = np.ravel(y_true)
+    y_score = np.ravel(y_score)
+
+    # make y_true a boolean vector
+    y_true = (y_true == pos_label)
+
+    # sort scores and corresponding truth values
+    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+
+    # y_score typically has many tied values. Here we extract
+    # the indices associated with the distinct values. We also
+    # concatenate a value for the end of the curve.
+    distinct_value_indices = np.where(np.diff(y_score))[0]
+    threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
+
+    # accumulate the true positives with decreasing threshold
+    
+    tps = np.cumsum(y_true, dtype=np.float64)[threshold_idxs]
+    fps = 1 + threshold_idxs - tps
+    return fps, tps, y_score[threshold_idxs]

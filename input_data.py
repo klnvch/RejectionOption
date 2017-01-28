@@ -10,6 +10,7 @@ from sklearn import datasets
 from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
 from data_utils import count_distribution
+from graphics import plot_pca_vs_lda
 
 DATA_DIR = 'datasets/'
 
@@ -129,11 +130,11 @@ def read_letter_recognition_image_data():
             x.append([np.float32(i) for i in currentline[1:17]])
             y.append(classes.index(currentline[0]))
             
-    return x, y, 26
+    return x, y, classes
 
 def read_iris_data():
     iris = datasets.load_iris()
-    return iris.data, iris.target, 3
+    return iris.data, iris.target, [0,1,2]
 
 def read_glass_identification_data():
     x = []
@@ -145,7 +146,7 @@ def read_glass_identification_data():
             x.append([np.float32(i) for i in currentline[1:10]])
             y.append(classes.index(int(currentline[10])))
             
-    return x, y, 6
+    return x, y, classes
 
 def read_image_segmentation_data():
     x = []
@@ -165,7 +166,7 @@ def read_image_segmentation_data():
             x.append([np.float32(i) for i in currentline[1:20]])
             y.append(classes.index(currentline[0]))
     
-    return x, y, 7
+    return x, y, classes
 
 def get_data(i, binarize=False, preprocess=0):
     """Returns choosen dataset.
@@ -183,14 +184,14 @@ def get_data(i, binarize=False, preprocess=0):
         ValueError: unknown error with data.
 
     """
-    if   i == 1: x, y, n_classes = read_letter_recognition_image_data()
-    elif i == 2: x, y, n_classes = read_iris_data()
-    elif i == 3: x, y, n_classes = read_glass_identification_data()
-    elif i == 4: x, y, n_classes = read_image_segmentation_data()
+    if   i == 1: x, y, classes = read_letter_recognition_image_data()
+    elif i == 2: x, y, classes = read_iris_data()
+    elif i == 3: x, y, classes = read_glass_identification_data()
+    elif i == 4: x, y, classes = read_image_segmentation_data()
     else: raise ValueError("unknown dataset: " + i)
     
     if binarize:
-        y = label_binarize(y, range(0, n_classes), 0, 1, False)
+        y = label_binarize(y, range(len(classes)), 0, 1, False)
         count_distribution(y)
     
     if preprocess == 1:
@@ -202,7 +203,7 @@ def get_data(i, binarize=False, preprocess=0):
     elif preprocess == 4:
         x = preprocessing.robust_scale(x)
     
-    return np.array(x), np.array(y), n_classes
+    return np.array(x), np.array(y), classes
 
 def print_stats(x):
     print(x.min(axis=0))
@@ -210,5 +211,5 @@ def print_stats(x):
     print(x.mean(axis=0))
 
 if __name__ == '__main__':
-    x, _, _ = get_data(3)
-    print_stats(x)
+    x, y, classes = get_data(4, preprocess=4)
+    plot_pca_vs_lda(x, y, classes)

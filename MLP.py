@@ -64,7 +64,7 @@ class MLP:
         if activation_function == 'softmax':
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, self.y_)) + regularizer
         elif activation_function == 'sigmoid':
-            self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(y, self.y_))
+            self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_, logits=y))
             
         if optimizer == 'gradient':
             self.train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.cross_entropy)
@@ -96,7 +96,7 @@ class MLP:
                     ['saver/model_best_area_0.ckpt',  0, 0, 0, 0, 0],
                     ['saver/model_best_area_1.ckpt',  0, 0, 0, 0, 0],
                     ['saver/model_best_area_2.ckpt',  0, 0, 0, 0, 0]]
-            counter = [0, 0, 0, 0]
+
 
         saver = tf.train.Saver()
         train_time = 0
@@ -116,34 +116,8 @@ class MLP:
                 if step%10 == 0:
                     loss, trn_acc = self.log_step_info(sess, trn_x, trn_y, vld_x, vld_y, step, train_time, logging)
                     train_time = 0
-                    
-                    if early_stopping is not None and step > 0:
-                        vld_acc = sess.run(self.accuracy, feed_dict={self.x: vld_x, self.y_: vld_y})
-                        r_0, c_0, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 0, 100)
-                        r_1, c_1, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 1, 100)
-                        r_2, c_2, _, _ = self.test_rejection_internal(sess, vld_x, vld_y, None, 2, 100)
-                        areas = [vld_acc, np.trapz(c_0, r_0), np.trapz(c_1, r_1), np.trapz(c_2, r_2)]
-                        mark=''
-                        for i in [0,1,2,3]:
-                            if counter[i] is not None:
-                                if areas[i] > result[i][5]:
-                                    result[i][1:6] = [step, loss, trn_acc, vld_acc, areas[i]]
-                                    counter[i] = 0
-                                    saver.save(sess, result[i][0], write_meta_graph=False)
-                                    mark += '+'
-                                else:
-                                    counter[i] += 1
-                                    if counter[i] > early_stopping:
-                                        counter[i] = None
-                                    mark += '-'
-                            else:
-                                mark += '.'
-                        self.log_accuracy(step, loss, trn_acc, vld_acc, areas, mark, logging)
-                        if counter == [None, None, None, None]:
-                            break
+            saver.save(sess, 'saver/model.ckpt')
         
-            if early_stopping is None:
-                saver.save(sess, 'saver/model.ckpt', write_meta_graph=False) 
         self.log_finish()
     
         if early_stopping is None:
@@ -190,10 +164,10 @@ class MLP:
         trn_acc = sess.run(self.accuracy, feed_dict={self.x: x_trn, self.y_: y_trn})
         vld_acc, outputs = sess.run([self.accuracy, self.y_final], feed_dict={self.x: x_vld, self.y_: y_vld})
         #
-        predictions = [np.argmax(o) for o in outputs]
-        y = [np.argmax(o) for o in y_vld]
+        predictions = np.array([np.argmax(o) for o in outputs])
+        y_ideal = np.array([np.argmax(o) for o in y_vld])
         auc = dict()
-        y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
+        y_true = [a==b for a, b in zip(y_ideal, predictions)]
         for i in [0,1,2]:
             y_score = rejection_score(outputs, i)
             auc[i] = metrics.roc_auc_score(y_true, y_score)
