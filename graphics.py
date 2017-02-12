@@ -288,3 +288,23 @@ def plot_pca_vs_lda(X, y, target_names):
     plt.title('LDA')
 
     plt.show()
+    
+    
+    
+    
+if __name__ == '__main__':
+    # draw ROC space
+    plt.figure()
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.plot([.1, .4, .7, .0, .6], [.6, .8, .7, 1., .2], 'ro')
+    plt.annotate('A', xy=(.12, .55))
+    plt.annotate('B', xy=(.42, .75))
+    plt.annotate('C', xy=(.72, .65))
+    plt.annotate('D', xy=(.02, .95))
+    plt.annotate('E', xy=(.62, .15))
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    plt.show()

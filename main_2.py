@@ -116,4 +116,4 @@ if __name__ == '__main__':
     
     # one month cancel_dump_traceback_later
     
-    test(ds, 'sigmoid', 'gradient', 0.1, 2000, 128, [32], graphics=True)
+    test(ds, 'sigmoid', 'adagrad', 0.1, 10000, 128, [32], graphics=True)
