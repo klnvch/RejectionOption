@@ -296,12 +296,20 @@ if __name__ == '__main__':
     # draw ROC space
     plt.figure()
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.plot([.1, .4, .7, .0, .6], [.6, .8, .7, 1., .2], 'ro')
-    plt.annotate('A', xy=(.12, .55))
-    plt.annotate('B', xy=(.42, .75))
-    plt.annotate('C', xy=(.72, .65))
-    plt.annotate('D', xy=(.02, .95))
-    plt.annotate('E', xy=(.62, .15))
+    
+    # roc discrete rejections
+    #plt.plot([.1, .4, .7, .0, .6], [.6, .8, .7, 1., .2], 'ro')
+    #plt.annotate('A', xy=(.12, .55))
+    #plt.annotate('B', xy=(.42, .75))
+    #plt.annotate('C', xy=(.72, .65))
+    #plt.annotate('D', xy=(.02, .95))
+    #plt.annotate('E', xy=(.62, .15))
+    
+    # three roc curves
+    plt.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1], [0, 0.3, 0.5, 0.7, 0.8, 0.9, 0.96, 0.97, 0.98, 0.99, 1], 'r')
+    plt.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1], [0, 0.8, 0.85, 0.87, 0.89, 0.9, 0.91, 0.93, 0.95, 0.97, 1], 'b')
+    plt.plot([0, 0.4, 1], [0, 0.8, 1], 'g')
+    
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
