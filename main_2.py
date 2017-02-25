@@ -2,6 +2,7 @@
 Created on Nov 12, 2016
 
 @author: anton
+It is the main module to run MLP
 '''
 from input_data import get_data
 from graphics import draw_roc, draw_precision_recall, plot_confusion_matrix, plot_multiclass_roc_curve

@@ -11,7 +11,6 @@ from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
 from data_utils import count_distribution
 from graphics import plot_pca_vs_lda
-from itertools import groupby
 from collections import Counter
 
 DATA_DIR = 'datasets/'
@@ -175,13 +174,17 @@ def get_data(i, binarize=False, preprocess=0):
 
     Args:
         i: index of the dataset.
-        
-        1 - Letter recognition image data
-        2 - Iris data
-        3 - Glass identification data
-        4 - Image segmentation data 
+            1 - Letter recognition image data
+            2 - Iris data
+            3 - Glass identification data
+            4 - Image segmentation data
+        preprocess: index of algorithm
+            1 - scale
+            2 - minmax scale
+            3 - normilize
+            4 - robust scale
     Returns:
-        two arrays data and labels.
+        features, output, classes 
     Raises:
         ValueError: unknown error with data.
 
@@ -195,7 +198,7 @@ def get_data(i, binarize=False, preprocess=0):
     if binarize:
         y = label_binarize(y, range(len(classes)), 0, 1, False)
         count_distribution(y)
-    
+        
     if preprocess == 1:
         x = preprocessing.scale(x)
     elif preprocess == 2:
@@ -213,6 +216,9 @@ def print_stats(x, clases):
     print(x.mean(axis=0))
     
 def print_classes_stats(y, classes):
+    """
+    Helper for generating class distibution table in chapter 1
+    """
     print(classes)
     print('&'.join(classes))
     dist = np.array(list(Counter(y).values()))
@@ -224,5 +230,5 @@ def print_classes_stats(y, classes):
 
 if __name__ == '__main__':
     x, y, classes = get_data(1, preprocess=None)
-    #plot_pca_vs_lda(x, y, classes)
+    plot_pca_vs_lda(x, y, classes)
     print_classes_stats(y, classes)
