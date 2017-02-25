@@ -11,6 +11,8 @@ from sklearn import preprocessing
 from sklearn.preprocessing import label_binarize
 from data_utils import count_distribution
 from graphics import plot_pca_vs_lda
+from itertools import groupby
+from collections import Counter
 
 DATA_DIR = 'datasets/'
 
@@ -205,11 +207,22 @@ def get_data(i, binarize=False, preprocess=0):
     
     return np.array(x), np.array(y), classes
 
-def print_stats(x):
+def print_stats(x, clases):
     print(x.min(axis=0))
     print(x.max(axis=0))
     print(x.mean(axis=0))
+    
+def print_classes_stats(y, classes):
+    print(classes)
+    print('&'.join(classes))
+    dist = np.array(list(Counter(y).values()))
+    print(dist)
+    print('&'.join(map(str,dist)))
+    dist = 100 * dist / len(y)
+    print(dist)
+    print('&'.join(map(str,dist)))
 
 if __name__ == '__main__':
-    x, y, classes = get_data(4, preprocess=4)
-    plot_pca_vs_lda(x, y, classes)
+    x, y, classes = get_data(1, preprocess=None)
+    #plot_pca_vs_lda(x, y, classes)
+    print_classes_stats(y, classes)
