@@ -14,13 +14,13 @@ from tensorflow.examples.tutorials.mnist.mnist import loss
 
 class MLP:
     
-    def __init__(self, learning_rate, layers, activation_function='softmax', optimizer='gradient', regularization_penalty=0.0):
+    def __init__(self, learning_rate, layers, activation_function='softmax', optimizer_name=None, regularization_penalty=0.0):
         print('init...')
-        print('learning rate: {:g}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer))
+        print('learning rate: {:g}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer_name))
         print('layers: {:s}'.format(str(layers)))
         
         self.learning_rate = learning_rate
-        self.optimizer = optimizer
+        self.optimizer_name = optimizer_name
         self.activation_function = activation_function
         self.num_input = layers[0]
         self.num_hidden = layers[1:-1]
@@ -60,18 +60,31 @@ class MLP:
             else:
                 regularizer = 0
 
-        self.cross_entropy = None
         if activation_function == 'softmax':
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, self.y_)) + regularizer
         elif activation_function == 'sigmoid':
             self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_, logits=y))
             
-        if optimizer == 'gradient':
-            self.train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.cross_entropy)
-        elif optimizer == 'adam':
-            self.train_step = tf.train.AdamOptimizer(learning_rate).minimize(self.cross_entropy)
-        elif optimizer == 'adagrad':
-            self.train_step = tf.train.AdagradOptimizer(learning_rate).minimize(self.cross_entropy)
+        if optimizer_name == 'GradientDescent':
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        elif optimizer_name == 'Adadelta':
+            optimizer = tf.train.AdadeltaOptimizer(learning_rate)
+        elif optimizer_name == 'Adagrad':
+            optimizer = tf.train.AdagradOptimizer(learning_rate)
+        elif optimizer_name == 'Momentum':
+            optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=True) 
+        elif optimizer_name == 'Adam':
+            optimizer = tf.train.AdamOptimizer(learning_rate)
+        elif optimizer_name == 'Ftrl':
+            optimizer = tf.train.FtrlOptimizer(learning_rate)
+        elif optimizer_name == 'RMSProp':
+            optimizer = tf.train.RMSPropOptimizer(learning_rate)
+            
+        self.train_step = optimizer.minimize(self.cross_entropy)
+        
+        #grads_and_vars = optimizer.compute_gradients(self.cross_entropy)
+        #grad_norms = [tf.nn.l2_loss(g) for g, _ in grads_and_vars]
+        #self.grad_norm = tf.add_n(grad_norms)
     
         self.y_final = None
         if activation_function == 'softmax':
@@ -100,6 +113,8 @@ class MLP:
 
         saver = tf.train.Saver()
         train_time = 0
+        counter = 0
+        best_vld_acc = 0
         with tf.Session() as sess:
             tf.global_variables_initializer().run()
             for step in range(steps+1):
@@ -114,8 +129,17 @@ class MLP:
                 finish_time = time.time()
                 train_time += (finish_time - start_time)
                 if step%10 == 0:
-                    loss, trn_acc = self.log_step_info(sess, trn_x, trn_y, vld_x, vld_y, step, train_time, logging)
+                    loss, trn_acc, vld_acc = self.log_step_info(sess, trn_x, trn_y, vld_x, vld_y, step, train_time, logging)
                     train_time = 0
+                    if vld_acc > best_vld_acc:
+                        best_vld_acc = vld_acc
+                        counter = 0
+                    else:
+                        counter += 1
+                    if counter >= 10:
+                        break
+                        
+                    
             saver.save(sess, 'saver/model.ckpt')
         
         self.log_finish()
@@ -148,7 +172,7 @@ class MLP:
         
         self.log_file = None
         if logging:
-            filename = 'tests/{:s}_{:s}_{:g}_{:d}_{:d}_{:s}_{:d}.csv'.format(self.activation_function, self.optimizer, self.learning_rate, steps, batch_size, str(self.num_hidden), int(time.time()))
+            filename = 'tests/{:s}_{:s}_{:g}_{:d}_{:d}_{:s}_{:d}.csv'.format(self.activation_function, self.optimizer_name, self.learning_rate, steps, batch_size, str(self.num_hidden), int(time.time()))
             self.log_file = open(filename, 'w+')
             print('Step,Loss,Train accuracy,Validation accuracy,ROC AUC: output threshold,ROC AUC: differential threshold,ROC AUC: ratio threshold,Time', file=self.log_file)
     
@@ -160,8 +184,7 @@ class MLP:
         print(log_msg)
         
     def log_step_info(self, sess, x_trn, y_trn, x_vld, y_vld, step, train_time, logging):
-        loss = sess.run(self.cross_entropy, feed_dict={self.x: x_trn, self.y_: y_trn})
-        trn_acc = sess.run(self.accuracy, feed_dict={self.x: x_trn, self.y_: y_trn})
+        loss, trn_acc = sess.run([self.cross_entropy, self.accuracy], feed_dict={self.x: x_trn, self.y_: y_trn})
         vld_acc, outputs = sess.run([self.accuracy, self.y_final], feed_dict={self.x: x_vld, self.y_: y_vld})
         #
         predictions = np.array([np.argmax(o) for o in outputs])
@@ -176,7 +199,7 @@ class MLP:
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
         #
-        return loss, trn_acc
+        return loss, trn_acc, vld_acc
     
             
     def log_accuracy(self, i, loss, trn_acc, vld_acc=None, areas=None, mark=None, logging=True):

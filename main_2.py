@@ -86,7 +86,7 @@ def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0
 
 
 if __name__ == '__main__':
-    ds_x, ds_y, class_names = get_data(1, binarize=True, preprocess=4)
+    ds_x, ds_y, class_names = get_data(1, binarize=True, preprocess=1)
     ds = train_test_split(ds_x, ds_y, test_size=0.5, random_state=42)
     ds = [ds[0], ds[2], ds[1], ds[3], class_names]
     #
@@ -106,15 +106,64 @@ if __name__ == '__main__':
     #test(ds, 'softmax', 'adagrad', 0.01, 20000, 256, [40], graphics=False)
     #
     #test(ds, 'sigmoid', 'gradient', 0.01, 20000, 256, [20,20], graphics=False)
-    #test(ds, 'sigmoid',     'adam', 0.01, 20000, 256, [20,20], graphics=False)
+    #test(ds, 'sigmoid',     'Adam', 0.01, 20000, 256, [20,20], graphics=False)
     #test(ds, 'sigmoid',  'adagrad', 0.01, 20000, 256, [20,20], graphics=False)
     #
-    #test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], graphics=False)
-    #test(ds, 'sigmoid',     'adam', 0.01, 2000, 512, [20,20], graphics=False)
+    #test(ds, 'sigmoid',     'Adam', 0.01, 2000, 128, [20,20], graphics=False)
+    #test(ds, 'sigmoid',     'Adam', 0.01, 2000, 512, [20,20], graphics=False)
     #
-    #test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], 0.5, graphics=False)
-    #test(ds, 'sigmoid',     'adam', 0.01, 2000, 128, [20,20], 1.0, graphics=False)
+    #test(ds, 'sigmoid',     'Adam', 0.01, 2000, 128, [20,20], 0.5, graphics=False)
+    #test(ds, 'sigmoid',     'Adam', 0.01, 2000, 128, [20,20], 1.0, graphics=False)
     
     # one month cancel_dump_traceback_later
     
-    test(ds, 'sigmoid', 'adagrad', 0.1, 10000, 128, [32], graphics=True)
+    # compare different optimizers, just for fun
+    
+    test(ds, 'sigmoid', 'GradientDescent', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'GradientDescent', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'GradientDescent', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'GradientDescent', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'GradientDescent', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'GradientDescent', 0.001, 10000, 256, [32], graphics=False)
+        
+    test(ds, 'sigmoid', 'Adadelta', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adadelta', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adadelta', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adadelta', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adadelta', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adadelta', 0.001, 10000, 256, [32], graphics=False)
+        
+    test(ds, 'sigmoid', 'Adagrad', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adagrad', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adagrad', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adagrad', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adagrad', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adagrad', 0.001, 10000, 256, [32], graphics=False)
+        
+    test(ds, 'sigmoid', 'Momentum', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Momentum', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Momentum', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Momentum', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Momentum', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Momentum', 0.001, 10000, 256, [32], graphics=False)
+        
+    test(ds, 'sigmoid', 'Adam', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adam', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adam', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adam', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adam', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Adam', 0.001, 10000, 256, [32], graphics=False)
+        
+    test(ds, 'sigmoid', 'Ftrl', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Ftrl', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Ftrl', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Ftrl', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Ftrl', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'Ftrl', 0.001, 10000, 256, [32], graphics=False)
+        
+    test(ds, 'sigmoid', 'RMSProp', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'RMSProp', 0.1,   10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'RMSProp', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'RMSProp', 0.01,  10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'RMSProp', 0.001, 10000, 256, [32], graphics=False)
+    test(ds, 'sigmoid', 'RMSProp', 0.001, 10000, 256, [32], graphics=False)
