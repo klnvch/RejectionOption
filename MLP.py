@@ -55,13 +55,30 @@ class MLP:
             
             y = tf.matmul(tf.nn.sigmoid(tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h1) + b_h1), w_h2) + b_h2), w_o) + b_o
             
-            if regularization_penalty > 0:
-                regularizer = regularization_penalty * (tf.nn.l2_loss(w_h1) + tf.nn.l2_loss(b_h1) + tf.nn.l2_loss(w_h2) + tf.nn.l2_loss(b_h2) + tf.nn.l2_loss(w_o) + tf.nn.l2_loss(b_o))
-            else:
-                regularizer = 0
+        elif len(self.num_hidden) == 3:
+            w_h1 = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_1_weights")
+            b_h1 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_1_biases")
+            layer1 = tf.nn.sigmoid(tf.matmul(self.x, w_h1) + b_h1)
+            
+            w_h2 = tf.Variable(tf.truncated_normal([self.num_hidden[0], self.num_hidden[1]], stddev=0.1), name="hidden_2_weights")
+            b_h2 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[1]]), name="hidden_2_biases")
+            layer2 = tf.nn.sigmoid(tf.matmul(layer1, w_h2) + b_h2)
+            
+            w_h3 = tf.Variable(tf.truncated_normal([self.num_hidden[1], self.num_hidden[2]], stddev=0.1), name="hidden_2_weights")
+            b_h3 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[2]]), name="hidden_2_biases")
+            layer3 = tf.nn.sigmoid(tf.matmul(layer2, w_h3) + b_h3)
+            
+            w_o = tf.Variable(tf.truncated_normal([self.num_hidden[2], self.num_output], stddev=0.1), name="output_weights")
+            b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
+            y = tf.matmul(layer3, w_o) + b_o
+            
+        if regularization_penalty > 0:
+            regularizer = regularization_penalty * (tf.nn.l2_loss(w_h1) + tf.nn.l2_loss(b_h1) + tf.nn.l2_loss(w_h2) + tf.nn.l2_loss(b_h2) + tf.nn.l2_loss(w_o) + tf.nn.l2_loss(b_o))
+        else:
+            regularizer = 0
 
         if activation_function == 'softmax':
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(y, self.y_)) + regularizer
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.y_, logits=y))
         elif activation_function == 'sigmoid':
             self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_, logits=y))
             
@@ -95,26 +112,19 @@ class MLP:
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
         
         
-    def train(self, steps, trn_x, trn_y, vld_x, vld_y, batch_size=None, early_stopping=None, logging=True):
+    def train(self, steps, trn_x, trn_y, vld_x, vld_y, batch_size=None, logging=True):
         """
         if early stopping not None output is
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc, best_area0, best_area1 and best_area2
         """
         self.clean_model_dir()
-        self.log_init(steps, batch_size, early_stopping, logging)
+        self.log_init(steps, batch_size, logging)
         
-        #       [model_file, step, loss, trn_acc, vld_acc, area]
-        if early_stopping is not None:
-            result=[['saver/model_best_vld_acc.ckpt', 0, 0, 0, 0, 0],
-                    ['saver/model_best_area_0.ckpt',  0, 0, 0, 0, 0],
-                    ['saver/model_best_area_1.ckpt',  0, 0, 0, 0, 0],
-                    ['saver/model_best_area_2.ckpt',  0, 0, 0, 0, 0]]
-
-
         saver = tf.train.Saver()
         train_time = 0
         counter = 0
         best_vld_acc = 0
+        step = 0
         with tf.Session() as sess:
             tf.global_variables_initializer().run()
             for step in range(steps+1):
@@ -144,10 +154,7 @@ class MLP:
         
         self.log_finish()
     
-        if early_stopping is None:
-            return ['saver/model.ckpt', steps, loss, trn_acc]
-        else:
-            return result
+        return ['saver/model.ckpt', step, loss, trn_acc, vld_acc]
     
     def test(self, x, y, filename='saver/model.ckpt'):
         saver = tf.train.Saver()
@@ -168,7 +175,7 @@ class MLP:
         for fileName in fileList:
             os.remove(dirPath+"/"+fileName)
     
-    def log_init(self, steps, batch_size, early_stopping, logging):
+    def log_init(self, steps, batch_size, logging):
         
         self.log_file = None
         if logging:
@@ -179,8 +186,6 @@ class MLP:
         log_msg = 'learing rate: {:f}; steps: {:d}'.format(self.learning_rate, steps)
         if batch_size is not None:
             log_msg += '; batch size: {:d}'.format(batch_size)
-        if early_stopping is not None:
-            log_msg += '; early_stopping: {:d}'.format(early_stopping)
         print(log_msg)
         
     def log_step_info(self, sess, x_trn, y_trn, x_vld, y_vld, step, train_time, logging):

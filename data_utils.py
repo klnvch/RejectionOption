@@ -8,6 +8,8 @@ import numpy as np
 import heapq
 from collections import Counter
 from sklearn import metrics
+from sklearn.metrics import roc_curve, auc
+from scipy import interp
 
 def count_distribution(y):
     d = [0] * y.shape[1]
@@ -87,7 +89,7 @@ def rejection_score(outputs, rejection_method):
     else:
         assert False
         
-def calc_roc(y, outputs):
+def calc_roc_binary(y, outputs):
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
@@ -101,6 +103,43 @@ def calc_roc(y, outputs):
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         
     return fpr, tpr, roc_auc
+
+def cal_roc_multiclass(y_test, y_score, class_names):
+    """
+    see graphics plot_multiclass_roc_curve
+    """
+    n_classes = len(class_names)
+    # Compute ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    
+    # Compute macro-average ROC curve and ROC area
+
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+    
+    return fpr, tpr, roc_auc
+    
 
 def calc_precision_recall(y, outputs):
     precision = dict()
