@@ -8,7 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import preprocessing
-from sklearn.preprocessing import label_binarize
 from data_utils import count_distribution
 from graphics import plot_pca_vs_lda
 from collections import Counter
@@ -169,6 +168,10 @@ def read_image_segmentation_data():
     
     return x, y, classes
 
+
+
+
+
 def get_data(i, binarize=False, preprocess=0):
     """Returns choosen dataset.
 
@@ -196,7 +199,7 @@ def get_data(i, binarize=False, preprocess=0):
     else: raise ValueError("unknown dataset: " + i)
     
     if binarize:
-        y = label_binarize(y, range(len(classes)), 0, 1, False)
+        y = preprocessing.label_binarize(y, range(len(classes)), 0, 1, False)
         count_distribution(y)
         
     if preprocess == 1:
@@ -210,11 +213,18 @@ def get_data(i, binarize=False, preprocess=0):
     
     return np.array(x), np.array(y), classes
 
+
+
+
+
 def print_stats(x, clases):
     print(x.min(axis=0))
     print(x.max(axis=0))
     print(x.mean(axis=0))
-    
+
+
+
+
 def print_classes_stats(y, classes):
     """
     Helper for generating class distibution table in chapter 1

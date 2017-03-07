@@ -8,8 +8,8 @@ import numpy as np
 import heapq
 from collections import Counter
 from sklearn import metrics
-from sklearn.metrics import roc_curve, auc
 from scipy import interp
+from sklearn.model_selection import train_test_split
 
 def count_distribution(y):
     d = [0] * y.shape[1]
@@ -24,21 +24,64 @@ def count_distribution(y):
 def print_frequencies(x):
     print(Counter(x))
 
-def remove_class(ds_x, ds_y, i):
+
+
+
+def split_dataset(ds_x, ds_y, split1=0.6, split2=0.5, random_state=None):
+    """
+    Splits dataset into train, validation and test sets
+    Args:
+        ds_x: features
+        ds_y: outputs
+        split1: train set size from the entire set
+        split2: validation set size from the rest set
+    Returns:
+        train x and y, validation x and y, test x an y
+    """
+    split_1 = train_test_split(ds_x, ds_y, test_size=split1, random_state=random_state)
+    split_2 = train_test_split(split_1[0], split_1[2], test_size=split2, random_state=random_state)
+    return split_1[1], split_1[3], split_2[0], split_2[2], split_2[1], split_2[3]
+    
+
+
+
+def remove_class(ds_x, ds_y, classes_names, i):
+    """
+    Removes classes from list i in dataset ds_x, ds_y
+    Args:
+        ds_x: features
+        ds_y: binarized outputs
+        classes_names: names of classes
+        i: list of classes to be removed
+    Returns:
+        new dataset, ds_x,ds_y and outliers
+    """
     new_ds_x = []
     new_ds_y = []
+    new_classes_names = np.delete(classes_names, i)
     outliers = []
-    
     for x, y in zip(ds_x, ds_y):
         if y.argmax() in i:
             outliers.append(x)
         else:
             new_ds_x.append(x)
             new_ds_y.append(np.delete(y, i))
-    
-    return np.array(new_ds_x), np.array(new_ds_y), np.array(outliers)
+    return np.array(new_ds_x), np.array(new_ds_y), new_classes_names, np.array(outliers)
+
+
+
 
 def add_noise_as_no_class(ds_x, ds_y, noise_size=None, noise_output=None):
+    """
+    Adds noise to a dataset
+    Args:
+        ds_x: features
+        ds_y: binarized outputs
+        noise_size: numner of noise patterns, default is side of the dataset
+        noise_output: noise output, defult is 1./number of classes
+    Returns:
+        new dataset, ds_x,ds_y and outliers
+    """
     assert ds_x.shape[0] == ds_y.shape[0]
     
     if noise_size is None:
@@ -54,6 +97,9 @@ def add_noise_as_no_class(ds_x, ds_y, noise_size=None, noise_output=None):
     
     assert new_ds_x.shape[0] == new_ds_y.shape[0]
     return new_ds_x, new_ds_y
+
+
+
 
 def add_noise_as_a_class(ds_x, ds_y, noise_size=None):
     assert ds_x.shape[0] == ds_y.shape[0]
@@ -88,23 +134,43 @@ def rejection_score(outputs, rejection_method):
         return result
     else:
         assert False
-        
-def calc_roc_binary(y, outputs):
+
+
+
+
+def calc_roc_binary(y_test, outputs, outliers_outputs=None):
+    """
+    Calcs binary ROC curve or for single threshold
+    Args:
+        y_test: desired output
+        outputs: real output
+        outliers_outputs: output for outliers
+    Returns:
+        FPR, TPR, area under the ROC curve
+    """
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
     
+    y = [np.argmax(y) for y in y_test]
     predictions = [np.argmax(o) for o in outputs]
     y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
     
     for i in [0,1,2]:
-        y_score = rejection_score(outputs, i)
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score)
+        if outliers_outputs is None:
+            y_score = rejection_score(outputs, i)
+            fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score)
+        else:
+            y_score = rejection_score(np.concatenate((outputs, outliers_outputs),axis=0), i)
+            fpr[i], tpr[i], _ = metrics.roc_curve(y_true + [False] * outliers_outputs.shape[0], y_score)
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         
     return fpr, tpr, roc_auc
 
-def cal_roc_multiclass(y_test, y_score, class_names):
+
+
+
+def calc_roc_multiclass(y_test, y_score, class_names):
     """
     see graphics plot_multiclass_roc_curve
     """
@@ -114,12 +180,12 @@ def cal_roc_multiclass(y_test, y_score, class_names):
     tpr = dict()
     roc_auc = dict()
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_test[:, i], y_score[:, i])
+        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
-    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    fpr["micro"], tpr["micro"], _ = metrics.roc_curve(y_test.ravel(), y_score.ravel())
+    roc_auc["micro"] = metrics.auc(fpr["micro"], tpr["micro"])
     
     # Compute macro-average ROC curve and ROC area
 
@@ -136,10 +202,12 @@ def cal_roc_multiclass(y_test, y_score, class_names):
 
     fpr["macro"] = all_fpr
     tpr["macro"] = mean_tpr
-    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+    roc_auc["macro"] = metrics.auc(fpr["macro"], tpr["macro"])
     
     return fpr, tpr, roc_auc
-    
+
+
+
 
 def calc_precision_recall(y, outputs):
     precision = dict()
