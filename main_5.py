@@ -1,14 +1,15 @@
 '''
-Created on Mar 5, 2017
+Created on Mar 11, 2017
 
 @author: anton
 
-test training with low output
+noise as a class
 '''
 from input_data import get_data
-from graphics import plot_binary_roc_curve, plot_confusion_matrix, plot_multiclass_roc_curve
+from graphics import plot_binary_roc_curve, plot_confusion_matrix, plot_multiclass_roc_curve,\
+    plot_pca_vs_lda
 from data_utils import calc_roc_binary, calc_roc_multiclass, split_dataset,\
-    remove_class, add_noise_as_no_class
+    remove_class, add_noise_as_a_class
 from MLP import MLP
 import numpy as np
 import time
@@ -18,7 +19,7 @@ import matplotlib.pyplot as plt
 def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0.1, steps=100001, batch_size=256, hidden_layer=[2], regularization_penalty=0.0, graphics=False):
     print('learning rate {:g}; hidden_num {:s}'.format(learning_rate, str(hidden_layer)))
         
-    trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, class_names, outliers = ds
+    trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, class_names, _ = ds
         
     mlp = MLP(learning_rate, [trn_x.shape[1]]+hidden_layer+[trn_y.shape[1]], activation_function, optimizer, regularization_penalty)
     result = mlp.train(steps, trn_x, trn_y, vld_x, vld_y, batch_size, logging=True)
@@ -34,9 +35,8 @@ def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0
     print(metrics.classification_report(y_true, predictions))
     
     # build ROC curves with outliers
-    outliers_outputs = mlp.predict_proba(outliers, result[0])
-    fpr_binary, tpr_binary, roc_auc_binary = calc_roc_binary(tst_y, outputs, outliers_outputs)
-    fpr_multiclass, tpr_multiclass, roc_auc_multiclass = calc_roc_multiclass(tst_y, outputs, class_names, outliers_outputs)
+    fpr_binary, tpr_binary, roc_auc_binary = calc_roc_binary(tst_y, outputs, None)
+    fpr_multiclass, tpr_multiclass, roc_auc_multiclass = calc_roc_multiclass(tst_y, outputs, class_names)
     
     if graphics:
         # plot confusion matrix
@@ -72,11 +72,15 @@ def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0
 
 
 if __name__ == '__main__':
-    ds_x, ds_y, class_names = get_data(1, binarize=True, preprocess=1)
-    ds_x, ds_y, class_names, outliers = remove_class(ds_x, ds_y, class_names, [0])
+    ds_x, ds_y, classes = get_data(1, binarize=True, preprocess=2)
+    ds_x, ds_y, classes, outliers = remove_class(ds_x, ds_y, classes, [0])
     trn_x, trn_y, vld_x, vld_y, tst_x, tst_y = split_dataset(ds_x, ds_y, 0.6, 0.5, random_state=42)
-    trn_x, trn_y = add_noise_as_no_class(trn_x, trn_y, 12000, 0)
-    ds = [trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, class_names, outliers]
+    trn_x, trn_y, _           = add_noise_as_a_class(trn_x, trn_y, classes, None, 20000)
+    vld_x, vld_y, _           = add_noise_as_a_class(vld_x, vld_y, classes, None, 20000)
+    tst_x, tst_y, classes = add_noise_as_a_class(tst_x, tst_y, classes, outliers, None)
+    ds = [trn_x, trn_y, vld_x, vld_y, tst_x, tst_y, classes, outliers]
+    plot_pca_vs_lda(trn_x, np.array([np.argmax(o) for o in trn_y]), classes)
+    
     
     # test number of nodes in the hiden layer
     """
@@ -94,4 +98,3 @@ if __name__ == '__main__':
     """
     
     test(ds, 'sigmoid', 'Adam', 0.01, 10000, 256, [32], graphics=True)
-    

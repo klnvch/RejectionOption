@@ -73,7 +73,7 @@ def remove_class(ds_x, ds_y, classes_names, i):
 
 def add_noise_as_no_class(ds_x, ds_y, noise_size=None, noise_output=None):
     """
-    Adds noise to a dataset
+    Adds noise with low output to a dataset
     Args:
         ds_x: features
         ds_y: binarized outputs
@@ -101,21 +101,41 @@ def add_noise_as_no_class(ds_x, ds_y, noise_size=None, noise_output=None):
 
 
 
-def add_noise_as_a_class(ds_x, ds_y, noise_size=None):
+def add_noise_as_a_class(ds_x, ds_y, classes_names, outliers = None, outliers_size=None):
+    """
+    Adds noise as a class to a dataset
+    Args:
+        ds_x: features
+        ds_y: binarized outputs
+        classes_names: names of classes
+        outliers: pattern, uniform distributed if None
+        outliers_size: numner of noise patterns, default is side of the dataset
+    Returns:
+        new dataset, ds_x,ds_y and outliers
+    """
     assert ds_x.shape[0] == ds_y.shape[0]
     
-    if noise_size is None:
-        noise_size = ds_y.shape[0]
+    if outliers is None:
+        if outliers_size is None:
+            outliers_size = ds_y.shape[0]
+        outliers = np.random.uniform(ds_x.min(), ds_x.max(), [outliers_size, ds_x.shape[1]])
+    else:
+        outliers_size = outliers.shape[0]
     
-    noise = np.random.uniform(0.0, 1.0, [noise_size, ds_x.shape[1]])
+    new_ds_x = np.concatenate([ds_x, outliers])
     
-    ds_y = np.append(ds_y, np.array([[0]] * ds_y.shape[0]), axis=1)
+    new_ds_y = np.append(ds_y, np.array([[0]] * ds_y.shape[0]), axis=1)
+    new_ds_y = np.concatenate([new_ds_y, np.array([[0]*(ds_y.shape[1]) + [1]] * outliers_size)])
     
-    new_ds_x = np.concatenate([ds_x, noise])
-    new_ds_y = np.concatenate([ds_y, np.array([[0]*ds_y.shape[1] + [1]] * noise_size)])
+    new_classes_names = np.concatenate([classes_names, ['Outliers']])
     
     assert new_ds_x.shape[0] == new_ds_y.shape[0]
-    return new_ds_x, new_ds_y
+    assert new_ds_x.shape[0] == ds_x.shape[0] + outliers_size
+    
+    return new_ds_x, new_ds_y, new_classes_names
+
+
+
 
 def rejection_score(outputs, rejection_method):
     if rejection_method == 0:

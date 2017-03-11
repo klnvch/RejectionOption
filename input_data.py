@@ -205,8 +205,8 @@ def get_data(i, binarize=False, preprocess=0):
     if preprocess == 1:
         x = preprocessing.scale(x)
     elif preprocess == 2:
-        x = preprocessing.minmax_scale(x)
-    elif preprocess == 3:
+        x = preprocessing.minmax_scale(x, feature_range=(0, 1))
+    elif preprocess == 3: # normilize row a = a / sqrt(a+b+...)
         x = preprocessing.normalize(x)
     elif preprocess == 4:
         x = preprocessing.robust_scale(x)
@@ -238,7 +238,10 @@ def print_classes_stats(y, classes):
     print(dist)
     print('&'.join(map(str,dist)))
 
+
+
+
 if __name__ == '__main__':
-    x, y, classes = get_data(1, preprocess=None)
+    x, y, classes = get_data(1, preprocess=3)
     plot_pca_vs_lda(x, y, classes)
     print_classes_stats(y, classes)
