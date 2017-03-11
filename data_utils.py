@@ -170,21 +170,47 @@ def calc_roc_binary(y_test, outputs, outliers_outputs=None):
 
 
 
-def calc_roc_multiclass(y_test, y_score, class_names):
+def calc_roc_multiclass(y_test, outputs, class_names, outliers_outputs=None):
     """
-    see graphics plot_multiclass_roc_curve
+    Calcs binary ROC curve or for multiple threshold
+    Args:
+        y_test: desired output
+        outputs: real output
+        class_names: names of classes
+        outliers_outputs: output for outliers
+    Returns:
+        FPR, TPR, area under the ROC curve
     """
     n_classes = len(class_names)
     # Compute ROC curve and ROC area for each class
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
+    
+    y = [np.argmax(y) for y in y_test]
+    predictions = [np.argmax(o) for o in outputs]
+    y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
+    y_score = rejection_score(outputs, 0)
+    
+    y_true_classes = [[] for _ in range(n_classes)]
+    y_score_classes = [[] for _ in range(n_classes)]
+    for predicted_class, correctness, score in zip(predictions, y_true, y_score):
+        y_true_classes[predicted_class].append(correctness)
+        y_score_classes[predicted_class].append(score)
+        
+    if outliers_outputs is not None:
+        predictions_outliers = [np.argmax(o) for o in outputs]
+        y_score_outliers = rejection_score(outliers_outputs, 0)
+        for predicted_class, score in zip(predictions_outliers, y_score_outliers):
+            y_true_classes[predicted_class].append(False)
+            y_score_classes[predicted_class].append(score)
+        
     for i in range(n_classes):
-        fpr[i], tpr[i], _ = metrics.roc_curve(y_test[:, i], y_score[:, i])
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_true_classes[i], y_score_classes[i])
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
 
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = metrics.roc_curve(y_test.ravel(), y_score.ravel())
+    fpr["micro"], tpr["micro"], _ = metrics.roc_curve(y_test.ravel(), outputs.ravel())
     roc_auc["micro"] = metrics.auc(fpr["micro"], tpr["micro"])
     
     # Compute macro-average ROC curve and ROC area
