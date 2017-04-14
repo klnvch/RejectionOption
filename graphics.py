@@ -259,33 +259,56 @@ def plot_pca_vs_lda(X, y, target_names):
 
     plt.show()
     
+
+FIG_HALF_SIZE = 4.1
     
     
-    
-if __name__ == '__main__':
-    # draw ROC space
-    plt.figure()
+def plot_roc_space_figure_1():
+    """
+    ROC space with five discrete rejection
+    """
+    plt.figure(figsize=(FIG_HALF_SIZE, FIG_HALF_SIZE))
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.plot([.1, .4, .7, .0, .6], [.6, .8, .7, 1., .2], 'ro')
+    plt.annotate('A', xy=(.12, .55))
+    plt.annotate('B', xy=(.42, .75))
+    plt.annotate('C', xy=(.72, .65))
+    plt.annotate('D', xy=(.02, .95))
+    plt.annotate('E', xy=(.62, .15))
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    plt.savefig('/home/anton/Desktop/diploma_text/images/roc_space.png')
+    plt.show()
     
-    # roc discrete rejections
-    #plt.plot([.1, .4, .7, .0, .6], [.6, .8, .7, 1., .2], 'ro')
-    #plt.annotate('A', xy=(.12, .55))
-    #plt.annotate('B', xy=(.42, .75))
-    #plt.annotate('C', xy=(.72, .65))
-    #plt.annotate('D', xy=(.02, .95))
-    #plt.annotate('E', xy=(.62, .15))
     
-    # three roc curves
+    
+
+def plot_roc_space_figure_2():
+    """
+    ROC space with three ROC curves
+    """
+    plt.figure(figsize=(FIG_HALF_SIZE, FIG_HALF_SIZE))
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1], [0, 0.3, 0.5, 0.7, 0.8, 0.9, 0.96, 0.97, 0.98, 0.99, 1], 'r')
     plt.annotate('A', xy=(.05, .7))
     plt.plot([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1], [0, 0.8, 0.85, 0.87, 0.89, 0.9, 0.91, 0.93, 0.95, 0.97, 1], 'b')
     plt.annotate('B', xy=(.25, .65))
     plt.plot([0, 0.4, 1], [0, 0.8, 1], 'g')
     plt.annotate('C', xy=(.3, .55))
-    
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend(loc="lower right")
+    plt.savefig('/home/anton/Desktop/diploma_text/images/roc_curves.png')
     plt.show()
+    
+    
+    
+    
+if __name__ == '__main__':
+    plot_roc_space_figure_1()
+    plot_roc_space_figure_2()

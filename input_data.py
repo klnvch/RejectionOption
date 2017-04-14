@@ -5,7 +5,6 @@ Created on Oct 26, 2016
 '''
 
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import preprocessing
 from data_utils import count_distribution
@@ -13,112 +12,6 @@ from graphics import plot_pca_vs_lda
 from collections import Counter
 
 DATA_DIR = 'datasets/'
-
-"""
-Three gaussian distributed classes, two non-separable and one separable
-    add_noise=None - no outliers
-    add_noise=1    - just display and return
-    add_noise=2    - add noise as no class
-    add_noise=3    - add noise as additional class
-"""
-def create_gaussian_data_2(size=100, add_noise=None, max_output=1.0, min_output=0.0, noise_output=0.0, graphics=False):
-    class_1 = np.random.multivariate_normal([ 0.2,  0.2], [[0.04, 0.02], [0.02, 0.04]], size)
-    class_2 = np.random.multivariate_normal([-0.2, -0.2], [[0.04, 0.01], [0.01, 0.04]], size)
-    class_3 = np.random.multivariate_normal([ 0.6, -0.6], [[0.04, 0.0 ], [0.0 , 0.04]], size)
-    noise = None
-    if add_noise is not None:
-        noise = np.random.uniform(-2, 2, [size, 2])
-    
-    if graphics:
-        lbl_noise = None
-        if add_noise is not None:
-            lbl_noise,  = plt.plot(*zip(*noise),   marker='s', ls='', label='Outliers',   ms='5' ,color='black')
-        lbl_class1, = plt.plot(*zip(*class_1), marker='o', ls='', label='Class 1', ms='5', color='red')
-        lbl_class2, = plt.plot(*zip(*class_2), marker='o', ls='', label='Class 2', ms='5', color='green')
-        lbl_class3, = plt.plot(*zip(*class_3), marker='p', ls='', label='Class 3', ms='5', color='blue')
-        
-        if add_noise is not None:
-            plt.legend(handles=[lbl_noise, lbl_class1, lbl_class2, lbl_class3], numpoints=1, loc=2)
-        else:
-            plt.legend(handles=[lbl_class1, lbl_class2, lbl_class3], numpoints=1, loc=2)
-        plt.axis([-1, 1, -1, 1])
-        plt.axhline(0, color='black')
-        plt.axvline(0, color='black')
-        plt.xlabel(r'$x_1$')
-        plt.ylabel(r'$x_2$')
-        plt.show()
-    
-    if add_noise is None:
-        a = np.concatenate([class_1, class_2, class_3])
-        b = np.concatenate([[[max_output, min_output, min_output]] * size, 
-                            [[min_output, max_output, min_output]] * size, 
-                            [[min_output, min_output, max_output]] * size])
-        return a, b, None
-    elif add_noise==1:
-        a = np.concatenate([class_1, class_2, class_3])
-        b = np.concatenate([[[max_output, min_output, min_output]] * size, 
-                            [[min_output, max_output, min_output]] * size, 
-                            [[min_output, min_output, max_output]] * size])
-        return a, b, noise
-    elif add_noise==2:
-        a = np.concatenate([class_1, class_2, class_3, noise])
-        b = np.concatenate([[[max_output,   min_output,   min_output]]   * size, 
-                            [[min_output,   max_output,   min_output]]   * size, 
-                            [[min_output,   min_output,   max_output]]   * size,
-                            [[noise_output, noise_output, noise_output]] * size])
-        return a, b, noise
-    elif add_noise==3:
-        a = np.concatenate([class_1, class_2, class_3, noise])
-        b = np.concatenate([[[max_output, min_output, min_output, min_output]] * size, 
-                            [[min_output, max_output, min_output, min_output]] * size, 
-                            [[min_output, min_output, max_output, min_output]] * size,
-                            [[min_output, min_output, min_output, max_output]] * size])
-        return a, b, noise
-    else:
-        assert False
-        
-
-"""
-Two gaussian linear non-separable classes
-"""
-def create_gaussian_data_3(size=100, add_noise=None, max_output=1.0, min_output=0.0, noise_output=0.0, graphics=False):
-    class_1_part_1 = np.random.multivariate_normal([ 0.4,  0.4], [[0.04, 0.0], [0.0, 0.04]], int(size/2))
-    class_1_part_2 = np.random.multivariate_normal([-0.4, -0.4], [[0.04, 0.0], [0.0, 0.04]], int(size/2))
-    class_1 = np.concatenate([class_1_part_1, class_1_part_2])
-    class_2 = np.random.multivariate_normal([0.2, -0.2], [[0.04, 0], [0, 0.04]], size)
-    noise = None
-    if add_noise is not None:
-        noise = np.random.uniform(-1, 1, [size, 2])
-    
-    if graphics:
-        lbl_noise = None
-        if add_noise is not None:
-            lbl_noise,  = plt.plot(*zip(*noise),   marker='s', ls='', label='Outliers',   ms='5' ,color='black')
-        lbl_class1, = plt.plot(*zip(*class_1), marker='o', markersize='5', color='red',   ls='', label='Class 1')
-        lbl_class2, = plt.plot(*zip(*class_2), marker='o', markersize='5', color='green', ls='', label='Class 2')
-        
-        if add_noise is not None:
-            plt.legend(handles=[lbl_noise, lbl_class1, lbl_class2], numpoints=1, loc=2)
-        else:
-            plt.legend(handles=[lbl_class1, lbl_class2], numpoints=1, loc=2)
-        plt.axis([-1, 1, -1, 1])
-        plt.axhline(0, color='black')
-        plt.axvline(0, color='black')
-        plt.xlabel(r'$x_1$')
-        plt.ylabel(r'$x_2$')
-        plt.show()
-        
-    if add_noise is None or not add_noise:
-        a = np.concatenate([class_1, class_2])
-        b = np.concatenate([[[max_output, min_output]] * size, 
-                            [[min_output, max_output]] * size])
-        return a, b, noise
-    else:
-        a = np.concatenate([class_1, class_2, noise])
-        b = np.concatenate([[[max_output, min_output]] * size, 
-                            [[min_output, max_output]] * size, 
-                            [[noise_output, noise_output]] * size])
-        return a, b, noise
 
 def read_letter_recognition_image_data():
     x = []
@@ -146,7 +39,7 @@ def read_glass_identification_data():
             x.append([np.float32(i) for i in currentline[1:10]])
             y.append(classes.index(int(currentline[10])))
             
-    return x, y, classes
+    return x, y, ['1', '2', '3', '5', '6', '7']
 
 def read_image_segmentation_data():
     x = []
@@ -167,10 +60,6 @@ def read_image_segmentation_data():
             y.append(classes.index(currentline[0]))
     
     return x, y, classes
-
-
-
-
 
 def get_data(i, binarize=False, preprocess=0):
     """Returns choosen dataset.
@@ -213,17 +102,10 @@ def get_data(i, binarize=False, preprocess=0):
     
     return np.array(x), np.array(y), classes
 
-
-
-
-
 def print_stats(x, clases):
     print(x.min(axis=0))
     print(x.max(axis=0))
     print(x.mean(axis=0))
-
-
-
 
 def print_classes_stats(y, classes):
     """
@@ -238,10 +120,7 @@ def print_classes_stats(y, classes):
     print(dist)
     print('&'.join(map(str,dist)))
 
-
-
-
 if __name__ == '__main__':
-    x, y, classes = get_data(1, preprocess=3)
+    x, y, classes = get_data(3, preprocess=3)
     plot_pca_vs_lda(x, y, classes)
     print_classes_stats(y, classes)

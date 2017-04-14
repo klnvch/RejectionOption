@@ -2,6 +2,14 @@
 Created on Oct 26, 2016
 
 @author: anton
+
+This module keeps all code for Tensorflow to implement MLP
+
+TODO:
+    1. create a copy using tf.contrib.learn
+    2. check what is skflow
+    3. simplify
+    4. more comments
 '''
 
 import time, os
@@ -10,7 +18,6 @@ import tensorflow as tf
 from sklearn.utils import shuffle
 from sklearn import metrics
 from data_utils import rejection_score
-from tensorflow.examples.tutorials.mnist.mnist import loss
 
 class MLP:
     
