@@ -8,7 +8,6 @@ import numpy as np
 from sklearn import datasets
 from sklearn import preprocessing
 from data_utils import count_distribution
-from graphics import plot_pca_vs_lda
 from collections import Counter
 
 DATA_DIR = 'datasets/'
@@ -27,7 +26,7 @@ def read_letter_recognition_image_data():
 
 def read_iris_data():
     iris = datasets.load_iris()
-    return iris.data, iris.target, [0,1,2]
+    return iris.data, iris.target, ['Setosa', 'Versicolour', 'Virginica']
 
 def read_glass_identification_data():
     x = []
@@ -39,7 +38,10 @@ def read_glass_identification_data():
             x.append([np.float32(i) for i in currentline[1:10]])
             y.append(classes.index(int(currentline[10])))
             
-    return x, y, ['1', '2', '3', '5', '6', '7']
+    return x, y, ['building windows float processed', 
+                  'building windows non float processed', 
+                  'vehicle windows float processed', 
+                  'containers', 'tableware', 'headlamps']
 
 def read_image_segmentation_data():
     x = []
@@ -119,8 +121,3 @@ def print_classes_stats(y, classes):
     dist = 100 * dist / len(y)
     print(dist)
     print('&'.join(map(str,dist)))
-
-if __name__ == '__main__':
-    x, y, classes = get_data(3, preprocess=3)
-    plot_pca_vs_lda(x, y, classes)
-    print_classes_stats(y, classes)
