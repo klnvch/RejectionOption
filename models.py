@@ -29,3 +29,7 @@ def model_fn(features, targets, mode, params):
       optimizer="SGD")
 
     return predictions_dict, loss, train_op
+
+
+def model_1_layer_mlp(features, labels, mode):
+    

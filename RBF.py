@@ -55,6 +55,9 @@ class RBF:
         G = self._calcAct(X)
         Y = dot(G, self.W)
         return Y
+    
+    def predict_proba(self, X):
+        return self.test(X)
  
       
 if __name__ == '__main__':

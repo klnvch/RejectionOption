@@ -24,9 +24,15 @@ class DataSet:
             2 - Iris data
             3 - Glass identification data
             4 - Image segmentation data
+            
+            5 - Moons
+            6 - Blobs
+            7 - Circles
+            8 - Quantiles
+            9 - Multiclass
         """
         # load data
-        x, y, self.class_names = get_data(1, binarize=True, preprocess=1)
+        x, y, self.class_names = get_data(dataset, binarize=True, preprocess=1)
         self.num_features = x.shape[1]
         self.num_classes = y.shape[1]
         

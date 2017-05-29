@@ -13,11 +13,8 @@ TODO:
 '''
 
 import time, os
-import numpy as np
 import tensorflow as tf
 from sklearn.utils import shuffle
-from sklearn import metrics
-from data_utils import rejection_score
 
 class MLP:
     
@@ -35,60 +32,30 @@ class MLP:
         
         self.x = tf.placeholder(tf.float32, [None, self.num_input])
         self.y_ = tf.placeholder(tf.float32, [None, self.num_output])
+        
+        if len(self.num_hidden) == 0:
+            y = self.add_layer(self.x, [self.num_input, self.num_output], None, '')
 
-        if len(self.num_hidden) == 1:
-            w_h = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_weights")
-            b_h = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_biases")
-            
-            w_o = tf.Variable(tf.truncated_normal([self.num_hidden[0], self.num_output], stddev=0.1), name="output_weights")
-            b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
-            
-            y = tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h) + b_h), w_o) + b_o
-            
-            if regularization_penalty > 0:
-                regularizer = regularization_penalty * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(b_h) + tf.nn.l2_loss(w_o) + tf.nn.l2_loss(b_o))
-            else:
-                regularizer = 0
+        elif len(self.num_hidden) == 1:
+            h = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.sigmoid, '1')
+            y = self.add_layer(h,      [self.num_hidden[0], self.num_output],    None,          '2')
             
         elif len(self.num_hidden) == 2:
-            w_h1 = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_1_weights")
-            b_h1 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_1_biases")
-            
-            w_h2 = tf.Variable(tf.truncated_normal([self.num_hidden[0], self.num_hidden[1]], stddev=0.1), name="hidden_2_weights")
-            b_h2 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[1]]), name="hidden_2_biases")
-            
-            w_o = tf.Variable(tf.truncated_normal([self.num_hidden[1], self.num_output], stddev=0.1), name="output_weights")
-            b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
-            
-            y = tf.matmul(tf.nn.sigmoid(tf.matmul(tf.nn.sigmoid(tf.matmul(self.x, w_h1) + b_h1), w_h2) + b_h2), w_o) + b_o
+            h1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.relu, '1')
+            h2 = self.add_layer(h1,     [self.num_hidden[0], self.num_hidden[1]], tf.nn.relu, '2')
+            y  = self.add_layer(h2,     [self.num_hidden[1], self.num_output],    None,       '3')
             
         elif len(self.num_hidden) == 3:
-            w_h1 = tf.Variable(tf.truncated_normal([self.num_input, self.num_hidden[0]], stddev=0.1), name="hidden_1_weights")
-            b_h1 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[0]]), name="hidden_1_biases")
-            layer1 = tf.nn.sigmoid(tf.matmul(self.x, w_h1) + b_h1)
-            
-            w_h2 = tf.Variable(tf.truncated_normal([self.num_hidden[0], self.num_hidden[1]], stddev=0.1), name="hidden_2_weights")
-            b_h2 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[1]]), name="hidden_2_biases")
-            layer2 = tf.nn.sigmoid(tf.matmul(layer1, w_h2) + b_h2)
-            
-            w_h3 = tf.Variable(tf.truncated_normal([self.num_hidden[1], self.num_hidden[2]], stddev=0.1), name="hidden_2_weights")
-            b_h3 = tf.Variable(tf.constant(0.1, shape=[self.num_hidden[2]]), name="hidden_2_biases")
-            layer3 = tf.nn.sigmoid(tf.matmul(layer2, w_h3) + b_h3)
-            
-            w_o = tf.Variable(tf.truncated_normal([self.num_hidden[2], self.num_output], stddev=0.1), name="output_weights")
-            b_o = tf.Variable(tf.constant(0.1, shape=[self.num_output]), name="outputs_biases")
-            y = tf.matmul(layer3, w_o) + b_o
-            
-        if regularization_penalty > 0:
-            regularizer = regularization_penalty * (tf.nn.l2_loss(w_h1) + tf.nn.l2_loss(b_h1) + tf.nn.l2_loss(w_h2) + tf.nn.l2_loss(b_h2) + tf.nn.l2_loss(w_o) + tf.nn.l2_loss(b_o))
-        else:
-            regularizer = 0
+            h1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.relu, '1')
+            h2 = self.add_layer(h1,     [self.num_hidden[0], self.num_hidden[1]], tf.nn.relu, '2')
+            h3 = self.add_layer(h2,     [self.num_hidden[1], self.num_hidden[2]], tf.nn.relu, '3')
+            y  = self.add_layer(h3,     [self.num_hidden[2], self.num_output],    None,       '4')
 
         if activation_function == 'softmax':
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.y_, logits=y))
         elif activation_function == 'sigmoid':
             self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_, logits=y))
-            
+                        
         if optimizer_name == 'GradientDescent':
             optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         elif optimizer_name == 'Adadelta':
@@ -119,7 +86,18 @@ class MLP:
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
         
         
-    def train(self, steps, trn_x, trn_y, vld_x, vld_y, batch_size=None, logging=True):
+    def add_layer(self, x, shape, activation_function, postfix_name):
+        w = tf.Variable(tf.truncated_normal(shape, stddev=0.1), 
+                        name='weights_' + postfix_name)
+        b = tf.Variable(tf.constant(0.1, shape=[shape[1]]), 
+                        name='biases_' + postfix_name)
+        if activation_function is None:
+            return tf.matmul(x, w) + b
+        else:
+            return activation_function(tf.matmul(x, w) + b)
+        
+        
+    def train(self, steps, trn, vld, batch_size=None, logging=True):
         """
         if early stopping not None output is
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc, best_area0, best_area1 and best_area2
@@ -137,16 +115,16 @@ class MLP:
             for step in range(steps+1):
                 # train 
                 start_time = time.time()
-                x, y = shuffle(trn_x, trn_y)
+                x, y = shuffle(trn.x, trn.y)
                 if batch_size is None:
                     sess.run(self.train_step, feed_dict={self.x: x, self.y_: y})
                 else:
-                    for i in range(0, trn_x.shape[0], batch_size):
+                    for i in range(0, trn.x.shape[0], batch_size):
                         sess.run(self.train_step, feed_dict={self.x: x[i:i+batch_size], self.y_: y[i:i+batch_size]})
                 finish_time = time.time()
                 train_time += (finish_time - start_time)
                 if step%10 == 0:
-                    loss, trn_acc, vld_acc = self.log_step_info(sess, trn_x, trn_y, vld_x, vld_y, step, train_time, logging)
+                    loss, trn_acc, vld_acc = self.log_step_info(sess, trn.x, trn.y, vld.x, vld.y, step, train_time, logging)
                     train_time = 0
                     if vld_acc > best_vld_acc:
                         best_vld_acc = vld_acc
@@ -175,6 +153,12 @@ class MLP:
             saver.restore(sess, filename)
             return sess.run(self.y_final, feed_dict={self.x: x})
         
+    def predict(self, x, filename='saver/model.ckpt'):
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            saver.restore(sess, filename)
+            return sess.run(self.y_final, feed_dict={self.x: x})
+        
             
     def clean_model_dir(self):
         dirPath = "saver/"
@@ -197,20 +181,12 @@ class MLP:
         
     def log_step_info(self, sess, x_trn, y_trn, x_vld, y_vld, step, train_time, logging):
         loss, trn_acc = sess.run([self.cross_entropy, self.accuracy], feed_dict={self.x: x_trn, self.y_: y_trn})
-        vld_acc, outputs = sess.run([self.accuracy, self.y_final], feed_dict={self.x: x_vld, self.y_: y_vld})
-        #
-        predictions = np.array([np.argmax(o) for o in outputs])
-        y_ideal = np.array([np.argmax(o) for o in y_vld])
-        auc = dict()
-        y_true = [a==b for a, b in zip(y_ideal, predictions)]
-        for i in [0,1,2]:
-            y_score = rejection_score(outputs, i)
-            auc[i] = metrics.roc_auc_score(y_true, y_score)
-        #
-        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:9f}, {:9f}, {:f}'.format(step, loss, trn_acc, vld_acc, auc[0], auc[1], auc[2], train_time)
+        vld_acc, _ = sess.run([self.accuracy, self.y_final], feed_dict={self.x: x_vld, self.y_: y_vld})
+        
+        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:f}'.format(step, loss, trn_acc, vld_acc, train_time)
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
-        #
+        
         return loss, trn_acc, vld_acc
     
             

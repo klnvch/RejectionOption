@@ -12,38 +12,74 @@ from sklearn.metrics import average_precision_score
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 
-def draw(c, e, rc, re, axis=1):
-    
-    if c.shape[0] == 0: c = np.array([[None, None]])
-    if e.shape[0] == 0: e = np.array([[None, None]])
-    if rc.shape[0] == 0: rc = np.array([[None, None]])
-    if re.shape[0] == 0: re = np.array([[None, None]])
-    
-    lbl_c,  = plt.plot(*zip(*c),  marker='s', color='green', markersize='5', ls='', label='Correct')
-    lbl_e,  = plt.plot(*zip(*e),  marker='p', color='red',   markersize='5', ls='', label='Errors')
-    lbl_rc, = plt.plot(*zip(*rc), marker='o', color='blue',  markersize='5', ls='', label='Rejected correct')
-    lbl_re, = plt.plot(*zip(*re), marker='o', color='cyan',  markersize='5', ls='', label='Rejected errors')
-    
-    plt.legend(handles=[lbl_c, lbl_e, lbl_rc, lbl_re], numpoints=1, loc=2)
-    plt.axis([-axis, axis, -axis, axis])
-    plt.axhline(0, color='black')
-    plt.axvline(0, color='black')
-    plt.xlabel(r'$x_1$')
-    plt.ylabel(r'$x_2$')
+def plot_2d_dataset(x, y):
+    plt.scatter(x[:,0], x[:,1], c=y)
     plt.show()
-
-
-def draw_x_vs_y(xs, ys, xlabel=None, ylabel=None, labels=None, colors=None, legend_location=2):
-    handles = []
     
-    for x, y, label, color in zip(xs, ys, labels, colors):
-        lbl, = plt.plot(x, y, color=color, linewidth=2.0, label=label)
-        handles.append(lbl)
+def plot_boundaries(x, y, classifier, figsize=(4.1, 4.1), savefig=None):
+    # step size in the mesh
+    h = .02
     
-    plt.legend(handles=handles, numpoints=1, loc=legend_location)
-    if xlabel is not None and ylabel is not None:
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+    # create a mesh to plot in
+    x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+    y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+    
+    # Plot the decision boundary. For that, we will assign a color to each
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
+    Z = classifier.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.argmax(axis=1)
+    # Put the result into a color plot
+    Z = Z.reshape(xx.shape)
+    fig = plt.figure(figsize=figsize)
+    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)  # @UndefinedVariable
+    plt.contour(xx, yy, Z, colors='black')
+    plt.axis('off')
+
+    # Plot also the training points
+    #color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
+    #colors = [color_map[_y] for _y in y]
+    plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1))  # @UndefinedVariable
+    if savefig is not None:
+        plt.savefig(savefig)
+    plt.show()
+    
+def plot_regions(x, y, classifier, figsize=(4.1, 4.1), savefig=None):
+    # step size in the mesh
+    h = .02
+    
+    # create a mesh to plot in
+    x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+    y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+    
+    # Plot the decision boundary. For that, we will assign a color to each
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
+    Z = classifier.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+    # Put the result into a color plot
+    Z = Z.reshape((xx.shape[0], xx.shape[1], Z.shape[1]))
+    fig = plt.figure(figsize=figsize)
+    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    #imshow_handle = plt.imshow(Z, interpolation='nearest', 
+    #           extent=(x_min, x_max, y_min, y_max), aspect='auto', 
+    #           origin="lower", cmap=plt.cm.PuOr_r)  # @UndefinedVariable
+    Z_class = Z.argmax(axis=2)
+    Z_value = Z.max(axis=2)
+    plt.contourf(xx, yy, Z_class, cmap=plt.cm.Paired)  # @UndefinedVariable
+    plt.contourf(xx, yy, Z_value, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
+    plt.contour(xx, yy, Z_class, colors='white')
+    plt.axis('off')
+
+    # Plot also the training points
+    #color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
+    #colors = [color_map[_y] for _y in y]
+    plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1))  # @UndefinedVariable
+    #plt.colorbar(imshow_handle, orientation='horizontal')
+    if savefig is not None:
+        plt.savefig(savefig)
     plt.show()
     
 def plot_binary_roc_curve(fpr, tpr, roc_auc, filename=None):
