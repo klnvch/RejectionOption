@@ -28,8 +28,10 @@ class DataSet:
             5 - Moons
             6 - Blobs
             7 - Circles
-            8 - Quantiles
+            8 - Gaussian Quantiles modified
             9 - Multiclass
+            10 - Gaussian Quantiles
+            11 - Noise
         """
         # load data
         x, y, self.class_names = get_data(dataset, binarize=True, preprocess=1)

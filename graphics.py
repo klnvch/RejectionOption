@@ -12,8 +12,12 @@ from sklearn.metrics import average_precision_score
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 
-def plot_2d_dataset(x, y):
+def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
+    plt.figure(figsize=figsize)
+    plt.axis('off')
     plt.scatter(x[:,0], x[:,1], c=y)
+    if savefig is not None:
+        plt.savefig(savefig)
     plt.show()
     
 def plot_boundaries(x, y, classifier, figsize=(4.1, 4.1), savefig=None):

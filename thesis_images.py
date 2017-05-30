@@ -10,7 +10,7 @@ some basic definitions
 '''
 
 import matplotlib.pyplot as plt
-from graphics import get_cmap
+from graphics import get_cmap, plot_2d_dataset
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from DataSet import DataSet
@@ -63,6 +63,32 @@ def plot_pca_vs_lda(X, y, target_names):
     #plt.title('LDA')
 
     plt.show()
+    
+def dataset_examlpes():
+    ds = DataSet(5)
+    plot_2d_dataset(ds.trn.x, ds.trn.y.argmax(axis=1), 
+                    (FIG_HALF_SIZE, FIG_HALF_SIZE),
+                    IMAGES_DIR + 'chapter_1/ds_1.png')
+    ds = DataSet(7)
+    plot_2d_dataset(ds.trn.x, ds.trn.y.argmax(axis=1), 
+                    (FIG_HALF_SIZE, FIG_HALF_SIZE),
+                    IMAGES_DIR + 'chapter_1/ds_2.png')
+    ds = DataSet(10)
+    plot_2d_dataset(ds.trn.x, ds.trn.y.argmax(axis=1), 
+                    (FIG_HALF_SIZE, FIG_HALF_SIZE),
+                    IMAGES_DIR + 'chapter_1/ds_3.png')
+    ds = DataSet(6)
+    plot_2d_dataset(ds.trn.x, ds.trn.y.argmax(axis=1), 
+                    (FIG_HALF_SIZE, FIG_HALF_SIZE),
+                    IMAGES_DIR + 'chapter_1/ds_4.png')
+    ds = DataSet(9)
+    plot_2d_dataset(ds.trn.x, ds.trn.y.argmax(axis=1), 
+                    (FIG_HALF_SIZE, FIG_HALF_SIZE),
+                    IMAGES_DIR + 'chapter_1/ds_5.png')
+    ds = DataSet(11)
+    plot_2d_dataset(ds.trn.x, ds.trn.y.argmax(axis=1), 
+                    (FIG_HALF_SIZE, FIG_HALF_SIZE),
+                    IMAGES_DIR + 'chapter_1/ds_6.png')
     
 def decision_boundries_1():
     ds = DataSet(5)
@@ -166,6 +192,8 @@ def plot_roc_space_figure_2():
 
 
 if __name__ == '__main__':
+    # examples of datasets
+    dataset_examlpes()
     
     # Sources of errors
     #x, y, classes = get_data(4, preprocess=None)
@@ -176,7 +204,7 @@ if __name__ == '__main__':
     #decision_boundries_2()
     #decision_boundries_3()
     #decision_boundries_4()
-    decision_boundries_56()
+    #decision_boundries_56()
     
     #plot_roc_space_figure_1()
     #plot_roc_space_figure_2()

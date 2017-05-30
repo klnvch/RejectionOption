@@ -120,6 +120,10 @@ def generate_quantiles(mode=1):
     else:
         y[y==2] = 0
         return x, y, ['0', '1']
+    
+def generate_noise(size = 200):
+    x = np.random.uniform(-1, 1, (size, 2))
+    return x, [0]*size, ['0']
 
 def get_data(i, binarize=False, preprocess=0):
     """Returns choosen dataset.
@@ -133,8 +137,10 @@ def get_data(i, binarize=False, preprocess=0):
             5 - Moons
             6 - Blobs
             7 - Circles
-            8 - Quantiles
+            8 - Gaussian Quantiles modified
             9 - Multiclass
+            10 - Gaussian Quantiles
+            
         preprocess: index of algorithm
             1 - scale
             2 - minmax scale
@@ -155,6 +161,8 @@ def get_data(i, binarize=False, preprocess=0):
     elif i == 7: x, y, classes = generate_circles()
     elif i == 8: x, y, classes = generate_quantiles(mode=2)
     elif i == 9: x, y, classes = generate_multiclass()
+    elif i == 10: x, y, classes = generate_quantiles(mode=1)
+    elif i == 11: x, y, classes = generate_noise()
     else: raise ValueError("unknown dataset: " + i)
     
     if binarize:
@@ -194,5 +202,5 @@ def print_classes_stats(y, classes):
     print('&'.join(map(str,dist)))
     
 if __name__ == '__main__':
-    x, y, _ = generate_multiclass()
+    x, y, _ = generate_noise()
     plot_2d_dataset(x, y)
