@@ -59,17 +59,15 @@ def add_noise_as_no_class(x, y, noise_size=None, noise_output=None):
     assert x.shape[0] == y.shape[0]
     
     size = x.shape[0]    # number of patterns
-    size_x = x.shape[1]  # number of features
-    size_y = y.shape[1]  # number of classes
+    num_features = x.shape[1]  # number of features
+    num_classes = y.shape[1]  # number of classes
     
-    if noise_size is None:
-        noise_size = size
-        
-    if noise_output is None:
-        noise_output = 1.0/size_y
+    if noise_size is None: noise_size = size
     
-    noise_x = np.random.uniform(x.min(), x.max(), [noise_size, size_x])
-    noise_y = np.array([[noise_output] * size_y] * noise_size)
+    if noise_output is None: noise_output = 1.0/num_classes
+    
+    noise_x = np.random.uniform(x.min(), x.max(), [noise_size, num_features])
+    noise_y = np.array([[noise_output] * num_classes] * noise_size)
     
     new_x = np.concatenate([x, noise_x])
     new_y = np.concatenate([y, noise_y])
@@ -92,20 +90,20 @@ def add_noise_as_a_class(x, y, names, out_x=None, outliers_size=None):
     assert x.shape[0] == y.shape[0]
     
     size = x.shape[0]    # number of patterns
-    size_x = x.shape[1]  # number of features
-    size_y = y.shape[1]  # number of classes
+    num_features = x.shape[1]  # number of features
+    num_classes = y.shape[1]  # number of classes
     
     if out_x is None:
-        if outliers_size is None:
-            outliers_size = size
-        out_x = np.random.uniform(x.min(), x.max(), [outliers_size, size_x])
+        if outliers_size is None: outliers_size = size
+        out_x = np.random.uniform(x.min(), x.max(), 
+                                  [outliers_size, num_features])
     else:
         outliers_size = out_x.shape[0]
     
-    out_y = np.array([[0]*(size_y) + [1]] * outliers_size)
+    out_y = np.array([[0]*(num_classes) + [1]] * outliers_size)
     
     new_x = np.concatenate([x, out_x])
-    new_y = np.append(y, np.array([[0]] * size_y), axis=1) # add column
+    new_y = np.append(y, np.array([[0]] * size), axis=1) # add column
     new_y = np.concatenate([new_y, out_y])
     new_names = np.concatenate([names, ['Outliers']])
     
@@ -123,22 +121,27 @@ def rejection_score(outputs, rejection_method):
     Returns:
         scores according to outputs
     """
-    if rejection_method == 0:
-        return np.max(outputs, axis=1)
-    elif rejection_method == 1:
-        result = []
-        for o in outputs:
-            x = heapq.nlargest(2, o)
-            result.append(x[0] - x[1])
-        return np.array(result)
-    elif rejection_method == 2:
-        result = []
-        for o in outputs:
-            x = heapq.nlargest(2, o)
-            result.append(1.0 - x[1] / x[0])
-        return np.array(result)
-    else:
-        assert False
+    if   rejection_method == 0: return threshold_output(outputs)
+    elif rejection_method == 1: return threshold_differential(outputs)
+    elif rejection_method == 2: return threshold_ratio(outputs)
+    else: raise ValueError('rejection method is wrong: ' + rejection_method)
+
+def threshold_output(outputs):
+    return np.max(outputs, axis=1)
+
+def threshold_differential(outputs):
+    result = []
+    for o in outputs:
+        x = heapq.nlargest(2, o)
+        result.append(x[0] - x[1])
+    return np.array(result)
+
+def threshold_ratio(outputs):
+    result = []
+    for o in outputs:
+        x = heapq.nlargest(2, o)
+        result.append(1.0 - x[1] / x[0])
+    return np.array(result)
 
 def calc_roc_binary(outputs_ideal, outputs_real, outputs_outliers=None):
     """

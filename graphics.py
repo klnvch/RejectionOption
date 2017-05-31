@@ -15,42 +15,13 @@ import matplotlib.cm as cmx
 def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
     plt.figure(figsize=figsize)
     plt.axis('off')
-    plt.scatter(x[:,0], x[:,1], c=y)
+    plt.scatter(x[:, 0], x[:, 1], c=y)
     if savefig is not None:
         plt.savefig(savefig)
     plt.show()
-    
-def plot_boundaries(x, y, classifier, figsize=(4.1, 4.1), savefig=None):
-    # step size in the mesh
-    h = .02
-    
-    # create a mesh to plot in
-    x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
-    y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                         np.arange(y_min, y_max, h))
-    
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    Z = classifier.predict(np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.argmax(axis=1)
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    fig = plt.figure(figsize=figsize)
-    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)  # @UndefinedVariable
-    plt.contour(xx, yy, Z, colors='black')
-    plt.axis('off')
 
-    # Plot also the training points
-    #color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
-    #colors = [color_map[_y] for _y in y]
-    plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1))  # @UndefinedVariable
-    if savefig is not None:
-        plt.savefig(savefig)
-    plt.show()
-    
-def plot_regions(x, y, classifier, figsize=(4.1, 4.1), savefig=None):
+def plot_decision_regions(x, y, classifier, reject=None,
+                          figsize=(4.1, 4.1), savefig=None):
     # step size in the mesh
     h = .02
     
@@ -62,33 +33,36 @@ def plot_regions(x, y, classifier, figsize=(4.1, 4.1), savefig=None):
     
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, x_max]x[y_min, y_max].
-    Z = classifier.predict_proba(np.c_[xx.ravel(), yy.ravel()])
+    outputs = classifier.predict_proba(np.c_[xx.ravel(), yy.ravel()])
     # Put the result into a color plot
-    Z = Z.reshape((xx.shape[0], xx.shape[1], Z.shape[1]))
     fig = plt.figure(figsize=figsize)
     fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
-    #imshow_handle = plt.imshow(Z, interpolation='nearest', 
+    # imshow_handle = plt.imshow(Z, interpolation='nearest', 
     #           extent=(x_min, x_max, y_min, y_max), aspect='auto', 
     #           origin="lower", cmap=plt.cm.PuOr_r)  # @UndefinedVariable
-    Z_class = Z.argmax(axis=2)
-    Z_value = Z.max(axis=2)
-    plt.contourf(xx, yy, Z_class, cmap=plt.cm.Paired)  # @UndefinedVariable
-    plt.contourf(xx, yy, Z_value, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
-    plt.contour(xx, yy, Z_class, colors='white')
+    Z = outputs.argmax(axis=1)
+    Z = Z.reshape((xx.shape[0], xx.shape[1]))
+    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)  # @UndefinedVariable
+    if reject is not None:
+        scores = reject(outputs)
+        scores = scores.reshape((xx.shape[0], xx.shape[1]))
+        cnt = plt.contourf(xx, yy, scores, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
+        plt.clabel(cnt, fmt='%2.1f', inline=1, colors='red', fontsize=10)
+    plt.contour(xx, yy, Z, colors='white')
     plt.axis('off')
 
     # Plot also the training points
-    #color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
-    #colors = [color_map[_y] for _y in y]
+    # color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
+    # colors = [color_map[_y] for _y in y]
     plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1))  # @UndefinedVariable
-    #plt.colorbar(imshow_handle, orientation='horizontal')
+    # plt.colorbar(imshow_handle, orientation='horizontal')
     if savefig is not None:
         plt.savefig(savefig)
     plt.show()
-    
+
 def plot_binary_roc_curve(fpr, tpr, roc_auc, filename=None):
     colors = itertools.cycle(['aqua', 'darkorange', 'cornflowerblue'])
-    for i, color in zip([0,1,2], colors):
+    for i, color in zip([0, 1, 2], colors):
         plt.plot(fpr[i], tpr[i], color=color, lw=2, label='ROC curve of method {0} (area = {1:0.4f})'.format(i, roc_auc[i]))
 
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
@@ -96,7 +70,7 @@ def plot_binary_roc_curve(fpr, tpr, roc_auc, filename=None):
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    #plt.title('ROC curves for single threshold')
+    # plt.title('ROC curves for single threshold')
     plt.legend(loc="lower right")
     #
     if filename is not None:
@@ -105,7 +79,7 @@ def plot_binary_roc_curve(fpr, tpr, roc_auc, filename=None):
     
 def draw_precision_recall(precision, recall, average_precision, filename=None):
     colors = itertools.cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
-    for i, color in zip([0,1,2], colors):
+    for i, color in zip([0, 1, 2], colors):
         plt.plot(recall[i], precision[i], color=color, lw=2, label='Precision-recall curve of method {0} (area = {1:0.4f})'.format(i, average_precision[i]))
 
     plt.xlim([0.0, 1.0])
@@ -135,7 +109,7 @@ def plot_confusion_matrix(cm, classes,
     classes - one-dimensional ndarray of strings - class names
     """
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    #plt.title(title)
+    # plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=45)
@@ -197,7 +171,7 @@ def plot_multiclass_roc_curve(fpr, tpr, roc_auc, class_names):
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    #plt.title('ROC curves for multiple thresholds')
+    # plt.title('ROC curves for multiple thresholds')
     plt.legend(loc="lower right")
 
 
@@ -254,7 +228,7 @@ def get_cmap(N):
     
     Copied from http://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
     '''
-    color_norm  = colors.Normalize(vmin=0, vmax=N-1)
+    color_norm = colors.Normalize(vmin=0, vmax=N - 1)
     scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv') 
     def map_index_to_rgb_color(index):
         return scalar_map.to_rgba(index)

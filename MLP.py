@@ -78,10 +78,10 @@ class MLP:
         #self.grad_norm = tf.add_n(grad_norms)
     
         self.y_final = None
-        if activation_function == 'softmax':
-            self.y_final = tf.nn.softmax(y)
-        elif activation_function == 'sigmoid':
-            self.y_final = tf.nn.sigmoid(y)
+        if   activation_function == 'softmax': self.y_final = tf.nn.softmax(y)
+        elif activation_function == 'sigmoid': self.y_final = tf.nn.sigmoid(y)
+        else: raise ValueError('no such activation function: ' + activation_function)
+        
         self.correct_prediction = tf.equal(tf.argmax(self.y_final, 1), tf.argmax(self.y_, 1))
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
         
