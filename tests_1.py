@@ -41,7 +41,7 @@ def test_mlp_sotmax_thresholds(ds):
                           IMAGES_DIR + 'mlp_softmax_threshold_ratio')
 
 def test_rbf_thresholds(ds):
-    rbf = RBF(ds.num_features, 64, ds.num_classes)
+    rbf = RBF(ds.num_features, 16, ds.num_classes)
     rbf.train(ds.trn.x, ds.trn.y)
     plot_decision_regions(ds.tst.x, ds.tst.y, rbf, threshold_output,
                           (FIG_HALF_SIZE, FIG_HALF_SIZE),
@@ -107,9 +107,9 @@ def test_mlp_sotmax_thresholds_noise_as_a_class(ds):
 
 def test_thresholds():
     ds = DataSet(5)
-    test_mlp_sigmoid_thresholds(ds)
-    #test_mlp_sotmax_thresholds(ds)
-    #test_rbf_thresholds(ds)
+    # test_mlp_sigmoid_thresholds(ds)
+    # test_mlp_sotmax_thresholds(ds)
+    test_rbf_thresholds(ds)
     
 def test_thresholds_with_noise_as_no_class():
     ds = DataSet(5, add_noise=1, noise_output=0.0)
@@ -123,6 +123,6 @@ def test_thresholds_with_noise_as_a_class():
     test_mlp_sotmax_thresholds_noise_as_a_class(ds)
 
 if __name__ == '__main__':
-    #test_thresholds()
-    #test_thresholds_with_noise_as_no_class()
-    test_thresholds_with_noise_as_a_class()
+    test_thresholds()
+    # test_thresholds_with_noise_as_no_class()
+    # test_thresholds_with_noise_as_a_class()

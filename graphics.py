@@ -21,15 +21,12 @@ def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
     plt.show()
 
 def plot_decision_regions(x, y, classifier, reject=None,
-                          figsize=(4.1, 4.1), savefig=None):
-    # step size in the mesh
-    h = .02
-    
+                          figsize=(4.1, 4.1), savefig=None, step_size=0.02):
     # create a mesh to plot in
     x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
     y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                         np.arange(y_min, y_max, h))
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, step_size),
+                         np.arange(y_min, y_max, step_size))
     
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, x_max]x[y_min, y_max].
@@ -47,7 +44,7 @@ def plot_decision_regions(x, y, classifier, reject=None,
         scores = reject(outputs)
         scores = scores.reshape((xx.shape[0], xx.shape[1]))
         cnt = plt.contourf(xx, yy, scores, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
-        plt.clabel(cnt, fmt='%2.1f', inline=1, colors='red', fontsize=10)
+        plt.clabel(cnt, fmt='%2.1f', inline=False, colors='red', fontsize=14)
     plt.contour(xx, yy, Z, colors='white')
     plt.axis('off')
 

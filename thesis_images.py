@@ -132,18 +132,18 @@ def decision_boundries_4():
 def decision_boundries_56():
     ds = DataSet(9)
     # MLP
-    mlp = MLP(0.01, [ds.num_features, 16, ds.num_classes], 'sigmoid', 'Adam')
+    mlp = MLP(0.01, [ds.num_features, 8, ds.num_classes], 'sigmoid', 'Adam')
     result = mlp.train(10000, ds.trn, ds.vld, 1, logging=True)
     print(result)
     # RBF
-    rbf = RBF(ds.num_features, 64, ds.num_classes)
+    rbf = RBF(ds.num_features, 8, ds.num_classes)
     rbf.train(ds.trn.x, ds.trn.y)
     # plot_2d_dataset(ds.tst.x, ds.tst.y)
     plot_decision_regions(ds.tst.x, ds.tst.y, mlp, threshold_output,
                           (FIG_HALF_SIZE, FIG_HALF_SIZE),
                           IMAGES_DIR + 'chapter_3/boundaries_5.png')
-    plot_decision_regions(ds.tst.x, ds.tst.y, rbf,
-                          (FIG_HALF_SIZE, FIG_HALF_SIZE), threshold_output,
+    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, threshold_output,
+                          (FIG_HALF_SIZE, FIG_HALF_SIZE),
                           IMAGES_DIR + 'chapter_3/boundaries_6.png')
 
 def plot_roc_space_figure_1():
@@ -190,7 +190,7 @@ def plot_roc_space_figure_2():
 
 if __name__ == '__main__':
     # examples of datasets
-    dataset_examlpes()
+    # dataset_examlpes()
     
     # Sources of errors
     # x, y, classes = get_data(4, preprocess=None)
@@ -201,7 +201,7 @@ if __name__ == '__main__':
     # decision_boundries_2()
     # decision_boundries_3()
     # decision_boundries_4()
-    # decision_boundries_56()
+     decision_boundries_56()
     
     # plot_roc_space_figure_1()
     # plot_roc_space_figure_2()
