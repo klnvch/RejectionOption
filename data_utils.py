@@ -8,6 +8,7 @@ import numpy as np
 import heapq
 from sklearn import metrics
 from scipy import interp
+import itertools
 
 def count_distribution(y):
     """
@@ -143,13 +144,13 @@ def threshold_ratio(outputs):
         result.append(1.0 - x[1] / x[0])
     return np.array(result)
 
-def calc_roc_binary(outputs_ideal, outputs_real, outputs_outliers=None):
+def calc_roc_binary(outputs_true, outputs_pred, outputs_outliers=None):
     """
     Calcs binary ROC curve or for single threshold
     Args:
-        outputs_ideal: desired output
-        outputs_real: real output
-        outliers_outputs: output for outliers
+        outputs_true : desired output
+        outputs_pred : real output
+        outputs_outliers : output for outliers
     Returns:
         FPR, TPR, area under the ROC curve
     """
@@ -157,68 +158,148 @@ def calc_roc_binary(outputs_ideal, outputs_real, outputs_outliers=None):
     tpr = dict()
     roc_auc = dict()
     
-    y_ideal = [np.argmax(y) for y in outputs_ideal]
-    y_real = [np.argmax(o) for o in outputs_real]
+    y_ideal = outputs_true.argmax(axis=1)
+    y_real = outputs_pred.argmax(axis=1)
     y_true = [a==b for a,b in zip(y_ideal, y_real)]
     
     for i in [0, 1, 2]: # across rejection methods
         if outputs_outliers is None:
-            y_score = rejection_score(outputs_real, i)
-            fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score)
+            y_score = rejection_score(outputs_pred, i)
+            fpr[i], tpr[i], _ = my_roc_curve(y_true, y_score)
         else:
-            outputs = np.concatenate([outputs_real, outputs_outliers])
+            outputs = np.concatenate([outputs_pred, outputs_outliers])
             y_score = rejection_score(outputs, i)
             y_true_all = y_true + [False] * outputs_outliers.shape[0]
             fpr[i], tpr[i], _ = metrics.roc_curve(y_true_all, y_score)
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
-        
+    
     return fpr, tpr, roc_auc
 
-def calc_roc_multiclass(outputs_ideal, outputs_real, names, 
+def my_roc_curve(y_true, y_score):
+    fpr = []
+    tpr = []
+    
+    for t in y_score:
+        tp = 0
+        tn = 0
+        fp = 0
+        fn = 0
+        for corectness, score in zip(y_true, y_score):
+            if corectness:
+                if score >= t: tp += 1
+                else:          fn += 1
+            else:
+                if score >= t: fp += 1
+                else:          tn += 1
+        
+        fpr.append(fp / (fp + tn))
+        tpr.append(tp / (tp + fn))
+    
+    fpr, tpr, y_score = zip(*sorted(zip(fpr, tpr, y_score)))
+    
+    return fpr, tpr, y_score
+
+def calc_roc_multiple(outputs_true, outputs_pred, labels):
+    n_classes = len(labels)
+    
+    y_ideal = outputs_true.argmax(axis=1)
+    y_real = outputs_pred.argmax(axis=1)
+    y_true = [a==b for a,b in zip(y_ideal, y_real)]
+    y_score = threshold_output(outputs_pred)
+    
+    y_true_classes = [[] for _ in range(n_classes)]
+    y_score_classes = [[] for _ in range(n_classes)]
+    for i, correctness, score in zip(y_ideal, y_true, y_score):
+        y_true_classes[i].append(correctness)
+        y_score_classes[i].append(score)
+    
+    fpr = []
+    tpr = []
+    
+    for t0, t1 in itertools.product(y_score_classes[0], y_score_classes[1]):
+        tp = 0
+        tn = 0
+        fp = 0
+        fn = 0
+        
+        for corectness, score in zip(y_true_classes[0], y_score_classes[0]):
+            if corectness:
+                if score >= t0: tp += 1
+                else:           fn += 1
+            else:
+                if score >= t0: fp += 1
+                else:           tn += 1
+        
+        for corectness, score in zip(y_true_classes[1], y_score_classes[1]):
+            if corectness:
+                if score >= t1: tp += 1
+                else:           fn += 1
+            else:
+                if score >= t1: fp += 1
+                else:           tn += 1
+        
+        fpr.append(fp / (fp + tn))
+        tpr.append(tp / (tp + fn))
+    
+    fpr, tpr = zip(*sorted(zip(fpr, tpr)))
+    
+    clean_fpr = [fpr[0]]
+    clean_tpr = [tpr[0]]
+    for x, y in zip(fpr, tpr):
+        if clean_fpr[-1] == x:
+            clean_tpr[-1] = max(clean_tpr[-1], y) 
+        else:
+            clean_fpr.append(x)
+            clean_tpr.append(y)
+        
+    
+    return clean_fpr, clean_tpr, metrics.auc(clean_fpr, clean_tpr)
+
+def calc_roc_multiclass(outputs_true, outputs_pred, labels,
                         outputs_outliers=None):
     """
     Calcs binary ROC curve or for multiple output thresholds
     Args:
-        outputs_ideal: desired output
-        outputs_real: real output
-        names: names of classes
+        outputs_true: desired output
+        outputs_pred: real output
+        labels: names of classes
         outputs_outliers: output for outliers
     Returns:
         FPR, TPR, area under the ROC curve
     """
-    n_classes = len(names)
+    n_classes = len(labels)
     # Compute ROC curve and ROC area for each class
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
     
-    y_ideal = [np.argmax(y) for y in outputs_ideal]
-    y_real = [np.argmax(o) for o in outputs_real]
+    y_ideal = outputs_true.argmax(axis=1)
+    y_real = outputs_pred.argmax(axis=1)
     y_true = [a==b for a,b in zip(y_ideal, y_real)]
-    y_score = rejection_score(outputs_real, 0)
+    y_score = threshold_output(outputs_pred)
     
     y_true_classes = [[] for _ in range(n_classes)]
     y_score_classes = [[] for _ in range(n_classes)]
-    for prediction, correctness, score in zip(y_real, y_true, y_score):
-        y_true_classes[prediction].append(correctness)
-        y_score_classes[prediction].append(score)
-        
+    for i, correctness, score in zip(y_ideal, y_true, y_score):
+        y_true_classes[i].append(correctness)
+        y_score_classes[i].append(score)
+    
     if outputs_outliers is not None:
         y_real_outliers = [np.argmax(o) for o in outputs_outliers]
         y_score_outliers = rejection_score(outputs_outliers, 0)
         for prediction, score in zip(y_real_outliers, y_score_outliers):
             y_true_classes[prediction].append(False)
             y_score_classes[prediction].append(score)
-        
+    
     for i in range(n_classes):
         if len(y_true_classes) > 1:
             fpr[i], tpr[i], _ = metrics.roc_curve(y_true_classes[i], y_score_classes[i])
             roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         else:
             fpr[i] = tpr[i] = roc_auc[i] = None
-
+    
     # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = metrics.roc_curve(outputs_ideal.ravel(), outputs_real.ravel())
+    fpr["micro"], tpr["micro"], _ = metrics.roc_curve(outputs_true.ravel(), outputs_pred.ravel())
     roc_auc["micro"] = metrics.auc(fpr["micro"], tpr["micro"])
     
     # Compute macro-average ROC curve and ROC area
@@ -255,3 +336,22 @@ def calc_precision_recall(y, outputs):
         average_precision[i] = metrics.average_precision_score(y_true, y_score)
         
     return precision, recall, average_precision
+
+if __name__ == '__main__':
+    calc_roc_multiple(np.array([[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 1.0]]),
+                      np.array([[0.9, 0.1], [0.4, 0.6], [0.5, 0.3], [0.1, 0.9]]),
+                      np.array(['0', '1']))
+    
+    #y_true = np.array([True, True, False, False])
+    #y_score = np.array([0.9, 0.6, 0.7, 0.1])
+    
+    #fpr1, tpr1, thr1 = metrics.roc_curve(y_true, y_score)
+    #print(fpr1)
+    #print(tpr1)
+    #print(thr1)
+    
+    #fpr2, tpr2, thr2 = my_roc_curve(y_true, y_score)
+    #print(fpr2)
+    #print(tpr2)
+    #print(thr2)
+    

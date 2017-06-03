@@ -7,6 +7,7 @@ Created on Oct 29, 2016
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
+from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 import matplotlib.colors as colors
@@ -21,7 +22,8 @@ def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
     plt.show()
 
 def plot_decision_regions(x, y, classifier, reject=None,
-                          figsize=(4.1, 4.1), savefig=None, step_size=0.02):
+                          figsize=(4.1, 4.1), savefig=None, show=True,
+                          step_size=0.02):
     # create a mesh to plot in
     x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
     y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
@@ -38,11 +40,11 @@ def plot_decision_regions(x, y, classifier, reject=None,
     #           extent=(x_min, x_max, y_min, y_max), aspect='auto', 
     #           origin="lower", cmap=plt.cm.PuOr_r)  # @UndefinedVariable
     Z = outputs.argmax(axis=1)
-    Z = Z.reshape((xx.shape[0], xx.shape[1]))
+    Z = Z.reshape(xx.shape)
     plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)  # @UndefinedVariable
     if reject is not None:
         scores = reject(outputs)
-        scores = scores.reshape((xx.shape[0], xx.shape[1]))
+        scores = scores.reshape(xx.shape)
         cnt = plt.contourf(xx, yy, scores, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
         plt.clabel(cnt, fmt='%2.1f', inline=False, colors='red', fontsize=14)
     plt.contour(xx, yy, Z, colors='white')
@@ -53,26 +55,31 @@ def plot_decision_regions(x, y, classifier, reject=None,
     # colors = [color_map[_y] for _y in y]
     plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1))  # @UndefinedVariable
     # plt.colorbar(imshow_handle, orientation='horizontal')
-    if savefig is not None:
-        plt.savefig(savefig)
-    plt.show()
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.clf()
 
-def plot_binary_roc_curve(fpr, tpr, roc_auc, filename=None):
-    colors = itertools.cycle(['aqua', 'darkorange', 'cornflowerblue'])
-    for i, color in zip([0, 1, 2], colors):
-        plt.plot(fpr[i], tpr[i], color=color, lw=2, label='ROC curve of method {0} (area = {1:0.4f})'.format(i, roc_auc[i]))
-
+def plot_binary_roc_curve(fpr, tpr, roc_auc, savefig=None, show=True):
+    colors = itertools.cycle(['aqua', 'darkorange', 'cornflowerblue', 'red'])
+    labels = ['Single output threshold (AUC: {0:0.4f})',
+              'Single differential threshold (AUC: {0:0.4f})',
+              'Single ratio threshold (AUC: {0:0.4f})',
+              'Multiple output thresholds (AUC: {0:0.4f})']
+    plt.figure()
+    for i, color, label in zip([0, 1, 2, 'm'], colors, labels):
+        plt.plot(fpr[i], tpr[i], color=color, lw=2,
+                 label=label.format(roc_auc[i]))
+    
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    # plt.title('ROC curves for single threshold')
+    #plt.title('ROC curves for single threshold')
     plt.legend(loc="lower right")
-    #
-    if filename is not None:
-        plt.savefig(filename)
-    
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.clf()
     
 def draw_precision_recall(precision, recall, average_precision, filename=None):
     colors = itertools.cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
@@ -89,90 +96,89 @@ def draw_precision_recall(precision, recall, average_precision, filename=None):
     if filename is not None:
         plt.savefig(filename)
 
-
-
-
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):  # @UndefinedVariable
+def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     
-    Copied from http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
+    y_true : array, shape = [n_samples]
+    Ground truth (correct) target values.
     
-    cm - two-dimensional ndarray of integers - confusion matrix
-    classes - one-dimensional ndarray of strings - class names
+    y_pred : array, shape = [n_samples]
+    Estimated targets as returned by a classifier.
+    
+    labels : array, shape = [n_classes]
+    Names of classes for columns and rows in the final matrix
+    
+    Copied from http://scikit-learn.org/stable/auto_examples/model_selection
+    /plot_confusion_matrix.html
+    #sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure()
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)  # @UndefinedVariable
     # plt.title(title)
     plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print('Normalized confusion matrix')
-    else:
-        print('Confusion matrix, without normalization')
-
+    tick_marks = np.arange(len(labels))
+    plt.xticks(tick_marks, labels, rotation=45)
+    plt.yticks(tick_marks, labels)
+    
+    #if normalize:
+    #    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    #    print('Normalized confusion matrix')
+    #else:
+    #    print('Confusion matrix, without normalization')
+    
+    np.set_printoptions(precision=2)
     print(cm)
-
+    
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, cm[i, j],
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
-
+    
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.clf()
 
-
-
-
-def plot_multiclass_roc_curve(fpr, tpr, roc_auc, class_names):
+def plot_multiclass_roc_curve(fpr, tpr, roc_auc, labels,
+                              savefig=None, show=True):
     """
     Plot ROC curves for the multiclass problem
     
-    Copied from http://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
-    
-    y_test - two-dimensional ndarray of size n_classes x number of samples
-    y_score - two-dimensional ndarray of size n_classes x number of samples
+    Copied from http://scikit-learn.org/stable/auto_examples/model_selection
+    /plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
     """
-    n_classes = len(class_names)
-
+    n_classes = len(labels)
     # Plot all ROC curves
     lw = 2
-    colors = get_cmap(n_classes)
+    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
+    plt.figure()
+    for i, color in zip(range(n_classes), colors):
+        label = 'Class ''{0}'' (AUC: {1:0.4f})'.format(labels[i], roc_auc[i])
+        plt.plot(fpr[i], tpr[i], color=color, lw=lw, label=label)
     
-    for i in range(n_classes):
-        plt.plot(fpr[i], tpr[i], color=colors(i), lw=lw,
-             label='ROC curve of class ''{0}'' (area = {1:0.4f})'
-             ''.format(class_names[i], roc_auc[i]))
-        
-    plt.plot(fpr["micro"], tpr["micro"],
-         label='micro-average ROC curve (area = {0:0.4f})'
-               ''.format(roc_auc["micro"]),
-         color='deeppink', linestyle=':', linewidth=4)
-
-    plt.plot(fpr["macro"], tpr["macro"],
-         label='macro-average ROC curve (area = {0:0.4f})'
-               ''.format(roc_auc["macro"]),
-         color='navy', linestyle=':', linewidth=4)
-
+    label_micro = 'Micro-average (AUC: {0:0.4f})'.format(roc_auc["micro"])
+    plt.plot(fpr["micro"], tpr["micro"], label=label_micro, color='deeppink',
+             linestyle=':', linewidth=4)
+    label_macro = 'Macro-average (AUC: {0:0.4f})'.format(roc_auc["macro"])
+    plt.plot(fpr["macro"], tpr["macro"], label=label_macro, color='navy',
+             linestyle=':', linewidth=4)
+    
     plt.plot([0, 1], [0, 1], 'k--', lw=lw)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    # plt.title('ROC curves for multiple thresholds')
+    #plt.title('ROC curves for multiple thresholds')
     plt.legend(loc="lower right")
-
-
-
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.clf()
 
 def plot_multiclass_precision_recall_curve(y_test, y_score, class_names):
     """

@@ -97,7 +97,7 @@ class MLP:
             return activation_function(tf.matmul(x, w) + b)
         
         
-    def train(self, steps, trn, vld, batch_size=None, logging=True):
+    def train(self, steps, trn, vld=None, batch_size=None, logging=True):
         """
         if early stopping not None output is
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc, best_area0, best_area1 and best_area2
@@ -124,17 +124,17 @@ class MLP:
                 finish_time = time.time()
                 train_time += (finish_time - start_time)
                 if step%10 == 0:
-                    loss, trn_acc, vld_acc = self.log_step_info(sess, trn.x, trn.y, vld.x, vld.y, step, train_time, logging)
+                    loss, trn_acc, vld_acc = self.log_step_info(sess, trn, vld, step, train_time, logging)
                     train_time = 0
-                    if vld_acc > best_vld_acc:
-                        best_vld_acc = vld_acc
-                        counter = 0
-                    else:
-                        counter += 1
-                    if counter >= 10:
-                        break
-                        
-                    
+                    if vld is not None:
+                        if vld_acc > best_vld_acc:
+                            best_vld_acc = vld_acc
+                            counter = 0
+                        else:
+                            counter += 1
+                        if counter >= 10:
+                            break
+            
             saver.save(sess, 'saver/model.ckpt')
         
         self.log_finish()
@@ -179,9 +179,11 @@ class MLP:
             log_msg += '; batch size: {:d}'.format(batch_size)
         print(log_msg)
         
-    def log_step_info(self, sess, x_trn, y_trn, x_vld, y_vld, step, train_time, logging):
-        loss, trn_acc = sess.run([self.cross_entropy, self.accuracy], feed_dict={self.x: x_trn, self.y_: y_trn})
-        vld_acc, _ = sess.run([self.accuracy, self.y_final], feed_dict={self.x: x_vld, self.y_: y_vld})
+    def log_step_info(self, sess, trn, vld, step, train_time, logging):
+        loss, trn_acc = sess.run([self.cross_entropy, self.accuracy], feed_dict={self.x: trn.x, self.y_: trn.y})
+        if vld is not None:
+            vld_acc = sess.run(self.accuracy, feed_dict={self.x: vld.x, self.y_: vld.y})
+        else: vld_acc = 0
         
         log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:f}'.format(step, loss, trn_acc, vld_acc, train_time)
         if logging: print(log_msg, file=self.log_file)

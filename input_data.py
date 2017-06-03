@@ -101,9 +101,12 @@ def generate_circles():
     return x, y, ['0', '1']
 
 def generate_moons():
-    x, y = datasets.make_moons(n_samples=1000, 
-                               shuffle=True, 
-                               noise=0.3, 
+    """
+    Fixed to check misclassification
+    """
+    x, y = datasets.make_moons(n_samples=1000,
+                               shuffle=True,
+                               noise=0.5,
                                random_state=None)
     return x, y, ['0', '1']
 
@@ -202,5 +205,5 @@ def print_classes_stats(y, classes):
     print('&'.join(map(str,dist)))
     
 if __name__ == '__main__':
-    x, y, _ = generate_noise()
+    x, y, _ = generate_moons()
     plot_2d_dataset(x, y)

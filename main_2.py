@@ -9,52 +9,39 @@ test thresholding
 from graphics import plot_binary_roc_curve, plot_confusion_matrix, plot_multiclass_roc_curve
 from data_utils import calc_roc_binary, calc_roc_multiclass
 from MLP import MLP
-import numpy as np
 import time
 from sklearn import metrics
-import matplotlib.pyplot as plt
 from DataSet import DataSet
 
 def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0.1, steps=100001, batch_size=256, hidden_layer=[2], regularization_penalty=0.0, graphics=False):
     print('learning rate {:g}; hidden_num {:s}'.format(learning_rate, str(hidden_layer)))
-        
+    
     mlp = MLP(learning_rate, [ds.num_features]+hidden_layer+[ds.num_classes], activation_function, optimizer, regularization_penalty)
-    result = mlp.train(steps, ds.trn.x, ds.trn.y, ds.vld.x, ds.vld.y, batch_size, logging=True)
+    result = mlp.train(steps, ds.trn, ds.vld, batch_size, logging=True)
     
     print(result)
-        
-    outputs = mlp.predict_proba(ds.tst.x, result[0])
-    predictions = [np.argmax(o) for o in outputs]
-    y_true = [np.argmax(y) for y in ds.tst.y]
-    accuracy_score = metrics.accuracy_score(y_true, predictions)
-    print('Accuracy: {0:f}'.format(accuracy_score))
-    print(metrics.classification_report(y_true, predictions))
     
-    fpr_binary, tpr_binary, roc_auc_binary = calc_roc_binary(ds.tst.y, outputs)
-    fpr_multiclass, tpr_multiclass, roc_auc_multiclass = calc_roc_multiclass(ds.tst.y, outputs, ds.class_names)
+    outputs = mlp.predict_proba(ds.tst.x)
+    y_pred = outputs.argmax(axis=1)
+    y_true = ds.tst.y.argmax(axis=1)
+    
+    accuracy_score = metrics.accuracy_score(y_true, y_pred)
+    print('Accuracy: {0:f}'.format(accuracy_score))
+    print(metrics.classification_report(y_true, y_pred))
+    
+    fpr_bin, tpr_bin, roc_auc_bin = calc_roc_binary(ds.tst.y, outputs)
+    fpr_multiclass, tpr_multiclass, roc_auc_multiclass = calc_roc_multiclass(ds.tst.y, outputs, ds.target_names)
     
     if graphics:
-        # plot confusion matrix
-        cnf_matrix = metrics.confusion_matrix(y_true, predictions)
-        np.set_printoptions(precision=2)
-        plt.figure()
-        plot_confusion_matrix(cnf_matrix, classes=ds.class_names)
-        plt.show()
-        
+        plot_confusion_matrix(y_true, y_pred, ds.target_names)
         #plot ROC curves for multiple output thresholds
         # Compute ROC curve and ROC area for each class
-        plt.figure()
-        plot_multiclass_roc_curve(fpr_multiclass, tpr_multiclass, roc_auc_multiclass, ds.class_names)
-        plt.show()
-        
+        plot_multiclass_roc_curve(fpr_multiclass, tpr_multiclass, roc_auc_multiclass, ds.target_names)
         # plot ROC curve for different rejection methods
-        plt.figure()
-        plot_binary_roc_curve(fpr_binary, tpr_binary, roc_auc_binary, 'tests/roc_{:s}_{:d}.png'.format(str(hidden_layer), int(time.time())))
-        plt.show()
-        
+        plot_binary_roc_curve(fpr_bin, tpr_bin, roc_auc_bin, 'tests/roc_{:s}_{:d}.png'.format(str(hidden_layer), int(time.time())))
         #plot Precision-Recall curves for multiple output threshols
         #plt.figure()
-        #plot_multiclass_precision_recall_curve(tst_y, outputs, class_names)
+        #plot_multiclass_precision_recall_curve(tst_y, outputs, target_names)
         #plt.show()
         
         # plot precision-recall curve
@@ -63,8 +50,7 @@ def test(ds, activation_function='softmax', optimizer='adagrad', learning_rate=0
         #draw_precision_recall(precision, recall, average_precision, 'tests/prr_{:s}_{:d}.png'.format(str(hidden_layer), int(time.time())))
         #plt.show()
         
-    return [result[1], result[2], result[3], result[4], accuracy_score, roc_auc_binary[0], roc_auc_binary[1], roc_auc_binary[2], roc_auc_multiclass["micro"], roc_auc_multiclass["macro"]]
-
+    return [result[1], result[2], result[3], result[4], accuracy_score, roc_auc_bin[0], roc_auc_bin[1], roc_auc_bin[2], roc_auc_multiclass["micro"], roc_auc_multiclass["macro"]]
 
 if __name__ == '__main__':
     ds = DataSet(1)
@@ -123,4 +109,3 @@ if __name__ == '__main__':
     print(table)
     """
     test(ds, 'sigmoid', 'Adam', 0.01, 10000, 256, [16], graphics=True)
-    

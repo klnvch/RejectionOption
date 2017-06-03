@@ -35,7 +35,7 @@ class DataSet:
                 11 - Noise
         """
         # load data
-        x, y, self.class_names = get_data(dataset, binarize=True, preprocess=1)
+        x, y, self.target_names = get_data(dataset, binarize=True, preprocess=1)
         self.num_features = x.shape[1]
         self.num_classes = y.shape[1]
         #
