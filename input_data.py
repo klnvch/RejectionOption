@@ -7,7 +7,6 @@ Created on Oct 26, 2016
 import numpy as np
 from sklearn import datasets
 from sklearn import preprocessing
-from data_utils import count_distribution
 from collections import Counter
 from graphics import plot_2d_dataset
 
@@ -16,7 +15,8 @@ DATA_DIR = 'datasets/'
 def read_letter_recognition_image_data():
     x = []
     y = []
-    classes = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+    classes = ['A','B','C','D','E','F','G','H','I','J','K','L','M',
+               'N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
     with open(DATA_DIR + 'Letter recognition/letter-recognition.data', 'r') as filestream:
         for line in filestream:
             currentline = line.split(',')
@@ -100,13 +100,17 @@ def generate_circles():
                                  factor=.5)
     return x, y, ['0', '1']
 
-def generate_moons():
+def generate_moons(n_samples=1000, noise=0.3):
     """
-    Fixed to check misclassification
+    Keep noise=0.3  to create two classes with overlapping regions,
+    so it can be possible to separate them by three hyperplanes
+    
+    Keep noise=0.1 to create two classes tha are separable,
+    but not linearly non-separable
     """
-    x, y = datasets.make_moons(n_samples=1000,
+    x, y = datasets.make_moons(n_samples=n_samples,
                                shuffle=True,
-                               noise=0.5,
+                               noise=noise,
                                random_state=None)
     return x, y, ['0', '1']
 
@@ -128,7 +132,7 @@ def generate_noise(size = 200):
     x = np.random.uniform(-1, 1, (size, 2))
     return x, [0]*size, ['0']
 
-def get_data(i, binarize=False, preprocess=0):
+def get_data(i, size, binarize=False, preprocess=0):
     """Returns choosen dataset.
 
     Args:
@@ -137,12 +141,14 @@ def get_data(i, binarize=False, preprocess=0):
             2 - Iris data
             3 - Glass identification data
             4 - Image segmentation data
-            5 - Moons
+            5 - Moons non-separable
             6 - Blobs
             7 - Circles
             8 - Gaussian Quantiles modified
             9 - Multiclass
             10 - Gaussian Quantiles
+            11 - Noise
+            12 - Moons separable
             
         preprocess: index of algorithm
             1 - scale
@@ -159,13 +165,14 @@ def get_data(i, binarize=False, preprocess=0):
     elif i == 2: x, y, classes = read_iris_data()
     elif i == 3: x, y, classes = read_glass_identification_data()
     elif i == 4: x, y, classes = read_image_segmentation_data()
-    elif i == 5: x, y, classes = generate_moons()
+    elif i == 5: x, y, classes = generate_moons(size, 0.3)
     elif i == 6: x, y, classes = generate_blobs()
     elif i == 7: x, y, classes = generate_circles()
     elif i == 8: x, y, classes = generate_quantiles(mode=2)
     elif i == 9: x, y, classes = generate_multiclass()
     elif i == 10: x, y, classes = generate_quantiles(mode=1)
     elif i == 11: x, y, classes = generate_noise()
+    elif i == 12: x, y, classes = generate_moons(size, 0.1)
     else: raise ValueError("unknown dataset: " + i)
     
     if binarize:
@@ -191,6 +198,19 @@ def print_stats(x, clases):
     print(x.max(axis=0))
     print(x.mean(axis=0))
 
+def count_distribution(y):
+    """
+    Check if needed
+    """
+    d = [0] * y.shape[1]
+    
+    for i in y:
+        d[i.argmax()] += 1
+        
+    #d = np.asarray(d) / ds_y.shape[0]
+    print(d)
+    return d
+
 def print_classes_stats(y, classes):
     """
     Helper for generating class distibution table in chapter 1
@@ -205,5 +225,5 @@ def print_classes_stats(y, classes):
     print('&'.join(map(str,dist)))
     
 if __name__ == '__main__':
-    x, y, _ = generate_moons()
+    x, y, _ = generate_moons(1000, 0.1)
     plot_2d_dataset(x, y)

@@ -3,26 +3,13 @@ Created on Oct 26, 2016
 
 @author: anton
 '''
-
 import numpy as np
 import heapq
 from sklearn import metrics
 from scipy import interp
 import itertools
+import time
 
-def count_distribution(y):
-    """
-    Check if needed
-    """
-    d = [0] * y.shape[1]
-    
-    for i in y:
-        d[i.argmax()] += 1
-        
-    #d = np.asarray(d) / ds_y.shape[0]
-    print(d)
-    return d
-    
 def remove_class(x, y, names, indices):
     """
     Removes classes from indices in dataset (x, y)
@@ -45,36 +32,6 @@ def remove_class(x, y, names, indices):
             new_x.append(x)
             new_y.append(np.delete(_y, indices))
     return np.array(new_x), np.array(new_y), new_names, np.array(outliers)
-
-def add_noise_as_no_class(x, y, noise_size=None, noise_output=None):
-    """
-    Adds noise with low output to a dataset
-    Args:
-        x: features
-        y: binarized outputs
-        noise_size: numner of noise patterns, default is side of the dataset
-        noise_output: noise output, defult is 1./number of classes
-    Returns:
-        new dataset, ds_x,ds_y and outliers
-    """
-    assert x.shape[0] == y.shape[0]
-    
-    size = x.shape[0]    # number of patterns
-    num_features = x.shape[1]  # number of features
-    num_classes = y.shape[1]  # number of classes
-    
-    if noise_size is None: noise_size = size
-    
-    if noise_output is None: noise_output = 1.0/num_classes
-    
-    noise_x = np.random.uniform(x.min(), x.max(), [noise_size, num_features])
-    noise_y = np.array([[noise_output] * num_classes] * noise_size)
-    
-    new_x = np.concatenate([x, noise_x])
-    new_y = np.concatenate([y, noise_y])
-    
-    assert new_x.shape[0] == new_y.shape[0]
-    return new_x, new_y
 
 def add_noise_as_a_class(x, y, names, out_x=None, outliers_size=None):
     """
@@ -131,20 +88,22 @@ def threshold_output(outputs):
     return np.max(outputs, axis=1)
 
 def threshold_differential(outputs):
-    result = []
-    for o in outputs:
-        x = heapq.nlargest(2, o)
-        result.append(x[0] - x[1])
-    return np.array(result)
+    return np.array([diff_two_max(o) for o in outputs])
 
 def threshold_ratio(outputs):
-    result = []
-    for o in outputs:
-        x = heapq.nlargest(2, o)
-        result.append(1.0 - x[1] / x[0])
-    return np.array(result)
+    return np.array([ratio_two_max(o) for o in outputs])
 
-def calc_roc_binary(outputs_true, outputs_pred, outputs_outliers=None):
+def diff_two_max(output):
+    x = heapq.nlargest(2, output)
+    return x[0] - x[1]
+
+def ratio_two_max(output):
+    x = heapq.nlargest(2, output)
+    ratio = 1.0 - x[1] / x[0]
+    if 0.0 <= ratio <= 1.0: return ratio
+    else:                   return 1.0
+
+def calc_roc_binary(outputs_true, outputs_pred, outputs_outl=None):
     """
     Calcs binary ROC curve or for single threshold
     Args:
@@ -152,7 +111,7 @@ def calc_roc_binary(outputs_true, outputs_pred, outputs_outliers=None):
         outputs_pred : real output
         outputs_outliers : output for outliers
     Returns:
-        FPR, TPR, area under the ROC curve
+        FPR, TPR, AUC
     """
     fpr = dict()
     tpr = dict()
@@ -163,14 +122,15 @@ def calc_roc_binary(outputs_true, outputs_pred, outputs_outliers=None):
     y_true = [a==b for a,b in zip(y_ideal, y_real)]
     
     for i in [0, 1, 2]: # across rejection methods
-        if outputs_outliers is None:
-            y_score = rejection_score(outputs_pred, i)
-            fpr[i], tpr[i], _ = my_roc_curve(y_true, y_score)
-        else:
-            outputs = np.concatenate([outputs_pred, outputs_outliers])
-            y_score = rejection_score(outputs, i)
-            y_true_all = y_true + [False] * outputs_outliers.shape[0]
-            fpr[i], tpr[i], _ = metrics.roc_curve(y_true_all, y_score)
+        if outputs_outl is not None:
+            outputs_pred = np.concatenate([outputs_pred, outputs_outl])
+            y_true = y_true + [False] * outputs_outl.shape[0]
+        
+        y_score = rejection_score(outputs_pred, i)
+        fpr[i], tpr[i], _ = metrics.roc_curve(y_true, y_score)
+        # add 0 and 1 to get full curve
+        fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
+        tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
         roc_auc[i] = metrics.auc(fpr[i], tpr[i])
     
     return fpr, tpr, roc_auc
@@ -191,15 +151,31 @@ def my_roc_curve(y_true, y_score):
             else:
                 if score >= t: fp += 1
                 else:          tn += 1
-        
-        fpr.append(fp / (fp + tn))
-        tpr.append(tp / (tp + fn))
+        if fp + tn > 0: fpr.append(fp / (fp + tn))
+        else:           fpr.append(1.0)
+        if tp + fn > 0: tpr.append(tp / (tp + fn))
+        else:           tpr.append(1.0)
     
     fpr, tpr, y_score = zip(*sorted(zip(fpr, tpr, y_score)))
+    # add 0 and 1 to get full curve
+    fpr = np.concatenate(([0.], fpr, [1.]))
+    tpr = np.concatenate(([0.], tpr, [1.]))
     
     return fpr, tpr, y_score
 
-def calc_roc_multiple(outputs_true, outputs_pred, labels):
+def calc_roc_multiple(outputs_true, outputs_pred, labels, outputs_outl=None):
+    """Calculates ROC for multiple output thresholds
+    
+    Output i with threshold T_i must deal with:
+        - patterns from class i, that are classified as i
+        - patterns from class j, that are classified as i
+        - outliers,              that are classified as i
+    
+    Caclulation below are very expensive
+    871 x 729 size takes 127.252952 seconds
+    421 x 369 size takes  16.488903 seconds
+    """
+    start_time = time.time()
     n_classes = len(labels)
     
     y_ideal = outputs_true.argmax(axis=1)
@@ -209,9 +185,18 @@ def calc_roc_multiple(outputs_true, outputs_pred, labels):
     
     y_true_classes = [[] for _ in range(n_classes)]
     y_score_classes = [[] for _ in range(n_classes)]
-    for i, correctness, score in zip(y_ideal, y_true, y_score):
+    
+    for i, correctness, score in zip(y_real, y_true, y_score):
         y_true_classes[i].append(correctness)
         y_score_classes[i].append(score)
+    if outputs_outl is not None:
+        for o in outputs_outl:
+            i = o.argmax()
+            y_true_classes[i].append(False)
+            y_score_classes[i].append(o.max())
+    
+    print('calc_roc_multiple: {:d} x {:d} size'
+          .format(len(y_true_classes[0]), len(y_true_classes[1])))
     
     fpr = []
     tpr = []
@@ -238,27 +223,40 @@ def calc_roc_multiple(outputs_true, outputs_pred, labels):
                 if score >= t1: fp += 1
                 else:           tn += 1
         
-        fpr.append(fp / (fp + tn))
-        tpr.append(tp / (tp + fn))
+        if fp + tn > 0: fpr.append(fp / (fp + tn))
+        else:           fpr.append(1.0)
+        if tp + fn > 0: tpr.append(tp / (tp + fn))
+        else:           tpr.append(1.0)
     
-    fpr, tpr = zip(*sorted(zip(fpr, tpr)))
+    tpr, fpr = clean_dots(tpr, fpr, min)
+    fpr, tpr = clean_dots(fpr, tpr, max)
+    #
+    print('calc_roc_multiple: {:9f} seconds'.format(time.time() - start_time))
     
-    clean_fpr = [fpr[0]]
-    clean_tpr = [tpr[0]]
-    for x, y in zip(fpr, tpr):
-        if clean_fpr[-1] == x:
-            clean_tpr[-1] = max(clean_tpr[-1], y) 
-        else:
-            clean_fpr.append(x)
-            clean_tpr.append(y)
-        
-    
-    return clean_fpr, clean_tpr, metrics.auc(clean_fpr, clean_tpr)
+    return fpr, tpr, metrics.auc(fpr, tpr)
 
-def calc_roc_multiclass(outputs_true, outputs_pred, labels,
-                        outputs_outliers=None):
-    """
-    Calcs binary ROC curve or for multiple output thresholds
+def clean_dots(xs, ys, comparison):
+    xs, ys = zip(*sorted(zip(xs, ys)))
+    new_xs = [xs[0]]
+    new_ys = [ys[0]]
+    for x, y in zip(xs, ys):
+        if new_xs[-1] == x:
+            new_ys[-1] = comparison(new_ys[-1], y) 
+        else:
+            new_xs.append(x)
+            new_ys.append(y)
+    xs = np.concatenate(([0.], new_xs, [1.]))
+    ys = np.concatenate(([0.], new_ys, [1.]))
+    return xs, ys
+
+def calc_roc_multiclass(outputs_true, outputs_pred, labels, outputs_outl=None):
+    """ Calcs binary ROC curve or for multiple output thresholds
+    
+    Output i with threshold T_i must deal with:
+        - patterns from class i, that are classified as i
+        - patterns from class j, that are classified as i
+        - outliers,              that are classified as i
+    
     Args:
         outputs_true: desired output
         outputs_pred: real output
@@ -280,20 +278,21 @@ def calc_roc_multiclass(outputs_true, outputs_pred, labels,
     
     y_true_classes = [[] for _ in range(n_classes)]
     y_score_classes = [[] for _ in range(n_classes)]
-    for i, correctness, score in zip(y_ideal, y_true, y_score):
+    for i, correctness, score in zip(y_real, y_true, y_score):
         y_true_classes[i].append(correctness)
         y_score_classes[i].append(score)
-    
-    if outputs_outliers is not None:
-        y_real_outliers = [np.argmax(o) for o in outputs_outliers]
-        y_score_outliers = rejection_score(outputs_outliers, 0)
-        for prediction, score in zip(y_real_outliers, y_score_outliers):
-            y_true_classes[prediction].append(False)
-            y_score_classes[prediction].append(score)
+    if outputs_outl is not None:
+        for o in outputs_outl:
+            i = o.argmax()
+            y_true_classes[i].append(False)
+            y_score_classes[i].append(o.max())
     
     for i in range(n_classes):
         if len(y_true_classes) > 1:
             fpr[i], tpr[i], _ = metrics.roc_curve(y_true_classes[i], y_score_classes[i])
+            # add 0 and 1 to get full curve
+            fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
+            tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
             roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         else:
             fpr[i] = tpr[i] = roc_auc[i] = None

@@ -123,7 +123,7 @@ class MLP:
                         sess.run(self.train_step, feed_dict={self.x: x[i:i+batch_size], self.y_: y[i:i+batch_size]})
                 finish_time = time.time()
                 train_time += (finish_time - start_time)
-                if step%10 == 0:
+                if step%100 == 0:
                     loss, trn_acc, vld_acc = self.log_step_info(sess, trn, vld, step, train_time, logging)
                     train_time = 0
                     if vld is not None:
@@ -148,6 +148,7 @@ class MLP:
             return sess.run(self.accuracy, feed_dict={self.x: x, self.y_: y})
         
     def predict_proba(self, x, filename='saver/model.ckpt'):
+        if x is None: return None
         saver = tf.train.Saver()
         with tf.Session() as sess:
             saver.restore(sess, filename)

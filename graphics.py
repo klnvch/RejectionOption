@@ -47,13 +47,13 @@ def plot_decision_regions(x, y, classifier, reject=None,
         scores = scores.reshape(xx.shape)
         cnt = plt.contourf(xx, yy, scores, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
         plt.clabel(cnt, fmt='%2.1f', inline=False, colors='red', fontsize=14)
+    plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1), s=6)
     plt.contour(xx, yy, Z, colors='white')
     plt.axis('off')
 
     # Plot also the training points
     # color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
     # colors = [color_map[_y] for _y in y]
-    plt.scatter(x[:, 0], x[:, 1], c=y.argmax(axis=1))  # @UndefinedVariable
     # plt.colorbar(imshow_handle, orientation='horizontal')
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
