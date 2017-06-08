@@ -3,7 +3,6 @@ Created on Oct 29, 2016
 
 @author: anton
 '''
-
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
@@ -55,7 +54,7 @@ def plot_decision_regions(x, y, classifier, reject=None,
     # plt.colorbar(imshow_handle, orientation='horizontal')
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
-    else: plt.clf()
+    else: plt.close()
 
 def plot_binary_roc_curve(fpr, tpr, roc_auc, savefig=None, show=True):
     colors = plt.cm.rainbow(np.linspace(0,1,4))  # @UndefinedVariable
@@ -77,7 +76,7 @@ def plot_binary_roc_curve(fpr, tpr, roc_auc, savefig=None, show=True):
     plt.legend(loc="lower right")
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
-    else: plt.clf()
+    else: plt.close()
     
 def draw_precision_recall(precision, recall, average_precision, filename=None):
     colors = itertools.cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
@@ -141,7 +140,7 @@ def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True):
     plt.xlabel('Predicted label')
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
-    else: plt.clf()
+    else: plt.close()
 
 def plot_multiclass_roc_curve(fpr, tpr, roc_auc, labels,
                               savefig=None, show=True):
@@ -176,7 +175,7 @@ def plot_multiclass_roc_curve(fpr, tpr, roc_auc, labels,
     plt.legend(loc="lower right")
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
-    else: plt.clf()
+    else: plt.close()
 
 def plot_multiclass_precision_recall_curve(y_test, y_score, class_names):
     """
