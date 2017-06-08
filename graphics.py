@@ -10,8 +10,6 @@ import itertools
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
 
 def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
     plt.figure(figsize=figsize)
@@ -60,7 +58,7 @@ def plot_decision_regions(x, y, classifier, reject=None,
     else: plt.clf()
 
 def plot_binary_roc_curve(fpr, tpr, roc_auc, savefig=None, show=True):
-    colors = itertools.cycle(['aqua', 'darkorange', 'cornflowerblue', 'red'])
+    colors = plt.cm.rainbow(np.linspace(0,1,4))  # @UndefinedVariable
     labels = ['Single output threshold (AUC: {0:0.4f})',
               'Single differential threshold (AUC: {0:0.4f})',
               'Single ratio threshold (AUC: {0:0.4f})',
@@ -204,10 +202,10 @@ def plot_multiclass_precision_recall_curve(y_test, y_score, class_names):
 
     # Plot Precision-Recall curve for each class
     lw = 2
-    colors = get_cmap(n_classes)
+    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
     
-    for i in range(n_classes):
-        plt.plot(recall[i], precision[i], color=colors(i), lw=lw,
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(recall[i], precision[i], color=color, lw=lw,
              label='Precision-recall curve of class ''{0}'' (area = {1:0.4f})'
                    ''.format(class_names[i], average_precision[i]))
 
@@ -221,19 +219,3 @@ def plot_multiclass_precision_recall_curve(y_test, y_score, class_names):
     plt.ylabel('Precision')
     plt.title('Precision-Recall curves for multiple thresholds')
     plt.legend(loc="lower right")
-    
-
-
-
-def get_cmap(N):
-    '''Returns a function that maps each index in 0, 1, ... N-1 to a distinct 
-    RGB color.
-    
-    Copied from http://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
-    '''
-    color_norm = colors.Normalize(vmin=0, vmax=N - 1)
-    scalar_map = cmx.ScalarMappable(norm=color_norm, cmap='hsv') 
-    def map_index_to_rgb_color(index):
-        return scalar_map.to_rgba(index)
-    return map_index_to_rgb_color
-    
