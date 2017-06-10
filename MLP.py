@@ -97,16 +97,17 @@ class MLP:
             return activation_function(tf.matmul(x, w) + b)
         
         
-    def train(self, steps, trn, vld=None, batch_size=None, logging=True):
+    def train(self, steps, trn, vld=None, batch_size=None, log=True):
         """
         if early stopping not None output is
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc, best_area0, best_area1 and best_area2
         """
         self.clean_model_dir()
-        self.log_init(steps, batch_size, logging)
+        self.log_init(steps, batch_size, log)
         
         saver = tf.train.Saver()
-        train_time = 0
+        save_path = 'saver/model.ckpt'
+        dt = 0
         counter = 0
         best_vld_acc = 0
         step = 0
@@ -120,27 +121,35 @@ class MLP:
                     sess.run(self.train_step, feed_dict={self.x: x, self.y_: y})
                 else:
                     for i in range(0, trn.x.shape[0], batch_size):
-                        sess.run(self.train_step, feed_dict={self.x: x[i:i+batch_size], self.y_: y[i:i+batch_size]})
+                        sess.run(self.train_step, 
+                                 feed_dict={self.x: x[i:i+batch_size],
+                                            self.y_: y[i:i+batch_size]})
                 finish_time = time.time()
-                train_time += (finish_time - start_time)
+                dt += (finish_time - start_time)
                 if step%100 == 0:
-                    loss, trn_acc, vld_acc = self.log_step_info(sess, trn, vld, step, train_time, logging)
-                    train_time = 0
+                    loss, trn_acc, vld_acc = \
+                        self.log_step_info(sess, trn, vld, step, dt, log)
+                    dt = 0
+                    # early stopping
                     if vld is not None:
                         if vld_acc > best_vld_acc:
                             best_vld_acc = vld_acc
                             counter = 0
+                            saver.save(sess, save_path)
+                            info = [save_path, step, loss, trn_acc, vld_acc]
                         else:
                             counter += 1
                         if counter >= 10:
                             break
             
-            saver.save(sess, 'saver/model.ckpt')
+            if vld is None:
+                info = [save_path, step, loss, trn_acc, vld_acc]
+                saver.save(sess, save_path)
         
         self.log_finish()
-    
-        return ['saver/model.ckpt', step, loss, trn_acc, vld_acc]
-    
+        
+        return info
+
     def test(self, x, y, filename='saver/model.ckpt'):
         saver = tf.train.Saver()
         with tf.Session() as sess:

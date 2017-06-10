@@ -59,8 +59,8 @@ class DataSet:
             splt2 = train_test_split(splt1[0], splt1[2],
                                      test_size=split[1] / (1.0 - split[0]))
             self.trn = Set(splt1[1], splt1[3])
-            self.vld = Set(splt2[0], splt2[2])
-            self.tst = Set(splt2[1], splt2[3])
+            self.vld = Set(splt2[1], splt2[3])
+            self.tst = Set(splt2[0], splt2[2])
             print('{:d}|{:d}|{:d}'.format(self.trn.size, self.vld.size, 
                                           self.tst.size))
         elif len(split) == 2:
