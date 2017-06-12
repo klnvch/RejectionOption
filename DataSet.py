@@ -8,7 +8,6 @@ Class for preparation dataset for ANN
 import numpy as np
 from input_data import get_data
 from sklearn.model_selection import train_test_split
-from data_utils import add_noise_as_a_class
 
 class Set:
     def __init__(self, x, y):
@@ -17,6 +16,20 @@ class Set:
         self.size = x.shape[0]
         self.n_features = x.shape[1]
         self.n_classes = y.shape[1]
+    
+    def add_noise_class(self, noise_size=None):
+        if noise_size is None: noise_size = self.size
+        
+        noise_x = np.random.uniform(self.x.min()-1, self.x.max()+1,
+                                    [noise_size, self.n_features])
+        noise_y = np.array([[0]*(self.n_classes) + [1]] * noise_size)
+        
+        self.x = np.concatenate([self.x, noise_x])
+        self.y = np.append(self.y, np.array([[0]] * self.size), axis=1)
+        self.y = np.concatenate([self.y, noise_y])
+        
+        self.size = self.y.shape[0]
+        self.n_classes = self.y.shape[1]
 
 class DataSet:
     
@@ -47,12 +60,6 @@ class DataSet:
         self.n_features = x.shape[1]
         self.n_classes = y.shape[1]
         self.outliers = None
-        #
-        if add_noise == 2:
-            x, y, self.class_names = add_noise_as_a_class(x, y,
-                                                          self.class_names,
-                                                          None, 100)
-            self.n_classes += 1
         # split into 60%, 20% and 20%
         if len(split) == 3:
             splt1 = train_test_split(x, y, test_size=split[0])
@@ -69,15 +76,17 @@ class DataSet:
             self.vld = None
             self.tst = Set(splt1[0], splt1[2])
             print('{:d}|{:d}'.format(self.trn.size, self.tst.size))
-        
         # add noise
         if add_noise == 1:
             self.add_noise_as_no_class(None, noise_output)
-            if self.vld is None:
-                print('{:d}|{:d}'.format(self.trn.size, self.tst.size))
-            else:
-                print('{:d}|{:d}|{:d}'.format(self.trn.size, self.vld.size, 
-                                              self.tst.size))
+        elif add_noise == 2:
+            self.add_noise_as_a_class(None)
+        # print final sizes
+        if self.vld is None:
+            print('{:d}|{:d}'.format(self.trn.size, self.tst.size))
+        else:
+            print('{:d}|{:d}|{:d}'.format(self.trn.size, self.vld.size, 
+                                          self.tst.size))
     
     def add_noise_as_no_class(self, noise_size=None, noise_output=None):
         """
@@ -103,3 +112,18 @@ class DataSet:
         self.outliers = np.random.uniform(self.tst.x.min()-1,
                                           self.tst.x.max()+1,
                                           [self.tst.size, self.n_features])
+        
+    def add_noise_as_a_class(self, noise_size=None):
+        """
+        Adds noise as a class to a dataset
+        Args:
+            noise_size: numner of noise patterns, default is side of the dataset
+        Returns:
+            new dataset, ds_x,ds_y and outliers
+        """
+        
+        self.trn.add_noise_class(noise_size)
+        if self.vld is not None: self.vld.add_noise_class(noise_size)
+        self.tst.add_noise_class(noise_size)
+        self.target_names = np.concatenate([self.target_names, ['Outliers']])
+        self.n_classes += 1

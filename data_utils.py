@@ -33,43 +33,6 @@ def remove_class(x, y, names, indices):
             new_y.append(np.delete(_y, indices))
     return np.array(new_x), np.array(new_y), new_names, np.array(outliers)
 
-def add_noise_as_a_class(x, y, names, out_x=None, outliers_size=None):
-    """
-    Adds noise as a class to a dataset
-    Args:
-        x: features
-        y: binarized outputs
-        names: names of classes
-        outliers: pattern, uniform distributed if None
-        outliers_size: numner of noise patterns, default is side of the dataset
-    Returns:
-        new dataset, ds_x,ds_y and outliers
-    """
-    assert x.shape[0] == y.shape[0]
-    
-    size = x.shape[0]    # number of patterns
-    num_features = x.shape[1]  # number of features
-    num_classes = y.shape[1]  # number of classes
-    
-    if out_x is None:
-        if outliers_size is None: outliers_size = size
-        out_x = np.random.uniform(x.min(), x.max(), 
-                                  [outliers_size, num_features])
-    else:
-        outliers_size = out_x.shape[0]
-    
-    out_y = np.array([[0]*(num_classes) + [1]] * outliers_size)
-    
-    new_x = np.concatenate([x, out_x])
-    new_y = np.append(y, np.array([[0]] * size), axis=1) # add column
-    new_y = np.concatenate([new_y, out_y])
-    new_names = np.concatenate([names, ['Outliers']])
-    
-    assert new_x.shape[0] == new_y.shape[0]
-    assert new_x.shape[0] == size + outliers_size
-    
-    return new_x, new_y, new_names
-
 def rejection_score(outputs, rejection_method):
     """
     Compute scores for single threshold
