@@ -149,13 +149,14 @@ class MLP:
         self.log_finish()
         
         return info
-
-    def test(self, x, y, filename='saver/model.ckpt'):
+    
+    def score(self, tst, filename='saver/model.ckpt'):
         saver = tf.train.Saver()
         with tf.Session() as sess:
             saver.restore(sess, filename)
-            return sess.run(self.accuracy, feed_dict={self.x: x, self.y_: y})
-        
+            return sess.run(self.accuracy,
+                            feed_dict={self.x: tst.x, self.y_: tst.y})
+    
     def predict_proba(self, x, filename='saver/model.ckpt'):
         if x is None: return None
         saver = tf.train.Saver()

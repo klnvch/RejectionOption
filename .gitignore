@@ -3,3 +3,4 @@
 /test.txt
 /.project
 /.pydevproject
+__pycache__/

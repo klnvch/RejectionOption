@@ -11,6 +11,8 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 
 def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
+    if y.ndim == 2: y = y.argmax(axis=1)
+    
     plt.figure(figsize=figsize)
     plt.axis('off')
     plt.scatter(x[:, 0], x[:, 1], c=y)
@@ -20,7 +22,20 @@ def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
 
 def plot_decision_regions(x, y, classifier, reject=None,
                           figsize=(4.1, 4.1), savefig=None, show=True,
-                          step_size=0.02):
+                          step_size=0.02, reject_output=False):
+    """ Plot decision regions
+    
+    
+    Args:
+      x:
+      y:
+      classifier:
+      figsize:
+      savefig:
+      show:
+      step_szie:
+      reject_otput: indicates if the last class ignored as the region
+    """
     # create a mesh to plot in
     x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
     y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
@@ -36,7 +51,9 @@ def plot_decision_regions(x, y, classifier, reject=None,
     # imshow_handle = plt.imshow(Z, interpolation='nearest', 
     #           extent=(x_min, x_max, y_min, y_max), aspect='auto', 
     #           origin="lower", cmap=plt.cm.PuOr_r)  # @UndefinedVariable
-    Z = outputs.argmax(axis=1)
+    Z = outputs
+    if reject_output: Z = Z[:,:-1]
+    Z = Z.argmax(axis=1)
     Z = Z.reshape(xx.shape)
     plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)  # @UndefinedVariable
     if reject is not None:
@@ -77,7 +94,28 @@ def plot_binary_roc_curve(fpr, tpr, roc_auc, savefig=None, show=True):
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
     else: plt.close()
+
+def plot_roc_curves(curves, savefig=None, show=True):
+    colors = plt.cm.rainbow(np.linspace(0,1,curves.shape[0]))  # @UndefinedVariable
+    label_auc = ' (AUC: {0:0.4f})'
     
+    plt.figure()
+    for curve, color in zip(curves, colors):
+        fpr, tpr, auc, label = curve
+        plt.plot(fpr, tpr, color=color, lw=2,
+                 label=label + label_auc.format(auc))
+    
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    #plt.title('ROC curves for single threshold')
+    plt.legend(loc="lower right")
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.close()
+
 def draw_precision_recall(precision, recall, average_precision, filename=None):
     colors = itertools.cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
     for i, color in zip([0, 1, 2], colors):
@@ -93,7 +131,7 @@ def draw_precision_recall(precision, recall, average_precision, filename=None):
     if filename is not None:
         plt.savefig(filename)
 
-def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True):
+def plot_confusion_matrix(outputs, y, labels, savefig=None, show=True):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -111,6 +149,10 @@ def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True):
     /plot_confusion_matrix.html
     #sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
     """
+    
+    y_pred = outputs.argmax(axis=1)
+    y_true = y.argmax(axis=1)
+    
     cm = confusion_matrix(y_true, y_pred)
     plt.figure()
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)  # @UndefinedVariable
