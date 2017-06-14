@@ -18,7 +18,8 @@ from sklearn.utils import shuffle
 
 class MLP:
     
-    def __init__(self, learning_rate, layers, activation_function='softmax', optimizer_name=None, regularization_penalty=0.0):
+    def __init__(self, learning_rate, layers, activation_function='softmax',
+                 optimizer_name=None, beta=0.0):
         print('init...')
         print('learning rate: {:g}, activation function: {:s}, optimizer: {:s}'.format(learning_rate, activation_function, optimizer_name))
         print('layers: {:s}'.format(str(layers)))
@@ -34,28 +35,33 @@ class MLP:
         self.y_ = tf.placeholder(tf.float32, [None, self.num_output])
         
         if len(self.num_hidden) == 0:
-            y = self.add_layer(self.x, [self.num_input, self.num_output], None, '')
-
+            y, regularizers = self.add_layer(self.x, [self.num_input, self.num_output], None, '')
+            
         elif len(self.num_hidden) == 1:
-            h = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.sigmoid, '1')
-            y = self.add_layer(h,      [self.num_hidden[0], self.num_output],    None,          '2')
+            h, r1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.sigmoid, '1')
+            y, r2 = self.add_layer(h,      [self.num_hidden[0], self.num_output],    None,          '2')
+            regularizers = r1 +r2
             
         elif len(self.num_hidden) == 2:
-            h1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.relu, '1')
-            h2 = self.add_layer(h1,     [self.num_hidden[0], self.num_hidden[1]], tf.nn.relu, '2')
-            y  = self.add_layer(h2,     [self.num_hidden[1], self.num_output],    None,       '3')
+            h1, r1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.relu, '1')
+            h2, r2 = self.add_layer(h1,     [self.num_hidden[0], self.num_hidden[1]], tf.nn.relu, '2')
+            y, r3  = self.add_layer(h2,     [self.num_hidden[1], self.num_output],    None,       '3')
+            regularizers = r1 +r2 + r3
             
         elif len(self.num_hidden) == 3:
-            h1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.relu, '1')
-            h2 = self.add_layer(h1,     [self.num_hidden[0], self.num_hidden[1]], tf.nn.relu, '2')
-            h3 = self.add_layer(h2,     [self.num_hidden[1], self.num_hidden[2]], tf.nn.relu, '3')
-            y  = self.add_layer(h3,     [self.num_hidden[2], self.num_output],    None,       '4')
-
+            h1, r1 = self.add_layer(self.x, [self.num_input,     self.num_hidden[0]], tf.nn.relu, '1')
+            h2, r2 = self.add_layer(h1,     [self.num_hidden[0], self.num_hidden[1]], tf.nn.relu, '2')
+            h3, r3 = self.add_layer(h2,     [self.num_hidden[1], self.num_hidden[2]], tf.nn.relu, '3')
+            y, r4  = self.add_layer(h3,     [self.num_hidden[2], self.num_output],    None,       '4')
+            regularizers = r1 + r2 + r3 + r4
+            
         if activation_function == 'softmax':
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.y_, logits=y))
+            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.y_, logits=y))
         elif activation_function == 'sigmoid':
-            self.cross_entropy = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_, logits=y))
-                        
+            self.loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_, logits=y))
+        
+        self.loss = tf.reduce_mean(self.loss + beta * regularizers)
+        
         if optimizer_name == 'GradientDescent':
             optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         elif optimizer_name == 'Adadelta':
@@ -70,10 +76,10 @@ class MLP:
             optimizer = tf.train.FtrlOptimizer(learning_rate)
         elif optimizer_name == 'RMSProp':
             optimizer = tf.train.RMSPropOptimizer(learning_rate)
-            
-        self.train_step = optimizer.minimize(self.cross_entropy)
         
-        #grads_and_vars = optimizer.compute_gradients(self.cross_entropy)
+        self.train_step = optimizer.minimize(self.loss)
+        
+        #grads_and_vars = optimizer.compute_gradients(self.loss)
         #grad_norms = [tf.nn.l2_loss(g) for g, _ in grads_and_vars]
         #self.grad_norm = tf.add_n(grad_norms)
     
@@ -91,10 +97,11 @@ class MLP:
                         name='weights_' + postfix_name)
         b = tf.Variable(tf.constant(0.1, shape=[shape[1]]), 
                         name='biases_' + postfix_name)
+        l2_loss = tf.nn.l2_loss(w)
         if activation_function is None:
-            return tf.matmul(x, w) + b
+            return tf.matmul(x, w) + b, l2_loss
         else:
-            return activation_function(tf.matmul(x, w) + b)
+            return activation_function(tf.matmul(x, w) + b), l2_loss
         
         
     def train(self, steps, trn, vld=None, batch_size=None, log=True):
@@ -191,7 +198,7 @@ class MLP:
         print(log_msg)
         
     def log_step_info(self, sess, trn, vld, step, train_time, logging):
-        loss, trn_acc = sess.run([self.cross_entropy, self.accuracy], feed_dict={self.x: trn.x, self.y_: trn.y})
+        loss, trn_acc = sess.run([self.loss, self.accuracy], feed_dict={self.x: trn.x, self.y_: trn.y})
         if vld is not None:
             vld_acc = sess.run(self.accuracy, feed_dict={self.x: vld.x, self.y_: vld.y})
         else: vld_acc = 0
