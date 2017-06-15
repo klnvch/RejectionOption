@@ -53,7 +53,7 @@ def diff_two_max(output):
 
 def ratio_two_max(output):
     x = heapq.nlargest(2, output)
-    ratio = x[1] / x[0]
+    ratio = 1.0 - x[1] / x[0]
     if 0.0 <= ratio <= 1.0: return ratio
     else:                   return 0.0
 ###############################################################################
