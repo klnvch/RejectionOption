@@ -84,6 +84,11 @@ class MLP:
         
         self.loss = tf.reduce_mean(self.loss + beta * regularizers)
         
+        self.global_step = tf.Variable(0, trainable=False)
+        starter_learning_rate = 0.1
+        self.learning_rate = tf.train.exponential_decay(starter_learning_rate,
+                                self.global_step, 1000, 0.96, staircase=True)
+        
         if optimizer_name == 'GradientDescent':
             optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         elif optimizer_name == 'Adadelta':
@@ -94,13 +99,14 @@ class MLP:
             optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9,
                                                    use_nesterov=True) 
         elif optimizer_name == 'Adam':
-            optimizer = tf.train.AdamOptimizer(learning_rate)
+            optimizer = tf.train.AdamOptimizer(self.learning_rate)
         elif optimizer_name == 'Ftrl':
             optimizer = tf.train.FtrlOptimizer(learning_rate)
         elif optimizer_name == 'RMSProp':
             optimizer = tf.train.RMSPropOptimizer(learning_rate)
         
-        self.train_step = optimizer.minimize(self.loss)
+        self.train_step = optimizer.minimize(self.loss,
+                                             global_step=self.global_step)
         
         # grads_and_vars = optimizer.compute_gradients(self.loss)
         # grad_norms = [tf.nn.l2_loss(g) for g, _ in grads_and_vars]
@@ -135,7 +141,7 @@ class MLP:
              best_area0, best_area1 and best_area2
         """
         self.clean_model_dir()
-        self.log_init(steps, batch_size, log)
+        #self.log_init(steps, batch_size, log)
         
         saver = tf.train.Saver()
         save_path = 'saver/model.ckpt'
@@ -163,7 +169,7 @@ class MLP:
                 dt += (finish_time - start_time)
                 if step % 100 == 0:
                     loss, trn_acc, vld_acc = \
-                        self.log_step_info(sess, trn, vld, step, dt, log)
+                        self.log_step_info(sess, trn, vld, dt, log)
                     dt = 0
                     # early stopping
                     if vld is not None:
@@ -174,7 +180,7 @@ class MLP:
                             info = [save_path, step, loss, trn_acc, vld_acc]
                         else:
                             counter += 1
-                        if counter >= 10:
+                        if counter >= 100:
                             break
             
             if vld is None:
@@ -232,11 +238,10 @@ class MLP:
             log_msg += '; batch size: {:d}'.format(batch_size)
         print(log_msg)
     
-    def log_step_info(self, sess, trn, vld, step, train_time, logging):
-        loss, trn_acc = sess.run([self.loss, self.accuracy],
-                                 feed_dict={self.x: trn.x,
-                                            self.y_: trn.y,
-                                            self.keep_prob: 1.0})
+    def log_step_info(self, sess, trn, vld, train_time, logging):
+        loss, trn_acc, lr, step = sess.run(
+            [self.loss, self.accuracy, self.learning_rate, self.global_step],
+            feed_dict={self.x: trn.x, self.y_: trn.y, self.keep_prob: 1.0})
         if vld is not None:
             vld_acc = sess.run(self.accuracy,
                                feed_dict={self.x: vld.x,
@@ -244,8 +249,8 @@ class MLP:
                                           self.keep_prob: 1.0})
         else: vld_acc = 0
         
-        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:f}'
-        log_msg = log_msg.format(step, loss, trn_acc, vld_acc, train_time)
+        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:f}'
+        log_msg = log_msg.format(step, lr, loss, trn_acc, vld_acc, train_time)
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
         
