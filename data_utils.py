@@ -55,34 +55,6 @@ def roc_s_thr(outputs_true, outputs_pred, outputs_outl, scores):
     result = [calc(outputs_true, outputs_pred, outputs_outl, i) for i in scores]
     return np.array(result)
 
-def my_roc_curve(y_true, y_score):
-    fpr = []
-    tpr = []
-    
-    for t in y_score:
-        tp = 0
-        tn = 0
-        fp = 0
-        fn = 0
-        for corectness, score in zip(y_true, y_score):
-            if corectness:
-                if score >= t: tp += 1
-                else:          fn += 1
-            else:
-                if score >= t: fp += 1
-                else:          tn += 1
-        if fp + tn > 0: fpr.append(fp / (fp + tn))
-        else:           fpr.append(1.0)
-        if tp + fn > 0: tpr.append(tp / (tp + fn))
-        else:           tpr.append(1.0)
-    
-    fpr, tpr, y_score = zip(*sorted(zip(fpr, tpr, y_score)))
-    # add 0 and 1 to get full curve
-    fpr = np.concatenate(([0.], fpr, [1.]))
-    tpr = np.concatenate(([0.], tpr, [1.]))
-    
-    return fpr, tpr, y_score
-
 def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
     """Calculates ROC for multiple output thresholds
     
@@ -136,14 +108,13 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
                         if score >= t: fp += 1
                         else:          tn += 1
             
-            if fp + tn > 0: fpr.append(fp / (fp + tn))
-            else:           fpr.append(1.0)
-            if tp + fn > 0: tpr.append(tp / (tp + fn))
-            else:           tpr.append(1.0)
-            
+            if fp + tn > 0 and tp + fn > 0: 
+                fpr.append(fp / (fp + tn))
+                tpr.append(tp / (tp + fn))
+        
         tpr, fpr = clean_dots(tpr, fpr, min)
         fpr, tpr = clean_dots(fpr, tpr, max)
-            
+        
         return fpr, tpr, metrics.auc(fpr, tpr), label
     
     start_time = time.time()
@@ -238,22 +209,3 @@ def calc_precision_recall(y, outputs):
         average_precision[i] = metrics.average_precision_score(y_true, y_score)
         
     return precision, recall, average_precision
-
-if __name__ == '__main__':
-    roc_m_thr(np.array([[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 1.0]]),
-                      np.array([[0.9, 0.1], [0.4, 0.6], [0.5, 0.3], [0.1, 0.9]]),
-                      np.array(['0', '1']))
-    
-    #y_true = np.array([True, True, False, False])
-    #y_score = np.array([0.9, 0.6, 0.7, 0.1])
-    
-    #fpr1, tpr1, thr1 = metrics.roc_curve(y_true, y_score)
-    #print(fpr1)
-    #print(tpr1)
-    #print(thr1)
-    
-    #fpr2, tpr2, thr2 = my_roc_curve(y_true, y_score)
-    #print(fpr2)
-    #print(tpr2)
-    #print(thr2)
-    
