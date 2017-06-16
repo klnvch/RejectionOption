@@ -13,7 +13,7 @@ from sklearn.utils import shuffle
 class MLP:
     
     def __init__(self, learning_rate, layers, last_layer='softmax',
-                 optimizer_name=None, beta=0.0):
+                 optimizer_name=None, beta=0.0, batch_size=None):
         print('create neural network...')
         log_msg = 'learning rate: {:g}, function: {:s}, optimizer: {:s}'
         log_msg = log_msg.format(learning_rate, last_layer, optimizer_name)
@@ -21,6 +21,7 @@ class MLP:
         print('layers: {:s}'.format(str(layers)))
         
         self.learning_rate = learning_rate
+        self.batch_size = batch_size
         self.optimizer_name = optimizer_name
         self.activation_function = last_layer
         self.num_input = layers[0]
@@ -87,7 +88,8 @@ class MLP:
         self.global_step = tf.Variable(0, trainable=False)
         starter_learning_rate = 0.1
         self.learning_rate = tf.train.exponential_decay(starter_learning_rate,
-                                self.global_step, 1000, 0.96, staircase=True)
+                                self.global_step, 1000, 0.96,
+                                staircase=True)
         
         if optimizer_name == 'GradientDescent':
             optimizer = tf.train.GradientDescentOptimizer(learning_rate)
@@ -133,14 +135,14 @@ class MLP:
             layer = tf.nn.dropout(layer, keep_prob)
             return layer, l2_loss
     
-    def train(self, steps, trn, vld=None, batch_size=None, keep_prob=1.0,
-              log=True):
+    def train(self, steps, trn, vld=None, keep_prob=1.0, log=True):
         """
         if early stopping not None output is
             [model_file, step, loss, trn_acc, vld_acc, area] for best_vld_acc,
              best_area0, best_area1 and best_area2
         """
         self.clean_model_dir()
+        self.n_batches = int(trn.size / self.batch_size)
         #self.log_init(steps, batch_size, log)
         
         saver = tf.train.Saver()
@@ -155,15 +157,15 @@ class MLP:
                 # train 
                 start_time = time.time()
                 x, y = shuffle(trn.x, trn.y)
-                if batch_size is None:
+                if self.batch_size is None:
                     sess.run(self.train_step,
                              feed_dict={self.x: x, self.y_: y,
                                         self.keep_prob: keep_prob})
                 else:
-                    for i in range(0, trn.x.shape[0], batch_size):
+                    for i in range(0, trn.x.shape[0], self.batch_size):
                         sess.run(self.train_step,
-                                 feed_dict={self.x: x[i:i + batch_size],
-                                            self.y_: y[i:i + batch_size],
+                                 feed_dict={self.x: x[i:i + self.batch_size],
+                                            self.y_: y[i:i + self.batch_size],
                                             self.keep_prob: keep_prob})
                 finish_time = time.time()
                 dt += (finish_time - start_time)
@@ -180,7 +182,7 @@ class MLP:
                             info = [save_path, step, loss, trn_acc, vld_acc]
                         else:
                             counter += 1
-                        if counter >= 100:
+                        if counter >= 10:
                             break
             
             if vld is None:
@@ -250,7 +252,8 @@ class MLP:
         else: vld_acc = 0
         
         log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:f}'
-        log_msg = log_msg.format(step, lr, loss, trn_acc, vld_acc, train_time)
+        log_msg = log_msg.format(int(step / self.n_batches), lr, loss, trn_acc,
+                                 vld_acc, train_time)
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
         
