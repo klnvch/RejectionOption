@@ -83,6 +83,8 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
         return xs, ys
     
     def calc(n_classes, outputs_true, outputs_pred, outputs_outl, score):
+        start_time = time.time()
+        
         y_true_classes, y_score_classes, label = \
             score(n_classes, outputs_true, outputs_pred, outputs_outl)
         
@@ -115,12 +117,13 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
         tpr, fpr = clean_dots(tpr, fpr, min)
         fpr, tpr = clean_dots(fpr, tpr, max)
         
+        print('roc_m_thr: {:9f} seconds'.format(time.time() - start_time))
+        
         return fpr, tpr, metrics.auc(fpr, tpr), label
     
-    start_time = time.time()
     result = [calc(n_classes, outputs_true, outputs_pred, outputs_outl, i) 
               for i in scores]
-    print('roc_m_thr: {:9f} seconds'.format(time.time() - start_time))
+    
     return np.array(result)
 
 def calc_roc_multiclass(outputs_true, outputs_pred, labels, outputs_outl=None):

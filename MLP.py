@@ -279,6 +279,7 @@ class MLP:
         else:
             vld_acc = 0
             auc = 0
+            size = 0
         
         log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:9f}, {:4d}, {:f}'
         log_msg = log_msg.format(step, 0, loss, trn_acc,
