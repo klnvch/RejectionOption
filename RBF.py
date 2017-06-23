@@ -16,25 +16,26 @@ import numpy as np
 from DataSet import DataSet
 from sklearn.cluster import KMeans
 from graphics import plot_decision_regions
-from data_utils import threshold_output
+from thresholds import thr_output
+import time
+from sklearn import metrics
 
 class RBF:
     
-    def __init__(self, indim, numCenters, outdim):
-        self.indim = indim
-        self.outdim = outdim
-        self.numCenters = numCenters
-        self.centers = [random.uniform(-1, 1, indim) for _ in range(numCenters)]
-        self.beta = 8
-        self.W = random.random((self.numCenters, self.outdim))
+    def __init__(self, n_features, n_centers, n_classes):
+        print('Create RBF network...')
+        print('{:d}-{:d}-{:d}'.format(n_features, n_centers, n_classes))
+        self.n_features = n_features
+        self.n_classes = n_classes
+        self.n_centers = n_centers
     
     def _basisfunc(self, c, d):
-        assert len(d) == self.indim
+        assert len(d) == self.n_features
         return exp(-self.beta * norm(c - d) ** 2)
     
     def _calcAct(self, X):
         # calculate activations of RBFs
-        G = zeros((X.shape[0], self.numCenters), float)
+        G = zeros((X.shape[0], self.n_centers), float)
         for ci, c in enumerate(self.centers):
             for xi, x in enumerate(X):
                 G[xi, ci] = self._basisfunc(c, x)
@@ -42,13 +43,14 @@ class RBF:
     
     def set_random_centers(self, X):
         # choose random center vectors from training set
-        rnd_idx = random.permutation(X.shape[0])[:self.numCenters]
+        rnd_idx = random.permutation(X.shape[0])[:self.n_centers]
         self.centers = [X[i, :] for i in rnd_idx]
+        self.beta = 8.0
         print('center: {}'.format(self.centers))
     
     def set_kmeans_centers(self, X):
         # find centers
-        kmeans = KMeans(n_clusters=self.numCenters)
+        kmeans = KMeans(n_clusters=self.n_centers)
         kmeans.fit(X)
         self.centers = kmeans.cluster_centers_
         # find distance
@@ -56,6 +58,7 @@ class RBF:
         max_dist = dists.max()
         avg_dist = np.average(dists)
         self.beta = 8.0 / (2.0 * avg_dist ** 2)
+        
         print('max distance: ' + str(max_dist) + 
               ', avg distance: ' + str(avg_dist) + 
               ', beta = ' + str(self.beta))
@@ -63,28 +66,36 @@ class RBF:
     def train(self, X, Y):
         """ X: matrix of dimensions n x indim 
             y: column vector of dimension n x 1 """
-        # self.set_random_centers(X)
+        #self.set_random_centers(X)
         self.set_kmeans_centers(X)
         # calculate activations of RBFs
         G = self._calcAct(X)
-        print(G)
-        
+        #print(G)
         # calculate output weights (pseudoinverse)
         self.W = dot(pinv(G), Y)
     
-    def test(self, X):
+    def predict_proba(self, X):
+        if X is None: return None
         """ X: matrix of dimensions n x indim """
-         
+        #print('RBF.test: size {:d}'.format(len(X)))
+        start_time = time.time()
+        
         G = self._calcAct(X)
         Y = dot(G, self.W)
+        
+        print('RBF.test: {:9f} seconds'.format(time.time() - start_time))
+        
         return Y
     
-    def predict_proba(self, X):
-        return self.test(X)
+    def score(self, tst):
+        outputs = self.predict_proba(tst.x)
+        y_pred = outputs.argmax(axis=1)
+        y_true = tst.y.argmax(axis=1)
+        return metrics.accuracy_score(y_true, y_pred)
 
 if __name__ == '__main__':
-    ds = DataSet(5)
-    rbf = RBF(ds.num_features, 16, ds.num_classes)
+    ds = DataSet(12)
+    rbf = RBF(ds.n_features, 16, ds.n_classes)
     rbf.train(ds.trn.x, ds.trn.y)
-    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, threshold_output,
-                          (8, 8), None, 0.08)
+    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, thr_output,
+                          (4.1, 4.1), None, True, 0.05)
