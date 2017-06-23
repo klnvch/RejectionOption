@@ -81,6 +81,10 @@ class DataSet:
             self.add_noise_as_no_class(None, noise_output)
         elif add_noise == 2:
             self.add_noise_as_a_class(None)
+        elif add_noise == 3:
+            self.outliers = np.random.uniform(self.tst.x.min()-1,
+                                          self.tst.x.max()+1,
+                                          [self.tst.size, self.n_features])
         # print final sizes
         if self.vld is None:
             print('{:d}|{:d}'.format(self.trn.size, self.tst.size))
