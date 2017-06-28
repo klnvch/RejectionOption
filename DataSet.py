@@ -88,7 +88,7 @@ class DataSet:
                                           [self.tst.size, self.n_features])
     
     def copy(self):
-        return copy.copy(self)
+        return copy.deepcopy(self)
     
     def print_info(self):
         if self.vld is None:

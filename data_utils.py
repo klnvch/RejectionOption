@@ -126,7 +126,7 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
     
     return np.array(result)
 
-def calc_roc_multiclass(outputs_true, outputs_pred, labels, outputs_outl=None):
+def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None):
     """ Calcs binary ROC curve or for multiple output thresholds
     
     Output i with threshold T_i must deal with:
@@ -142,7 +142,6 @@ def calc_roc_multiclass(outputs_true, outputs_pred, labels, outputs_outl=None):
     Returns:
         FPR, TPR, area under the ROC curve
     """
-    n_classes = len(labels)
     # Compute ROC curve and ROC area for each class
     fpr = dict()
     tpr = dict()
