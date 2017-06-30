@@ -246,7 +246,7 @@ class MLP:
         outputs = sess.run(self.y_final, feed_dict={self.x: self.vld.x,
                                                     self.keep_prob: 1.0})
         result = roc_s_thr(self.vld.y, outputs, None, [score_outp])
-        return result[0][2], len(result[0][1])
+        return result[0][3], len(result[0][1])
     
     def log_init(self, steps, batch_size, logging):
         self.log_file = None

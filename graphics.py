@@ -99,9 +99,9 @@ def plot_roc_curves(curves, savefig=None, show=True):
     colors = plt.cm.rainbow(np.linspace(0,1,curves.shape[0]))  # @UndefinedVariable
     label_auc = ' (AUC: {0:0.4f})'
     
-    plt.figure()
+    plt.figure(figsize=(4.1, 4.1))
     for curve, color in zip(curves, colors):
-        fpr, tpr, auc, label = curve
+        fpr, tpr, _, auc, label = curve
         plt.plot(fpr, tpr, color=color, lw=2,
                  label=label + label_auc.format(auc))
     

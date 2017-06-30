@@ -58,6 +58,9 @@ def test_unit_mlp(ds, noise_size, units, beta, dropout, es, show):
     
     ro = RejectionOption(mlp, ds.n_classes)
     line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
+    if show:
+        ro.plot()
+        ro.print_thresholds()
     
     return '{:f}, {:f}, {:f}, {:f}, {:s}' \
         .format(result[2], result[3], result[4], score, line)
@@ -120,8 +123,8 @@ def test_block_mlp(ds_id, ds_name, attempts, params):
                 print(msg, file=f)
 
 if __name__ == '__main__':
-    #ds = DataSet(2, split=[0.3, 0.1, 0.6])
-    #test_unit_mlp(ds, 2.0, 16, 0.0001, 1.0, 0, True)
+    ds = DataSet(2, split=[0.3, 0.1, 0.6])
+    test_unit_mlp(ds, 4.0, 16, 0.0001, 1.0, 0, True)
     """
     test_block_mlp(2, 'iris', range(0,1),
                    [[1, 'mlp-sigmoid', 0.5, 16, 0.0001,  1.0, 0,  (0.0, 1.0)],
@@ -139,7 +142,7 @@ if __name__ == '__main__':
                     [1, 'mlp-sigmoid', 4.0, 16, 0.0001,  0.9, 0,  (0.0, 1.0)],
                     [1, 'mlp-sigmoid', 4.0, 16, 0.0001,  1.0, 50, (0.0, 1.0)]])
     """
-    
+    """
     test_block_mlp_rc(2, 'iris', range(0,1),
                    [[2, 'mlp-sigmoid', 0.5, 16, 0.0001,  1.0, 0,  (0.0, 1.0)],
                     [2, 'mlp-sigmoid', 1.0, 16, 0.0001,  1.0, 0,  (0.0, 1.0)],
@@ -169,7 +172,7 @@ if __name__ == '__main__':
                     [2, 'mlp-softmax', 4.0, 16, 0.00001, 1.0, 0,  (0.0, 1.0)],
                     [2, 'mlp-softmax', 4.0, 16, 0.0001,  0.9, 0,  (0.0, 1.0)],
                     [2, 'mlp-softmax', 4.0, 16, 0.0001,  1.0, 50, (0.0, 1.0)]])
-    
+    """
     """
     test_block_RBF('iris', 2, range(0,1),[3,6,9,12,15,18,21,24])
     """

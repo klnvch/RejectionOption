@@ -45,12 +45,12 @@ def roc_s_thr(outputs_true, outputs_pred, outputs_outl, scores):
     """
     def calc(outputs_true, outputs_pred, outputs_outl, score):
         y_true, y_score, label = score(outputs_true, outputs_pred, outputs_outl)
-        fpr, tpr, _ = metrics.roc_curve(y_true, y_score)
+        fpr, tpr, thr = metrics.roc_curve(y_true, y_score)
         # add 0 and 1 to get full curve
         fpr = np.concatenate(([0.], fpr, [1.]))
         tpr = np.concatenate(([0.], tpr, [1.]))
         roc_auc = metrics.auc(fpr, tpr)
-        return fpr, tpr, roc_auc, label
+        return fpr, tpr, thr, roc_auc, label
     
     result = [calc(outputs_true, outputs_pred, outputs_outl, i) for i in scores]
     return np.array(result)
@@ -68,19 +68,24 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
     [421 x 369] size takes  16.488903 seconds
     [366 x 424] size takes 13.825663 seconds
     """
-    def clean_dots(xs, ys, comparison):
-        xs, ys = zip(*sorted(zip(xs, ys)))
+    def clean_dots(xs, ys, thr, comparison):
+        xs, ys, thr = zip(*sorted(zip(xs, ys, thr)))
         new_xs = [xs[0]]
         new_ys = [ys[0]]
-        for x, y in zip(xs, ys):
+        new_thr = [thr[0]]
+        for x, y, t in zip(xs, ys, thr):
             if new_xs[-1] == x:
-                new_ys[-1] = comparison(new_ys[-1], y) 
+                new_ys[-1] = comparison(new_ys[-1], y)
+                if new_ys[-1] == y: new_thr[-1] = t
             else:
                 new_xs.append(x)
                 new_ys.append(y)
+                new_thr.append(t)
         xs = np.concatenate(([0.], new_xs, [1.]))
         ys = np.concatenate(([0.], new_ys, [1.]))
-        return xs, ys
+        stupid_thr = len(thr[0])*[None]
+        thr = np.concatenate(([stupid_thr], new_thr, [stupid_thr]))
+        return xs, ys, thr
     
     def calc(n_classes, outputs_true, outputs_pred, outputs_outl, score):
         start_time = time.time()
@@ -94,6 +99,7 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
         
         fpr = []
         tpr = []
+        thr = []
         
         for thresholds in itertools.product(*y_score_classes):
             tp = 0
@@ -113,13 +119,14 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
             if fp + tn > 0 and tp + fn > 0: 
                 fpr.append(fp / (fp + tn))
                 tpr.append(tp / (tp + fn))
+                thr.append(thresholds)
         
-        tpr, fpr = clean_dots(tpr, fpr, min)
-        fpr, tpr = clean_dots(fpr, tpr, max)
+        tpr, fpr, thr = clean_dots(tpr, fpr, thr, min)
+        fpr, tpr, thr = clean_dots(fpr, tpr, thr, max)
         
         print('roc_m_thr: {:9f} seconds'.format(time.time() - start_time))
         
-        return fpr, tpr, metrics.auc(fpr, tpr), label
+        return fpr, tpr, thr, metrics.auc(fpr, tpr), label
     
     result = [calc(n_classes, outputs_true, outputs_pred, outputs_outl, i) 
               for i in scores]
