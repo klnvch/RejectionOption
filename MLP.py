@@ -9,8 +9,6 @@ This module keeps all code for Tensorflow to implement MLP
 import time, os
 import tensorflow as tf
 from sklearn.utils import shuffle
-from data_utils import roc_s_thr
-from thresholds import score_outp
 
 class MLP:
     
@@ -242,12 +240,6 @@ class MLP:
         for fileName in fileList:
             os.remove(dirPath + '/' + fileName)
     
-    def calc_auc(self, sess):
-        outputs = sess.run(self.y_final, feed_dict={self.x: self.vld.x,
-                                                    self.keep_prob: 1.0})
-        result = roc_s_thr(self.vld.y, outputs, None, [score_outp])
-        return result[0][3], len(result[0][1])
-    
     def log_init(self, steps, batch_size, logging):
         self.log_file = None
         if logging:
@@ -275,15 +267,11 @@ class MLP:
                                feed_dict={self.x: vld.x,
                                           self.y_: vld.y,
                                           self.keep_prob: 1.0})
-            auc, size = self.calc_auc(sess)
         else:
             vld_acc = 0
-            auc = 0
-            size = 0
         
-        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:9f}, {:4d}, {:f}'
-        log_msg = log_msg.format(step, 0, loss, trn_acc,
-                                 vld_acc, auc, size, train_time)
+        log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:f}'
+        log_msg = log_msg.format(step, 0, loss, trn_acc, vld_acc, train_time)
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
         

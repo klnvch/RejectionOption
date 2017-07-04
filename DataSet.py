@@ -123,7 +123,7 @@ class DataSet:
         self.trn = Set(new_x, new_y)
         self.outliers = np.random.uniform(self.tst.x.min()-1,
                                           self.tst.x.max()+1,
-                                          [self.tst.size, self.n_features])
+                                          [self.tst.size*4, self.n_features])
         
         self.print_info()
         
