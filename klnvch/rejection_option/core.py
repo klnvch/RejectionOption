@@ -97,6 +97,7 @@ class RejectionOption:
         
         aucs = curves[:,3]
         
+        print(aucs)
         return ','.join([' %.5f' % num for num in aucs])
     
     def eval_rc(self, x, y):

@@ -5,6 +5,7 @@ Created on Oct 26, 2016
 '''
 
 import numpy as np
+import csv
 from sklearn import datasets
 from sklearn import preprocessing
 from collections import Counter
@@ -61,6 +62,38 @@ def read_image_segmentation_data():
             if len(currentline) != 20: continue
             x.append([np.float32(i) for i in currentline[1:20]])
             y.append(classes.index(currentline[0]))
+    
+    return x, y, classes
+
+def read_marcin_file(name):
+    with open(DATA_DIR + 'Archiwum/' + name) as csvfile:
+        reader = csv.reader(csvfile, delimiter=';')
+        columns = reader.__next__()
+        values = np.array([row for row in reader if len(row) > 0])
+        
+    # remove class (the first) and empty (the last)  columns
+    x = values[:,1:-1]
+    x = x.astype(np.float)
+    # find all classes from the first column
+    classes = np.unique(values[:,0])
+    # find indecies of classes for each row
+    y = np.array([np.where(classes==c)[0][0] for c in values[:,0]])
+    
+    return x, y, classes
+
+def read_marcin_data():
+    x, y, classes = read_marcin_file('LirykaLearning.csv')
+    read_marcin_file('LirykaValidate.csv')
+    read_marcin_file('LirykaTesting.csv')
+    
+    read_marcin_file('AccidentalsLearning.csv')
+    read_marcin_file('AccidentalsTesting.csv')
+    
+    read_marcin_file('DynamicsLearning.csv')
+    read_marcin_file('DynamicsTesting.csv')
+    
+    read_marcin_file('RestsLearning.csv')
+    read_marcin_file('RestsTesting.csv')
     
     return x, y, classes
 
@@ -225,5 +258,16 @@ def print_classes_stats(y, classes):
     print('&'.join(map(str,dist)))
     
 if __name__ == '__main__':
-    x, y, _ = generate_moons(1000, 0.1)
-    plot_2d_dataset(x, y)
+    #x, y, _ = generate_moons(1000, 0.1)
+    #plot_2d_dataset(x, y)
+    
+    x, y, classes = read_marcin_data()
+    
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=9)
+    pca.fit(x)
+    print(x.shape)
+    x = pca.transform(x)
+    print(x.shape)
+    print(pca.explained_variance_ratio_)
+    print(pca.components_)

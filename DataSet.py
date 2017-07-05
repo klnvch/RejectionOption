@@ -7,8 +7,11 @@ Class for preparation dataset for ANN
 '''
 import numpy as np
 import copy
-from input_data import get_data
+from sklearn import preprocessing
+from sklearn.decomposition import PCA
+from input_data import get_data, read_marcin_file
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import VarianceThreshold
 
 class Set:
     def __init__(self, x, y):
@@ -52,10 +55,16 @@ class DataSet:
                 10 - Gaussian Quantiles
                 11 - Noise
                 12 - Moons separable
+                
+                13 - Marcin Luckner Dataset
             
             add_noise: noise type
                 1: add noise as no class
         """
+        if dataset == 13:
+            self.load_marcin_dataset(add_noise)
+            return
+        
         # load data
         x, y, self.target_names = get_data(dataset, size,
                                            binarize=True, preprocess=1)
@@ -141,5 +150,81 @@ class DataSet:
         self.tst.add_noise_class(1.0)
         self.target_names = np.concatenate([self.target_names, ['Outliers']])
         self.n_classes += 1
+        
+        self.print_info()
+    
+    def load_marcin_dataset(self, add_noise):
+        # load data
+        x_trn, y_trn, self.target_names = read_marcin_file('LirykaLearning.csv')
+        x_vld, y_vld, _ = read_marcin_file('LirykaValidate.csv')
+        x_tst, y_tst, _ = read_marcin_file('LirykaTesting.csv')
+        
+        self.n_features = x_trn.shape[1]
+        self.n_classes = self.target_names.shape[0]
+        self.outliers = None
+        
+        if add_noise == 2:
+            o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')
+            o_trn_2, _, _ = read_marcin_file('DynamicsLearning.csv')
+            o_trn_3, _, _ = read_marcin_file('RestsLearning.csv')
+            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
+            
+            x_trn = np.concatenate((x_trn, o_trn))
+            y_trn = np.concatenate((y_trn,
+                                    np.array([self.n_classes]*o_trn.shape[0])))
+            
+            
+            o_trn_1, _, _ = read_marcin_file('AccidentalsTesting.csv')
+            o_trn_2, _, _ = read_marcin_file('DynamicsTesting.csv')
+            o_trn_3, _, _ = read_marcin_file('RestsTesting.csv')
+            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
+            
+            x_tst = np.concatenate((x_tst, o_trn))
+            y_tst = np.concatenate((y_tst,
+                                    np.array([self.n_classes]*o_trn.shape[0])))
+            
+            self.n_classes += 1
+            self.target_names = np.concatenate((self.target_names, ['Outliers']))
+        
+        
+        y_trn = preprocessing.label_binarize(y_trn, range(self.n_classes))
+        y_vld = preprocessing.label_binarize(y_vld, range(self.n_classes))
+        y_tst = preprocessing.label_binarize(y_tst, range(self.n_classes))
+        
+        if add_noise == 1:
+            o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')
+            o_trn_2, _, _ = read_marcin_file('DynamicsLearning.csv')
+            o_trn_3, _, _ = read_marcin_file('RestsLearning.csv')
+            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
+            
+            x_trn = np.concatenate((x_trn, o_trn))
+            y_trn = np.concatenate((y_trn,
+                                    np.zeros((o_trn.shape[0], self.n_classes))))
+            
+            o_trn_1, _, _ = read_marcin_file('AccidentalsTesting.csv')
+            o_trn_2, _, _ = read_marcin_file('DynamicsTesting.csv')
+            o_trn_3, _, _ = read_marcin_file('RestsTesting.csv')
+            self.outliers = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
+        
+        #self.n_features = 64
+        #pca = PCA(n_components=self.n_features).fit(x_trn)
+        #x_trn = pca.transform(x_trn)
+        #x_vld = pca.transform(x_vld)
+        #x_tst = pca.transform(x_tst)
+        
+        #vt = VarianceThreshold(threshold=50).fit(x_trn)
+        #x_trn = vt.transform(x_trn)
+        #x_vld = vt.transform(x_vld)
+        #x_tst = vt.transform(x_tst)
+        #self.n_features = x_trn.shape[1]
+        
+        scaler = preprocessing.StandardScaler().fit(x_trn)
+        x_trn = scaler.transform(x_trn)
+        x_vld = scaler.transform(x_vld)
+        x_tst = scaler.transform(x_tst)
+
+        self.trn = Set(x_trn, y_trn)
+        self.vld = Set(x_vld, y_vld)
+        self.tst = Set(x_tst, y_tst)
         
         self.print_info()
