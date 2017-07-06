@@ -69,6 +69,7 @@ def read_marcin_file(name):
     with open(DATA_DIR + 'Archiwum/' + name) as csvfile:
         reader = csv.reader(csvfile, delimiter=';')
         columns = reader.__next__()
+        print(columns)
         values = np.array([row for row in reader if len(row) > 0])
         
     # remove class (the first) and empty (the last)  columns
@@ -81,21 +82,28 @@ def read_marcin_file(name):
     
     return x, y, classes
 
-def read_marcin_data():
-    x, y, classes = read_marcin_file('LirykaLearning.csv')
-    read_marcin_file('LirykaValidate.csv')
-    read_marcin_file('LirykaTesting.csv')
+def print_marcin_data():
+    _, y, classes = read_marcin_file('LirykaLearning.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
+    _, y, classes = read_marcin_file('LirykaValidate.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
+    _, y, classes = read_marcin_file('LirykaTesting.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
     
-    read_marcin_file('AccidentalsLearning.csv')
-    read_marcin_file('AccidentalsTesting.csv')
+    _, y, classes = read_marcin_file('AccidentalsLearning.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
+    _, y, classes = read_marcin_file('AccidentalsTesting.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
     
-    read_marcin_file('DynamicsLearning.csv')
-    read_marcin_file('DynamicsTesting.csv')
+    _, y, classes = read_marcin_file('DynamicsLearning.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
+    _, y, classes = read_marcin_file('DynamicsTesting.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
     
-    read_marcin_file('RestsLearning.csv')
-    read_marcin_file('RestsTesting.csv')
-    
-    return x, y, classes
+    _, y, classes = read_marcin_file('RestsLearning.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
+    _, y, classes = read_marcin_file('RestsTesting.csv')
+    print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
 
 def generate_multiclass():
     x, y = datasets.make_classification(n_samples=1000,
@@ -244,24 +252,33 @@ def count_distribution(y):
     print(d)
     return d
 
-def print_classes_stats(y, classes):
+def print_classes_stats(y, classes, path=None):
     """
     Helper for generating class distibution table in chapter 1
     """
-    print(classes)
-    print('&'.join(classes))
-    dist = np.array(list(Counter(y).values()))
-    print(dist)
-    print('&'.join(map(str,dist)))
-    dist = 100 * dist / len(y)
-    print(dist)
-    print('&'.join(map(str,dist)))
-    
+    if path is None:
+        print(classes)
+        print('&'.join(classes))
+        dist = np.array(list(Counter(y).values()))
+        print(dist)
+        print('&'.join(map(str,dist)))
+        dist = 100 * dist / len(y)
+        print(dist)
+        print('&'.join(map(str,dist)))
+    else:
+        with open(path, 'a+') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(classes)
+            dist = np.array(list(Counter(y).values()))
+            writer.writerow(dist)
+            dist = 100 * dist / len(y)
+            writer.writerow(dist)
+
 if __name__ == '__main__':
     #x, y, _ = generate_moons(1000, 0.1)
     #plot_2d_dataset(x, y)
     
-    x, y, classes = read_marcin_data()
+    x, y, classes = read_marcin_file('LirykaLearning.csv')
     
     from sklearn.decomposition import PCA
     pca = PCA(n_components=9)
