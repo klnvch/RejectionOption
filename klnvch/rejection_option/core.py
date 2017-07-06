@@ -8,9 +8,9 @@ from thresholds import score_rati, score_diff, score_outp, score_outp_m,\
     score_rati_r, score_diff_r_m, score_outp_ir_m
 from data_utils import roc_s_thr, roc_m_thr, calc_roc_multiclass
 import numpy as np
-from graphics import plot_roc_curves, plot_multiclass_roc_curve,\
-    plot_confusion_matrix
+from graphics import plot_roc_curves, plot_multiclass_roc_curve
 from sklearn.metrics.classification import confusion_matrix
+from klnvch.rejection_option.plots import plot_confusion_matrix
 
 def get_labels(n_classes, rc=False, thresholds='all'):
     """
@@ -122,7 +122,11 @@ class RejectionOption:
         return ','.join([' %.5f' % num for num in aucs])
     
     def plot_confusion_matrix(self, labels):
-        plot_confusion_matrix(self.outputs, self.y, labels, show=True)
+        plot_confusion_matrix(self.outputs, self.y, labels, error_threshold=None)
+        plot_confusion_matrix(self.outputs, self.y, labels, error_threshold=0)
+        plot_confusion_matrix(self.outputs, self.y, labels, error_threshold=1)
+        plot_confusion_matrix(self.outputs, self.y, labels, error_threshold=2)
+        plot_confusion_matrix(self.outputs, self.y, labels, error_threshold=3)
     
     def plot(self):
         if self.curves_m is None:

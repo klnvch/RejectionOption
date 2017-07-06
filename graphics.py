@@ -6,7 +6,6 @@ Created on Oct 29, 2016
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
-from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 
@@ -130,59 +129,6 @@ def draw_precision_recall(precision, recall, average_precision, filename=None):
     #
     if filename is not None:
         plt.savefig(filename)
-
-def plot_confusion_matrix(outputs, y, labels, savefig=None, show=True):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    
-    y_true : array, shape = [n_samples]
-    Ground truth (correct) target values.
-    
-    y_pred : array, shape = [n_samples]
-    Estimated targets as returned by a classifier.
-    
-    labels : array, shape = [n_classes]
-    Names of classes for columns and rows in the final matrix
-    
-    Copied from http://scikit-learn.org/stable/auto_examples/model_selection
-    /plot_confusion_matrix.html
-    #sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
-    """
-    
-    y_pred = outputs.argmax(axis=1)
-    y_true = y.argmax(axis=1)
-    
-    cm = confusion_matrix(y_true, y_pred)
-    plt.figure()
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)  # @UndefinedVariable
-    # plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(labels))
-    plt.xticks(tick_marks, labels, rotation=45)
-    plt.yticks(tick_marks, labels)
-    
-    #if normalize:
-    #    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    #    print('Normalized confusion matrix')
-    #else:
-    #    print('Confusion matrix, without normalization')
-    
-    np.set_printoptions(precision=2)
-    print(cm)
-    
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-    
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    if savefig is not None: plt.savefig(savefig)
-    if show: plt.show()
-    else: plt.close()
 
 def plot_multiclass_roc_curve(fpr, tpr, roc_auc, labels,
                               savefig=None, show=True):
