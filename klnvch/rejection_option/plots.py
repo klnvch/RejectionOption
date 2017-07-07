@@ -24,6 +24,26 @@ def remove_correct(cm, labels, error_threshold):
     
     return cm, labels_x, labels_y
 
+def print_misslcassification_errors(cm, labels, limit=8):
+    pairs = []
+    values = []
+    for r, c in itertools.combinations(enumerate(labels), 2):
+        i1, l1 = r
+        i2, l2 = c
+        pairs.append([l1,l2])
+        values.append(cm[i1,i2] + cm[i2,i1])
+    values, pairs = zip(*sorted(zip(values, pairs), reverse=True))
+    print(list(zip(pairs, values))[:limit])
+
+def print_output_errors(cm, labels, limit=8):
+    pairs = []
+    values = []
+    for i, l in enumerate(labels):
+        pairs.append(l)
+        values.append(cm[:,i].sum() - cm[i,i])
+    values, pairs = zip(*sorted(zip(values, pairs), reverse=True))
+    print(list(zip(pairs, values))[:limit])
+
 def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True,
                           error_threshold=None):
     """
@@ -53,6 +73,8 @@ def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True,
     cm = confusion_matrix(y_true, y_pred)
     np.set_printoptions(precision=2)
     print(cm)
+    print_misslcassification_errors(cm, labels)
+    print_output_errors(cm, labels)
     
     if error_threshold is not None:
         cm, x_labels, y_labels = remove_correct(cm, labels, error_threshold)

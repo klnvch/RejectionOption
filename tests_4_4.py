@@ -21,11 +21,11 @@ def test_unit_RBF(ds, n_hidden):
     
     return '{:9f}, {:s}'.format(score, line)
 
-def test_unit_mlp(ds, clf, type, noise_size, units, beta, dropout, es, show):
+def test_unit_mlp(ds, clf, rej, noise_size, units, beta, dropout, es, show):
     ds = ds.copy()
-    if type == 1:
+    if rej == 1:
         ds.add_noise_as_no_class(noise_size)
-    elif type == 2:
+    elif rej == 2:
         ds.add_noise_as_a_class(noise_size)
     
     if clf == 'mlp-softmax':
@@ -44,12 +44,13 @@ def test_unit_mlp(ds, clf, type, noise_size, units, beta, dropout, es, show):
     score = mlp.score(ds.tst)
     print('Test accuracy: {0:f}'.format(score))
     
-    if type == 1 or type == 0:
+    if rej == 1 or rej == 0:
         ro = RejectionOption(mlp, ds.n_classes, False, 'simple')
-    elif type == 2:
+    elif rej == 2:
         ro = RejectionOption(mlp, ds.n_classes, True, 'simple')
     
     line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
+    ro.print_classification_report(ds.target_names)
     if show:
         ro.plot_confusion_matrix(ds.target_names)
         ro.plot()
@@ -74,13 +75,13 @@ def test_block_RBF(ds_name, ds_id, attempts, params):
             with open(filename, 'a+') as f:
                 print(msg, file=f)
 
-def test_block_mlp(ds_id, ds_name, type, attempts, params):
+def test_block_mlp(ds_id, ds_name, rej, attempts, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
     
-    if type == 1 or type == 0:
+    if rej == 1 or type == 0:
         colums = 'DS,Clf,Attempt,Type,Noise,Units,Beta,Dropout,ES,' \
                 'Loss,Trn acc,Vld acc,Tst acc,' + get_labels(3)
-    elif type == 2:
+    elif rej == 2:
         colums = 'DS,Clf,Attempt,Type,Noise,Units,Beta,Dropout,ES,' \
                 'Loss,Trn acc,Vld acc,Tst acc,' + get_labels(3, rc=True)
     

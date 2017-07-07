@@ -9,7 +9,7 @@ from thresholds import score_rati, score_diff, score_outp, score_outp_m,\
 from data_utils import roc_s_thr, roc_m_thr, calc_roc_multiclass
 import numpy as np
 from graphics import plot_roc_curves, plot_multiclass_roc_curve
-from sklearn.metrics.classification import confusion_matrix
+from sklearn import metrics
 from klnvch.rejection_option.plots import plot_confusion_matrix
 
 def get_labels(n_classes, rc=False, thresholds='all'):
@@ -139,6 +139,12 @@ class RejectionOption:
         fpr_mc, tpr_mc, auc_mc = self.curve_mc
         plot_multiclass_roc_curve(fpr_mc, tpr_mc, auc_mc, labels)
     
+    def print_classification_report(self, labels):
+        y_true = self.y.argmax(axis=1)
+        y_pred = self.outputs.argmax(axis=1)
+        report = metrics.classification_report(y_true, y_pred, None, labels)
+        print(report)
+    
     def print_thresholds(self):
         if self.curves_m is None: return
         fpr = self.curves_m[0][0]
@@ -154,7 +160,7 @@ class RejectionOption:
         for t, x, y in zip(thr, fpr, tpr):
             if None in t: continue
             y_pred = [o.max() >= t[o.argmax()] for o in outputs]
-            cm = confusion_matrix(y_true, y_pred)
+            cm = metrics.confusion_matrix(y_true, y_pred)
             tn, fp, fn, tp = cm.ravel()
             print(','.join([' %.4f' % a for a in t]) 
                   + ', {:d}, {:d}, {:d}, {:d}'.format(tp, fp, fn, tn))
