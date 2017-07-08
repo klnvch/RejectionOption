@@ -144,16 +144,17 @@ def plot_multiclass_roc_curve(fpr, tpr, roc_auc, labels,
     colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
     plt.figure()
     for i, color in zip(range(n_classes), colors):
+        if roc_auc[i] == 0: continue
         label = 'Class ''{0}'' (AUC: {1:0.4f})'.format(labels[i], roc_auc[i])
         plt.plot(fpr[i], tpr[i], color=color, lw=lw, label=label)
-    
+    """
     label_micro = 'Micro-average (AUC: {0:0.4f})'.format(roc_auc["micro"])
     plt.plot(fpr["micro"], tpr["micro"], label=label_micro, color='deeppink',
              linestyle=':', linewidth=4)
     label_macro = 'Macro-average (AUC: {0:0.4f})'.format(roc_auc["macro"])
     plt.plot(fpr["macro"], tpr["macro"], label=label_macro, color='navy',
              linestyle=':', linewidth=4)
-    
+    """
     plt.plot([0, 1], [0, 1], 'k--', lw=lw)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])

@@ -12,9 +12,9 @@ from sklearn.metrics import confusion_matrix
 def remove_correct(cm, labels, error_threshold):
     n_classes = len(labels)
     delete_x = [i for i in range(n_classes)
-                if cm[:,i].sum() - cm[i,i] <= error_threshold]
+                if cm[i,i] / cm[:,i].sum() >= error_threshold]
     delete_y = [i for i in range(n_classes)
-                if cm[i,:].sum() - cm[i,i] <= error_threshold]
+                if cm[i,i] / cm[i,:].sum() >= error_threshold]
     
     labels_x = np.delete(labels, delete_x)
     labels_y = np.delete(labels, delete_y)

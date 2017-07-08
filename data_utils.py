@@ -8,7 +8,7 @@ from sklearn import metrics
 from scipy import interp
 import itertools
 import time
-from thresholds import rejection_score, thr_output
+from thresholds import rejection_score, thr_output, thr_diff, thr_ratio
 
 def remove_class(x, y, names, indices):
     """
@@ -133,7 +133,8 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
     
     return np.array(result)
 
-def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None):
+def calc_roc_multiclass(outputs_true, outputs_pred, n_classes,
+                        outputs_outl=None, threshold = 0.9):
     """ Calcs binary ROC curve or for multiple output thresholds
     
     Output i with threshold T_i must deal with:
@@ -149,6 +150,10 @@ def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None
     Returns:
         FPR, TPR, area under the ROC curve
     """
+    def calc_recall(a):
+        a = np.array(a)
+        return np.count_nonzero(a==True) / len(a)
+    
     # Compute ROC curve and ROC area for each class
     fpr = dict()
     tpr = dict()
@@ -158,6 +163,8 @@ def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None
     y_real = outputs_pred.argmax(axis=1)
     y_true = [a==b for a,b in zip(y_ideal, y_real)]
     y_score = thr_output(outputs_pred)
+    #y_score = thr_diff(outputs_pred)
+    #y_score = thr_ratio(outputs_pred)
     
     y_true_classes = [[] for _ in range(n_classes)]
     y_score_classes = [[] for _ in range(n_classes)]
@@ -171,7 +178,7 @@ def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None
             y_score_classes[i].append(o.max())
     
     for i in range(n_classes):
-        if len(y_true_classes[i]) > 1:
+        if len(y_true_classes[i]) > 1 and calc_recall(y_true_classes[i]) <= threshold:
             fpr[i], tpr[i], _ = metrics.roc_curve(y_true_classes[i],
                                                   y_score_classes[i],
                                                   True)
@@ -181,7 +188,7 @@ def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None
             roc_auc[i] = metrics.auc(fpr[i], tpr[i])
         else:
             fpr[i] = tpr[i] = []
-            roc_auc[i] = None
+            roc_auc[i] = 0
     
     # Compute micro-average ROC curve and ROC area
     fpr["micro"], tpr["micro"], _ = metrics.roc_curve(outputs_true.ravel(), outputs_pred.ravel())
@@ -193,7 +200,7 @@ def calc_roc_multiclass(outputs_true, outputs_pred, n_classes, outputs_outl=None
     # Then interpolate all ROC curves at this points
     mean_tpr = np.zeros_like(all_fpr)
     for i in range(n_classes):
-        if roc_auc[i] is not None: 
+        if roc_auc[i] > 0: 
             mean_tpr += interp(all_fpr, fpr[i], tpr[i])
     # Finally average it and compute AUC
     mean_tpr /= n_classes

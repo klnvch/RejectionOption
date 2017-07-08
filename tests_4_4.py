@@ -38,8 +38,8 @@ def test_unit_mlp(ds, clf, rej, noise_size, units, beta, dropout, es, show):
         mlp = MLP(0.01, [ds.n_features, units, units, ds.n_classes],
                   ['relu', 'relu', 'softmax'], 'Adam', beta, 128)
     
-    result = mlp.train(5000, ds.trn, ds.vld, dropout, es, False)
-    print(result)
+    #result = mlp.train(5000, ds.trn, ds.vld, dropout, es, False)
+    #print(result)
     
     score = mlp.score(ds.tst)
     print('Test accuracy: {0:f}'.format(score))
@@ -57,8 +57,8 @@ def test_unit_mlp(ds, clf, rej, noise_size, units, beta, dropout, es, show):
         ro.plot_multiclass(ds.target_names)
         ro.print_thresholds()
     
-    return '{:f}, {:f}, {:f}, {:f}, {:s}' \
-        .format(result[2], result[3], result[4], score, line)
+    #return '{:f}, {:f}, {:f}, {:f}, {:s}' \
+    #    .format(result[2], result[3], result[4], score, line)
 
 def test_block_RBF(ds_name, ds_id, attempts, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
