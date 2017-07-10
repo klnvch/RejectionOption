@@ -122,3 +122,48 @@ def plot_confusion_matrix(y_true, y_pred, y_outl, labels, savefig=None, show=Tru
     if savefig is not None: plt.savefig(savefig)
     if show:    plt.show()
     else:       plt.close()
+
+def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
+                          savefig=None, show=True, curve_func = 'roc'):
+    """
+    Plot ROC curves for the multiclass problem
+    
+    Copied from http://scikit-learn.org/stable/auto_examples/model_selection
+    /plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
+    """
+    n_classes = len(labels)
+    # Plot all ROC curves
+    lw = 2
+    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
+    fig = plt.figure()
+    for i, color in zip(range(n_classes), colors):
+        if roc_auc[i] == 0: continue
+        label = 'Class ''{0}'' (AUC: {1:0.4f})'.format(labels[i], roc_auc[i])
+        plt.plot(fpr[i], tpr[i], color=color, lw=lw, label=label)
+    
+    if 'micro' in roc_auc and 'macro' in roc_auc:
+        label_micro = 'Micro-average (AUC: {0:0.4f})'.format(roc_auc["micro"])
+        plt.plot(fpr["micro"], tpr["micro"], label=label_micro,
+                 color='deeppink', linestyle=':', linewidth=4)
+        label_macro = 'Macro-average (AUC: {0:0.4f})'.format(roc_auc["macro"])
+        plt.plot(fpr["macro"], tpr["macro"], label=label_macro,
+                 color='navy', linestyle=':', linewidth=4)
+    
+    plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    if curve_func == 'precision_recall':
+        fig.canvas.set_window_title('Multiclass_Precision_Recall_Curve')
+        plt.xlabel('Precision')
+        plt.ylabel('Recall')
+    elif curve_func == 'roc':
+        fig.canvas.set_window_title('Multiclass_ROC_curve')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+    else: raise ValueError('wrong curve function')
+    #plt.title('ROC curves for multiple thresholds')
+    plt.legend(loc="lower right")
+    
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.close()

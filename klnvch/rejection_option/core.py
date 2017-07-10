@@ -6,11 +6,13 @@ Created on Jun 26, 2017
 from thresholds import score_rati, score_diff, score_outp, score_outp_m,\
     score_diff_ir, score_outp_ir, score_rati_ir, score_diff_r, score_outp_or,\
     score_rati_r, score_diff_r_m, score_outp_ir_m
-from data_utils import roc_s_thr, roc_m_thr, calc_roc_multiclass
+from data_utils import roc_s_thr, roc_m_thr
 import numpy as np
-from graphics import plot_roc_curves, plot_multiclass_roc_curve
+from graphics import plot_roc_curves
 from sklearn import metrics
 from klnvch.rejection_option.plots import plot_confusion_matrix
+from klnvch.rejection_option.plots import plot_multiclass_curve
+from klnvch.rejection_option.utils import calc_multiclass_curve
 
 def get_labels(n_classes, rc=False, thresholds='all'):
     """
@@ -82,18 +84,19 @@ class RejectionOption:
             self.curves_m = None
             curves = self.curves_s
         
-        self.curve_mc = calc_roc_multiclass(y, outputs, self.n_classes,
-                                            outputs_outl)
+        self.curve_mc = calc_multiclass_curve(y, outputs, self.n_classes,
+                                              outputs_outl)
         fpr_mc, tpr_mc, auc_mc = self.curve_mc
         
         for i in range(self.n_classes):
             curves = np.vstack([curves, [fpr_mc[i], tpr_mc[i],
                                          None, auc_mc[i], '']])
         
-        curves = np.vstack([curves, [fpr_mc['micro'], tpr_mc['micro'],
-                                     None, auc_mc['micro'], '']])
-        curves = np.vstack([curves, [fpr_mc['macro'], tpr_mc['macro'],
-                                     None, auc_mc['macro'], '']])
+        if 'micro' in auc_mc and 'macro' in auc_mc:
+            curves = np.vstack([curves, [fpr_mc['micro'], tpr_mc['micro'],
+                                         None, auc_mc['micro'], '']])
+            curves = np.vstack([curves, [fpr_mc['macro'], tpr_mc['macro'],
+                                         None, auc_mc['macro'], '']])
         
         aucs = curves[:,3]
         
@@ -140,9 +143,17 @@ class RejectionOption:
             curves = np.concatenate([self.curves_s, self.curves_m])
         plot_roc_curves(curves)
     
-    def plot_multiclass(self, labels):
-        fpr_mc, tpr_mc, auc_mc = self.curve_mc
-        plot_multiclass_roc_curve(fpr_mc, tpr_mc, auc_mc, labels)
+    def plot_multiclass_roc(self, labels):
+        x, y, v = calc_multiclass_curve(self.y, self.outputs,
+                                              self.n_classes,
+                                              self.outputs_outl)
+        plot_multiclass_curve(x, y, v, labels)
+    
+    def plot_multiclass_precision_recall(self, labels):
+        x, y, v = calc_multiclass_curve(self.y, self.outputs,
+                                        self.n_classes, self.outputs_outl,
+                                        curve_func='precision_recall')
+        plot_multiclass_curve(x, y, v, labels, curve_func='precision_recall')
     
     def print_classification_report(self, labels):
         y_true = self.y.argmax(axis=1)

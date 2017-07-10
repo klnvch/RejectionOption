@@ -6,8 +6,6 @@ Created on Oct 29, 2016
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import average_precision_score
 
 def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
     if y.ndim == 2: y = y.argmax(axis=1)
@@ -129,81 +127,3 @@ def draw_precision_recall(precision, recall, average_precision, filename=None):
     #
     if filename is not None:
         plt.savefig(filename)
-
-def plot_multiclass_roc_curve(fpr, tpr, roc_auc, labels,
-                              savefig=None, show=True):
-    """
-    Plot ROC curves for the multiclass problem
-    
-    Copied from http://scikit-learn.org/stable/auto_examples/model_selection
-    /plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
-    """
-    n_classes = len(labels)
-    # Plot all ROC curves
-    lw = 2
-    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
-    plt.figure()
-    for i, color in zip(range(n_classes), colors):
-        if roc_auc[i] == 0: continue
-        label = 'Class ''{0}'' (AUC: {1:0.4f})'.format(labels[i], roc_auc[i])
-        plt.plot(fpr[i], tpr[i], color=color, lw=lw, label=label)
-    """
-    label_micro = 'Micro-average (AUC: {0:0.4f})'.format(roc_auc["micro"])
-    plt.plot(fpr["micro"], tpr["micro"], label=label_micro, color='deeppink',
-             linestyle=':', linewidth=4)
-    label_macro = 'Macro-average (AUC: {0:0.4f})'.format(roc_auc["macro"])
-    plt.plot(fpr["macro"], tpr["macro"], label=label_macro, color='navy',
-             linestyle=':', linewidth=4)
-    """
-    plt.plot([0, 1], [0, 1], 'k--', lw=lw)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    #plt.title('ROC curves for multiple thresholds')
-    plt.legend(loc="lower right")
-    if savefig is not None: plt.savefig(savefig)
-    if show: plt.show()
-    else: plt.close()
-
-def plot_multiclass_precision_recall_curve(y_test, y_score, class_names):
-    """
-    Plot Precision-Recall curves for the multiclass problem
-    
-    Copied from http://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html#sphx-glr-auto-examples-model-selection-plot-precision-recall-py
-    """
-    n_classes = len(class_names)
-    # Compute Precision-Recall and plot curve
-    precision = dict()
-    recall = dict()
-    average_precision = dict()
-    for i in range(n_classes):
-        precision[i], recall[i], _ = precision_recall_curve(y_test[:, i],
-                                                        y_score[:, i])
-        average_precision[i] = average_precision_score(y_test[:, i], y_score[:, i])
-
-    # Compute micro-average ROC curve and ROC area
-    precision["micro"], recall["micro"], _ = precision_recall_curve(y_test.ravel(),
-        y_score.ravel())
-    average_precision["micro"] = average_precision_score(y_test, y_score,
-                                                     average="micro")
-
-    # Plot Precision-Recall curve for each class
-    lw = 2
-    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
-    
-    for i, color in zip(range(n_classes), colors):
-        plt.plot(recall[i], precision[i], color=color, lw=lw,
-             label='Precision-recall curve of class ''{0}'' (area = {1:0.4f})'
-                   ''.format(class_names[i], average_precision[i]))
-
-    plt.plot(recall["micro"], precision["micro"], color='gold', lw=lw,
-        label='micro-average Precision-recall curve (area = {0:0.4f})'
-               ''.format(average_precision["micro"]))
-    
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Precision-Recall curves for multiple thresholds')
-    plt.legend(loc="lower right")

@@ -54,7 +54,8 @@ def test_unit_mlp(ds, clf, rej, noise_size, units, beta, dropout, es, show):
     if show:
         ro.plot_confusion_matrix(ds.target_names)
         ro.plot()
-        ro.plot_multiclass(ds.target_names)
+        ro.plot_multiclass_roc(ds.target_names)
+        ro.plot_multiclass_precision_recall(ds.target_names)
         ro.print_thresholds()
     
     #return '{:f}, {:f}, {:f}, {:f}, {:s}' \
