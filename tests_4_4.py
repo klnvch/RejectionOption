@@ -104,7 +104,7 @@ def test_block_mlp(ds_id, ds_name, rej, attempts, params):
                 print(msg, file=f)
 
 if __name__ == '__main__':
-    ds = DataSet(13, add_noise=0)
+    ds = DataSet(13, add_noise=1)#, output=(0.1, 0.9))
     test_unit_mlp(ds, 'mlp-sigmoid', 0, 4.0, 64, 0.00001, 0.5, 0, True)
     """
     test_block_mlp(4, 'image_segmentation', 1, range(0,1),

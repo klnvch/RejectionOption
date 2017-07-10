@@ -44,7 +44,7 @@ def print_output_errors(cm, labels, limit=8):
     values, pairs = zip(*sorted(zip(values, pairs), reverse=True))
     print(list(zip(pairs, values))[:limit])
 
-def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True,
+def plot_confusion_matrix(y_true, y_pred, y_outl, labels, savefig=None, show=True,
                           error_threshold=None):
     """
     This function prints and plots the confusion matrix.
@@ -56,6 +56,9 @@ def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True,
     y_pred : array, shape = [n_samples]
     Estimated targets as returned by a classifier.
     
+    y_outl : array, shape = [n_outliers]
+    Estimated targets of outliers as returned by a classifier.
+    
     labels : array, shape = [n_classes]
     Names of classes for columns and rows in the final matrix
     
@@ -66,6 +69,15 @@ def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True,
     
     y_true = y_true.argmax(axis=1)
     y_pred = y_pred.argmax(axis=1)
+    
+    # Add outliers class
+    if y_outl is not None:
+        y_outl = y_outl.argmax(axis=1)
+        n_classes = len(labels)
+        y_true = np.concatenate((y_true, np.full(y_outl.shape, n_classes,
+                                                 dtype=int)))
+        y_pred = np.concatenate((y_pred, y_outl))
+        labels = np.concatenate((labels, ['Outliers']))
     
     x_labels = np.copy(labels)
     y_labels = np.copy(labels)
@@ -106,6 +118,7 @@ def plot_confusion_matrix(y_true, y_pred, labels, savefig=None, show=True,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    
     if savefig is not None: plt.savefig(savefig)
     if show:    plt.show()
     else:       plt.close()

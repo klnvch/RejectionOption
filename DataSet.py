@@ -38,7 +38,8 @@ class Set:
 class DataSet:
     
     def __init__(self, dataset, size=1000, split=[0.6, 0.2, 0.2], 
-                 add_noise=None, noise_size=1.0, noise_output=0.0):
+                 add_noise=None, noise_size=1.0, noise_output=0.0,
+                 output=None):
         """
         Args:
             dataset: index of the dataset.
@@ -62,7 +63,7 @@ class DataSet:
                 1: add noise as no class
         """
         if dataset == 13:
-            self.load_marcin_dataset(add_noise)
+            self.load_marcin_dataset(add_noise, output)
             return
         
         # load data
@@ -153,7 +154,7 @@ class DataSet:
         
         self.print_info()
     
-    def load_marcin_dataset(self, add_noise):
+    def load_marcin_dataset(self, add_noise, output):
         # load data
         x_trn, y_trn, self.target_names = read_marcin_file('LirykaLearning.csv')
         x_vld, y_vld, _ = read_marcin_file('LirykaValidate.csv')
@@ -186,10 +187,15 @@ class DataSet:
             self.n_classes += 1
             self.target_names = np.concatenate((self.target_names, ['Outliers']))
         
-        
         y_trn = preprocessing.label_binarize(y_trn, range(self.n_classes))
         y_vld = preprocessing.label_binarize(y_vld, range(self.n_classes))
         y_tst = preprocessing.label_binarize(y_tst, range(self.n_classes))
+        
+        if output is not None:
+            neg_label, pos_label = output
+            y_trn = y_trn.astype(float)
+            y_trn[y_trn==0.0]=neg_label
+            y_trn[y_trn==1.0]=pos_label
         
         if add_noise == 1:
             o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')

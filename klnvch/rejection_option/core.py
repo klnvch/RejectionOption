@@ -122,11 +122,16 @@ class RejectionOption:
         return ','.join([' %.5f' % num for num in aucs])
     
     def plot_confusion_matrix(self, labels):
-        plot_confusion_matrix(self.y, self.outputs, labels, error_threshold=None)
-        plot_confusion_matrix(self.y, self.outputs, labels, error_threshold=0.98)
-        plot_confusion_matrix(self.y, self.outputs, labels, error_threshold=0.95)
-        plot_confusion_matrix(self.y, self.outputs, labels, error_threshold=0.93)
-        plot_confusion_matrix(self.y, self.outputs, labels, error_threshold=0.90)
+        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+                              error_threshold=None)
+        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+                              error_threshold=0.98)
+        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+                              error_threshold=0.95)
+        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+                              error_threshold=0.93)
+        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+                              error_threshold=0.90)
     
     def plot(self):
         if self.curves_m is None:
