@@ -22,12 +22,13 @@ from sklearn import metrics
 
 class RBF:
     
-    def __init__(self, n_features, n_centers, n_classes):
+    def __init__(self, n_features, n_centers, n_classes, beta=None):
         print('Create RBF network...')
         print('{:d}-{:d}-{:d}'.format(n_features, n_centers, n_classes))
         self.n_features = n_features
         self.n_classes = n_classes
         self.n_centers = n_centers
+        self.beta = beta
     
     def _basisfunc(self, c, d):
         assert len(d) == self.n_features
@@ -54,14 +55,15 @@ class RBF:
         kmeans.fit(X)
         self.centers = kmeans.cluster_centers_
         # find distance
-        dists = pdist(self.centers)
-        max_dist = dists.max()
-        avg_dist = np.average(dists)
-        self.beta = 8.0 / (2.0 * avg_dist ** 2)
-        
-        print('max distance: ' + str(max_dist) + 
-              ', avg distance: ' + str(avg_dist) + 
-              ', beta = ' + str(self.beta))
+        if self.beta is None:
+            dists = pdist(self.centers)
+            max_dist = dists.max()
+            avg_dist = np.average(dists)
+            self.beta = 8.0 / (2.0 * avg_dist ** 2)
+            
+            print('max distance: ' + str(max_dist) + 
+                    ', avg distance: ' + str(avg_dist) + 
+                    ', beta = ' + str(self.beta))
     
     def train(self, X, Y):
         """ X: matrix of dimensions n x indim 
