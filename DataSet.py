@@ -206,7 +206,8 @@ class DataSet:
             x_trn = np.concatenate((x_trn, o_trn))
             y_trn = np.concatenate((y_trn,
                                     np.zeros((o_trn.shape[0], self.n_classes))))
-            
+        
+        if add_noise == 1 or add_noise == 3:
             o_trn_1, _, _ = read_marcin_file('AccidentalsTesting.csv')
             o_trn_2, _, _ = read_marcin_file('DynamicsTesting.csv')
             o_trn_3, _, _ = read_marcin_file('RestsTesting.csv')
