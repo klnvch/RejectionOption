@@ -3,9 +3,6 @@ Created on Jun 26, 2017
 
 @author: anton
 '''
-from thresholds import score_rati, score_diff, score_outp, score_outp_m,\
-    score_diff_ir, score_outp_ir, score_rati_ir, score_diff_r, score_outp_or,\
-    score_rati_r, score_diff_r_m, score_outp_ir_m
 from data_utils import roc_s_thr, roc_m_thr
 import numpy as np
 from graphics import plot_roc_curves
@@ -13,6 +10,8 @@ from sklearn import metrics
 from klnvch.rejection_option.plots import plot_confusion_matrix
 from klnvch.rejection_option.plots import plot_multiclass_curve
 from klnvch.rejection_option.utils import calc_multiclass_curve
+from klnvch.rejection_option.utils import validate_classes
+from klnvch.rejection_option.scoring import ScoringFunc as score_func
 
 def get_labels(n_classes, rc=False, thresholds='all'):
     """
@@ -72,11 +71,12 @@ class RejectionOption:
         self.outputs = outputs
         self.outputs_outl = outputs_outl
         
-        scores_s = [score_outp, score_diff, score_rati]
+        scores_s = [score_func.score_outp, score_func.score_diff,
+                    score_func.score_rati]
         self.curves_s = roc_s_thr(y, outputs, outputs_outl, scores_s)
         
         if self.thresholds == 'all':
-            scores_m = [score_outp_m]
+            scores_m = [score_func.score_outp_m]
             self.curves_m = roc_m_thr(self.n_classes, y, outputs,
                                       outputs_outl, scores_m)
             curves = np.concatenate([self.curves_s, self.curves_m])
@@ -123,6 +123,58 @@ class RejectionOption:
         aucs = curves[:,3]
         
         return ','.join([' %.5f' % num for num in aucs])
+    
+    def calc_metrics(self):
+        # SOT - Single 0utput Threshold
+        y_true, y_score, label = \
+                score_func.score_outp(self.y, self.outputs, self.outputs_outl)
+        auc = metrics.roc_auc_score(y_true, y_score)
+        print('{:40s}: {:0.4f}'.format(label, auc))
+        
+        # SDT - Single Differential Threshold
+        y_true, y_score, label = \
+                score_func.score_diff(self.y, self.outputs, self.outputs_outl)
+        auc = metrics.roc_auc_score(y_true, y_score)
+        print('{:40s}: {:0.4f}'.format(label, auc))
+        
+        # SRT - Single Ratio Threshold
+        y_true, y_score, label = \
+                score_func.score_rati(self.y, self.outputs, self.outputs_outl)
+        auc = metrics.roc_auc_score(y_true, y_score)
+        print('{:40s}: {:0.4f}'.format(label, auc))
+        
+        # MOT - Multiple Output Thresholds
+        y_m_true, y_m_score, label = \
+                score_func.score_outp_m(self.y, self.outputs, self.outputs_outl)
+        avg_auc = 0
+        for y_true, y_score in zip(y_m_true, y_m_score):
+            if validate_classes(y_true):
+                avg_auc += metrics.roc_auc_score(y_true, y_score)
+            else:
+                avg_auc += 1.0
+        print('{:40s}: {:0.4f}'.format(label, avg_auc / self.n_classes))
+        
+        # MOT - Multiple Differential Thresholds
+        y_m_true, y_m_score, label = \
+                score_func.score_diff_m(self.y, self.outputs, self.outputs_outl)
+        avg_auc = 0
+        for y_true, y_score in zip(y_m_true, y_m_score):
+            if validate_classes(y_true):
+                avg_auc += metrics.roc_auc_score(y_true, y_score)
+            else:
+                avg_auc += 1.0
+        print('{:40s}: {:0.4f}'.format(label, avg_auc / self.n_classes))
+        
+        # MOT - Multiple Ratio Thresholds
+        y_m_true, y_m_score, label = \
+                score_func.score_rati_m(self.y, self.outputs, self.outputs_outl)
+        avg_auc = 0
+        for y_true, y_score in zip(y_m_true, y_m_score):
+            if validate_classes(y_true):
+                avg_auc += metrics.roc_auc_score(y_true, y_score)
+            else:
+                avg_auc += 1.0
+        print('{:40s}: {:0.4f}'.format(label, avg_auc / self.n_classes))
     
     def plot_confusion_matrix(self, labels):
         plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
@@ -182,3 +234,10 @@ class RejectionOption:
                   + ', {:d}, {:d}, {:d}, {:d}'.format(tp, fp, fn, tn))
         
         print('The end')
+
+if __name__ == '__main__':
+    y_true = np.random.randint(2, size=(100,4))
+    y_score = np.random.rand(100,4)
+    y_score[20,3] = None
+    auc = metrics.roc_auc_score(y_true, y_score, None)
+    print(auc)

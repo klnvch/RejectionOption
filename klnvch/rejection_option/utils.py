@@ -5,13 +5,16 @@ Created on Jul 10, 2017
 '''
 
 import numpy as np
-from thresholds import thr_output
 from sklearn import metrics
 from scipy import interp
+from klnvch.rejection_option.scoring import ScoringFunc as score_func
+
+def validate_classes(y_true):
+    return len(np.unique(y_true)) == 2
 
 def calc_multiclass_curve(outputs_true, outputs_pred, n_classes,
                           outputs_outl=None, recall_threshold = 0.9,
-                          threshold_function=thr_output, avg=False,
+                          score_func=score_func.score_outp_m, avg=False,
                           curve_func = 'roc'):
     """ Calcs binary ROC curve or for multiple output thresholds
     
@@ -37,10 +40,10 @@ def calc_multiclass_curve(outputs_true, outputs_pred, n_classes,
     
     if curve_func == 'precision_recall':
         curve_func = metrics.precision_recall_curve
-        score_func = metrics.average_precision_score
+        metric_func = metrics.average_precision_score
     elif curve_func == 'roc':
         curve_func = metrics.roc_curve
-        score_func = metrics.roc_auc_score
+        metric_func = metrics.roc_auc_score
     else: raise ValueError('wrong curve function')
     
     # Compute ROC curve and ROC area for each class
@@ -48,36 +51,20 @@ def calc_multiclass_curve(outputs_true, outputs_pred, n_classes,
     tpr = dict()
     roc_auc = dict()
     
-    y_ideal = outputs_true.argmax(axis=1)
-    y_real = outputs_pred.argmax(axis=1)
-    y_true = [a==b for a,b in zip(y_ideal, y_real)]
-    y_score = threshold_function(outputs_pred)
-    
-    # split into separate curves per class
-    y_true_classes = [[] for _ in range(n_classes)]
-    y_score_classes = [[] for _ in range(n_classes)]
-    for i, correctness, score in zip(y_real, y_true, y_score):
-        y_true_classes[i].append(correctness)
-        y_score_classes[i].append(score)
-    # add outliers
-    if outputs_outl is not None:
-        for o in outputs_outl:
-            i = o.argmax()
-            y_true_classes[i].append(False)
-            y_score_classes[i].append(o.max())
+    y_m_true, y_m_score, _ =score_func(outputs_true, outputs_pred, outputs_outl)
     
     for i in range(n_classes):
         # skip if few outputs or nothing to reject
-        if (len(y_true_classes[i]) > 1 and
-            calc_recall(y_true_classes[i]) <= recall_threshold):
+        if (len(y_m_true[i]) > 1 and
+            calc_recall(y_m_true[i]) <= recall_threshold):
             
-            fpr[i], tpr[i], _ = curve_func(y_true_classes[i],
-                                           y_score_classes[i],
+            fpr[i], tpr[i], _ = curve_func(y_m_true[i],
+                                           y_m_score[i],
                                            True)
             # add 0 and 1 to get full curve
             fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
             tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
-            roc_auc[i] = score_func(y_true_classes[i], y_score_classes[i])
+            roc_auc[i] = metric_func(y_m_true[i], y_m_score[i])
         else:
             fpr[i] = tpr[i] = []
             roc_auc[i] = 0

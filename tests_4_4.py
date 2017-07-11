@@ -9,8 +9,8 @@ import time
 from RBF import RBF
 from klnvch.rejection_option.core import RejectionOption, get_labels
 
-def test_unit_RBF(ds, n_hidden):
-    rbf = RBF(ds.n_features, n_hidden, ds.n_classes)
+def test_unit_RBF(ds, n_hidden, beta=None, show=False):
+    rbf = RBF(ds.n_features, n_hidden, ds.n_classes, beta)
     rbf.train(ds.trn.x, ds.trn.y)
     
     score = rbf.score(ds.tst)
@@ -18,6 +18,12 @@ def test_unit_RBF(ds, n_hidden):
     
     ro = RejectionOption(rbf, ds.n_classes, False, 'simple')
     line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
+    if show:
+        ro.plot_confusion_matrix(ds.target_names)
+        ro.plot()
+        ro.plot_multiclass_roc(ds.target_names)
+        ro.plot_multiclass_precision_recall(ds.target_names)
+        ro.print_thresholds()
     
     return '{:9f}, {:s}'.format(score, line)
 
@@ -52,7 +58,8 @@ def test_unit_mlp(ds, clf, rej, noise_size, units, beta, dropout, es, show):
     line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
     ro.print_classification_report(ds.target_names)
     if show:
-        ro.plot_confusion_matrix(ds.target_names)
+        #ro.plot_confusion_matrix(ds.target_names)
+        ro.calc_metrics()
         ro.plot()
         ro.plot_multiclass_roc(ds.target_names)
         ro.plot_multiclass_precision_recall(ds.target_names)
@@ -105,8 +112,10 @@ def test_block_mlp(ds_id, ds_name, rej, attempts, params):
                 print(msg, file=f)
 
 if __name__ == '__main__':
-    ds = DataSet(13, add_noise=1)#, output=(0.1, 0.9))
-    test_unit_mlp(ds, 'mlp-sigmoid', 0, 4.0, 64, 0.00001, 0.5, 0, True)
+    
+    ds = DataSet(13, add_noise=2)#, output=(0.1, 0.9))
+    test_unit_mlp(ds, 'mlp-sigmoid', 0, 4.0, 128, 0.00001, 0.5, 0, True)
+    
     """
     test_block_mlp(4, 'image_segmentation', 1, range(0,1),
                    [
@@ -195,5 +204,9 @@ if __name__ == '__main__':
                     ])
     """
     """
-    test_block_RBF('image_segmentation', 4, range(0,1),[7,14,21,28,35,42,49,56])
+    ds = DataSet(13, add_noise=3)
+    test_unit_RBF(ds, 256, 0.001, True)
+    """
+    """
+    test_block_RBF('alphanumeric', 13, range(0,1),[7,14,21,28,35,42,49,56])
     """
