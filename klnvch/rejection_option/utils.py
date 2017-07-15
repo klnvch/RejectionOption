@@ -12,8 +12,8 @@ from klnvch.rejection_option.scoring import ScoringFunc as score_func
 def validate_classes(y_true):
     return len(np.unique(y_true)) == 2
 
-def calc_multiclass_curve(outputs_true, outputs_pred, n_classes,
-                          outputs_outl=None, recall_threshold = 0.9,
+def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
+                          recall_threshold = 0.9,
                           score_func=score_func.score_outp_m, avg=False,
                           curve_func = 'roc'):
     """ Calcs binary ROC curve or for multiple output thresholds
@@ -53,6 +53,7 @@ def calc_multiclass_curve(outputs_true, outputs_pred, n_classes,
     
     y_m_true, y_m_score, _ =score_func(outputs_true, outputs_pred, outputs_outl)
     
+    n_classes = outputs_true.shape[1]
     for i in range(n_classes):
         # skip if few outputs or nothing to reject
         if (len(y_m_true[i]) > 1 and

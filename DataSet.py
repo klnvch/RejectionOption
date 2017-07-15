@@ -153,6 +153,14 @@ class DataSet:
         self.n_classes += 1
         
         self.print_info()
+        
+    def change_targets(self, targets):
+        y = self.trn.y
+        
+        neg_label, pos_label = targets
+        y = y.astype(float)
+        y[y==0.0] = neg_label
+        y[y==1.0] = pos_label
     
     def load_marcin_dataset(self, add_noise, output):
         # load data
@@ -191,12 +199,6 @@ class DataSet:
         y_vld = preprocessing.label_binarize(y_vld, range(self.n_classes))
         y_tst = preprocessing.label_binarize(y_tst, range(self.n_classes))
         
-        if output is not None:
-            neg_label, pos_label = output
-            y_trn = y_trn.astype(float)
-            y_trn[y_trn==0.0]=neg_label
-            y_trn[y_trn==1.0]=pos_label
-        
         if add_noise == 1:
             o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')
             o_trn_2, _, _ = read_marcin_file('DynamicsLearning.csv')
@@ -233,5 +235,8 @@ class DataSet:
         self.trn = Set(x_trn, y_trn)
         self.vld = Set(x_vld, y_vld)
         self.tst = Set(x_tst, y_tst)
+        
+        if output is not None:
+            self.change_targets(output)
         
         self.print_info()

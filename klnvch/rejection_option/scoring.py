@@ -123,7 +123,7 @@ def sc_m(outputs_true, outputs_pred, outputs_outl, threshold_func):
         
         for i, score in zip(y_pred, y_score):
             y_m_true[i].append(False)
-            y_m_score[i].append(y_score)
+            y_m_score[i].append(score)
     
     return y_m_true, y_m_score
 ###############################################################################

@@ -53,6 +53,15 @@ class RejectionOption:
         self.n_classes = n_classes
         self.thresholds = thresholds
     
+    def init(self, labels, x, y, outliers=None):
+        assert x is not None and y is not None
+        assert x.shape[0] == y.shape[0]
+        
+        self.labels= labels
+        self.outputs_true = y
+        self.outputs_pred = self.clf.predict_proba(x)
+        self.outputs_outl = self.clf.predict_proba(outliers)
+    
     def evaluate(self, x, y, outliers=None, output='csv'):
         """Computes all 
         """
@@ -126,91 +135,113 @@ class RejectionOption:
     
     def calc_metrics(self):
         # SOT - Single 0utput Threshold
-        y_true, y_score, label = \
-                score_func.score_outp(self.y, self.outputs, self.outputs_outl)
-        auc = metrics.roc_auc_score(y_true, y_score)
-        print('{:40s}: {:0.4f}'.format(label, auc))
+        y_true, y_score, label = score_func.score_outp(self.outputs_true,
+                                                       self.outputs_pred,
+                                                       self.outputs_outl)
+        auc_0 = metrics.roc_auc_score(y_true, y_score)
+        print('{:40s}: {:0.4f}'.format(label, auc_0))
         
         # SDT - Single Differential Threshold
-        y_true, y_score, label = \
-                score_func.score_diff(self.y, self.outputs, self.outputs_outl)
-        auc = metrics.roc_auc_score(y_true, y_score)
-        print('{:40s}: {:0.4f}'.format(label, auc))
+        y_true, y_score, label = score_func.score_diff(self.outputs_true,
+                                                       self.outputs_pred,
+                                                       self.outputs_outl)
+        auc_1 = metrics.roc_auc_score(y_true, y_score)
+        print('{:40s}: {:0.4f}'.format(label, auc_1))
         
         # SRT - Single Ratio Threshold
-        y_true, y_score, label = \
-                score_func.score_rati(self.y, self.outputs, self.outputs_outl)
-        auc = metrics.roc_auc_score(y_true, y_score)
-        print('{:40s}: {:0.4f}'.format(label, auc))
+        y_true, y_score, label = score_func.score_rati(self.outputs_true,
+                                                       self.outputs_pred,
+                                                       self.outputs_outl)
+        auc_2 = metrics.roc_auc_score(y_true, y_score)
+        print('{:40s}: {:0.4f}'.format(label, auc_2))
         
         # MOT - Multiple Output Thresholds
-        y_m_true, y_m_score, label = \
-                score_func.score_outp_m(self.y, self.outputs, self.outputs_outl)
-        avg_auc = 0
+        y_m_true, y_m_score, label = score_func.score_outp_m(self.outputs_true,
+                                                             self.outputs_pred,
+                                                             self.outputs_outl)
+        avg_auc_0 = 0
         for y_true, y_score in zip(y_m_true, y_m_score):
             if validate_classes(y_true):
-                avg_auc += metrics.roc_auc_score(y_true, y_score)
+                avg_auc_0 += metrics.roc_auc_score(y_true, y_score)
             else:
-                avg_auc += 1.0
-        print('{:40s}: {:0.4f}'.format(label, avg_auc / self.n_classes))
+                avg_auc_0 += 1.0
+        avg_auc_0 /= self.n_classes
+        print('{:40s}: {:0.4f}'.format(label, avg_auc_0))
         
         # MOT - Multiple Differential Thresholds
-        y_m_true, y_m_score, label = \
-                score_func.score_diff_m(self.y, self.outputs, self.outputs_outl)
-        avg_auc = 0
+        y_m_true, y_m_score, label = score_func.score_diff_m(self.outputs_true,
+                                                             self.outputs_pred,
+                                                             self.outputs_outl)
+        avg_auc_1 = 0
         for y_true, y_score in zip(y_m_true, y_m_score):
             if validate_classes(y_true):
-                avg_auc += metrics.roc_auc_score(y_true, y_score)
+                avg_auc_1 += metrics.roc_auc_score(y_true, y_score)
             else:
-                avg_auc += 1.0
-        print('{:40s}: {:0.4f}'.format(label, avg_auc / self.n_classes))
+                avg_auc_1 += 1.0
+        avg_auc_1 /= self.n_classes
+        print('{:40s}: {:0.4f}'.format(label, avg_auc_1))
         
         # MOT - Multiple Ratio Thresholds
-        y_m_true, y_m_score, label = \
-                score_func.score_rati_m(self.y, self.outputs, self.outputs_outl)
-        avg_auc = 0
+        y_m_true, y_m_score, label = score_func.score_rati_m(self.outputs_true,
+                                                             self.outputs_pred,
+                                                             self.outputs_outl)
+        avg_auc_2 = 0
         for y_true, y_score in zip(y_m_true, y_m_score):
             if validate_classes(y_true):
-                avg_auc += metrics.roc_auc_score(y_true, y_score)
+                avg_auc_2 += metrics.roc_auc_score(y_true, y_score)
             else:
-                avg_auc += 1.0
-        print('{:40s}: {:0.4f}'.format(label, avg_auc / self.n_classes))
+                avg_auc_2 += 1.0
+        avg_auc_2 /= self.n_classes
+        print('{:40s}: {:0.4f}'.format(label, avg_auc_2))
+        
+        return auc_0, auc_1, auc_2, avg_auc_0, avg_auc_1, avg_auc_2
     
-    def plot_confusion_matrix(self, labels):
-        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+    def plot_confusion_matrix(self):
+        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                              self.outputs_outl, self.labels,
                               error_threshold=None)
-        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                              self.outputs_outl, self.labels,
                               error_threshold=0.98)
-        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                              self.outputs_outl, self.labels,
                               error_threshold=0.95)
-        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                              self.outputs_outl, self.labels,
                               error_threshold=0.93)
-        plot_confusion_matrix(self.y, self.outputs, self.outputs_outl, labels,
+        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                              self.outputs_outl, self.labels,
                               error_threshold=0.90)
     
-    def plot(self):
-        if self.curves_m is None:
-            curves = self.curves_s
-        else:
-            curves = np.concatenate([self.curves_s, self.curves_m])
-        plot_roc_curves(curves)
+    def plot_roc(self):
+        scores_s = [score_func.score_outp,
+                    score_func.score_diff,
+                    score_func.score_rati]
+        curves_s = roc_s_thr(self.outputs_true,
+                             self.outputs_pred,
+                             self.outputs_outl,
+                             scores_s)
+        plot_roc_curves(curves_s)
     
-    def plot_multiclass_roc(self, labels):
-        x, y, v = calc_multiclass_curve(self.y, self.outputs,
-                                              self.n_classes,
-                                              self.outputs_outl)
-        plot_multiclass_curve(x, y, v, labels)
+    def plot_multiclass_roc(self):
+        x, y, v = calc_multiclass_curve(self.outputs_true,
+                                        self.outputs_pred,
+                                        self.outputs_outl)
+        plot_multiclass_curve(x, y, v, self.labels)
     
-    def plot_multiclass_precision_recall(self, labels):
-        x, y, v = calc_multiclass_curve(self.y, self.outputs,
-                                        self.n_classes, self.outputs_outl,
+    def plot_multiclass_precision_recall(self):
+        x, y, v = calc_multiclass_curve(self.outputs_true,
+                                        self.outputs_pred,
+                                        self.outputs_outl,
                                         curve_func='precision_recall')
-        plot_multiclass_curve(x, y, v, labels, curve_func='precision_recall')
+        plot_multiclass_curve(x, y, v, self.labels,
+                              curve_func='precision_recall')
     
-    def print_classification_report(self, labels):
-        y_true = self.y.argmax(axis=1)
-        y_pred = self.outputs.argmax(axis=1)
-        report = metrics.classification_report(y_true, y_pred, None, labels)
+    def print_classification_report(self):
+        y_true = self.outputs_true.argmax(axis=1)
+        y_pred = self.outputs_pred.argmax(axis=1)
+        report = metrics.classification_report(y_true, y_pred,
+                                               None, self.labels)
         print(report)
     
     def print_thresholds(self):
@@ -234,10 +265,3 @@ class RejectionOption:
                   + ', {:d}, {:d}, {:d}, {:d}'.format(tp, fp, fn, tn))
         
         print('The end')
-
-if __name__ == '__main__':
-    y_true = np.random.randint(2, size=(100,4))
-    y_score = np.random.rand(100,4)
-    y_score[20,3] = None
-    auc = metrics.roc_auc_score(y_true, y_score, None)
-    print(auc)
