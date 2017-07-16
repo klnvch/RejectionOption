@@ -63,8 +63,8 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
                                            y_m_score[i],
                                            True)
             # add 0 and 1 to get full curve
-            fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
-            tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
+            #fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
+            #tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
             roc_auc[i] = metric_func(y_m_true[i], y_m_score[i])
         else:
             fpr[i] = tpr[i] = []
@@ -92,3 +92,37 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
         roc_auc["macro"] = metrics.auc(fpr["macro"], tpr["macro"])
     
     return fpr, tpr, roc_auc
+
+def calc_s_thr(outputs_true, outputs_pred, outputs_outl, scores,
+              curve_func = 'roc'):
+    """
+    Calcs binary ROC curve or for single threshold
+    Args:
+        outputs_true : desired output
+        outputs_pred : real output
+        outputs_outliers : output for outliers
+    Returns:
+        FPR, TPR, AUC
+    """
+    def calc(outputs_true, outputs_pred, outputs_outl,
+             score, curve_func = 'roc'):
+        
+        if curve_func == 'precision_recall':
+            curve_func = metrics.precision_recall_curve
+            metric_func = metrics.average_precision_score
+        elif curve_func == 'roc':
+            curve_func = metrics.roc_curve
+            metric_func = metrics.roc_auc_score
+        else: raise ValueError('wrong curve function')
+        
+        y_true, y_score, label = score(outputs_true, outputs_pred, outputs_outl)
+        fpr, tpr, thr = curve_func(y_true, y_score)
+        # add 0 and 1 to get full curve
+        #fpr = np.concatenate(([0.], fpr, [1.]))
+        #tpr = np.concatenate(([0.], tpr, [1.]))
+        roc_auc = metric_func(y_true, y_score)
+        return fpr, tpr, thr, roc_auc, label
+    
+    result = [calc(outputs_true, outputs_pred, outputs_outl, i, curve_func) 
+              for i in scores]
+    return np.array(result)

@@ -5,9 +5,7 @@ Created on Jul 11, 2017
 '''
 
 import numpy as np
-from thresholds import thr_output, thr_diff, thr_ratio, thr_output_ignore_reject,\
-    thr_diff_ignore_reject, thr_ratio_ignore_reject, thr_only_reject,\
-    thr_diff_reject, thr_ratio_reject
+from klnvch.rejection_option.thresholds import Thresholds as thr
 
 ###############################################################################
 #
@@ -60,37 +58,37 @@ def sc_ir(outputs_true, outputs_pred):
 def score_outp_ir(outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     y_true, outputs_pred = sc_ir(outputs_true, outputs_pred)
-    y_score = thr_output_ignore_reject(outputs_pred)
+    y_score = thr.thr_output_ignore_reject(outputs_pred)
     return y_true, y_score, 'Single output threshold'
 
 def score_diff_ir(outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     y_true, outputs_pred = sc_ir(outputs_true, outputs_pred)
-    y_score = thr_diff_ignore_reject(outputs_pred)
+    y_score = thr.thr_diff_ignore_reject(outputs_pred)
     return y_true, y_score, 'Single differential threshold'
 
 def score_rati_ir(outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     y_true, outputs_pred = sc_ir(outputs_true, outputs_pred)
-    y_score = thr_ratio_ignore_reject(outputs_pred)
+    y_score = thr.thr_ratio_ignore_reject(outputs_pred)
     return y_true, y_score, 'Single ratio threshold'
 
 def score_outp_or(outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     y_true, outputs_pred = sc_ir(outputs_true, outputs_pred)
-    y_score = thr_only_reject(outputs_pred)
+    y_score = thr.thr_only_reject(outputs_pred)
     return y_true, y_score, 'Rejection output threshold'
 
 def score_diff_r(outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     y_true, outputs_pred = sc_ir(outputs_true, outputs_pred)
-    y_score = thr_diff_reject(outputs_pred)
+    y_score = thr.thr_diff_reject(outputs_pred)
     return y_true, y_score, 'Rejection differential threshold'
 
 def score_rati_r(outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     y_true, outputs_pred = sc_ir(outputs_true, outputs_pred)
-    y_score = thr_ratio_reject(outputs_pred)
+    y_score = thr.thr_ratio_reject(outputs_pred)
     return y_true, y_score, 'Rejection ratio threshold'
 ###############################################################################
 # MULTIPLE THRESHOLDS, NO REJECT OUTPUT
@@ -135,7 +133,7 @@ def score_outp_ir_m(n_classes, outputs_true, outputs_pred, outputs_outl):
     y_ideal = outputs_true.argmax(axis=1)
     y_real = outputs_pred[:,:-1].argmax(axis=1)
     y_true = [a==b for a,b in zip(y_ideal, y_real)]
-    y_score = thr_output_ignore_reject(outputs_pred)
+    y_score = thr.thr_output_ignore_reject(outputs_pred)
     
     y_true_classes = [[] for _ in range(n_classes-1)]
     y_score_classes = [[] for _ in range(n_classes-1)]
@@ -159,7 +157,7 @@ def score_diff_r_m(n_classes, outputs_true, outputs_pred, outputs_outl):
     y_ideal = outputs_true.argmax(axis=1)
     y_real = outputs_pred[:,:-1].argmax(axis=1)
     y_true = [a==b for a,b in zip(y_ideal, y_real)]
-    y_score = thr_diff_reject(outputs_pred)
+    y_score = thr.thr_diff_reject(outputs_pred)
     
     y_true_classes = [[] for _ in range(n_classes-1)]
     y_score_classes = [[] for _ in range(n_classes-1)]
@@ -178,41 +176,40 @@ def score_diff_r_m(n_classes, outputs_true, outputs_pred, outputs_outl):
             'Multiple differential rejection threshold'
 
 class ScoringFunc:
-    
     ###################    Single threshold    ################################
     @staticmethod
     def score_outp(outputs_true, outputs_pred, outputs_outl):
         y_true, y_score = sc(outputs_true, outputs_pred, outputs_outl,
-                             thr_output)
+                             thr.thr_output)
         return y_true, y_score, 'Single output threshold'
     
     @staticmethod
     def score_diff(outputs_true, outputs_pred, outputs_outl):
         y_true, y_score = sc(outputs_true, outputs_pred, outputs_outl,
-                             thr_diff)
+                             thr.thr_diff)
         return y_true, y_score, 'Single differential threshold'
     
     @staticmethod
     def score_rati(outputs_true, outputs_pred, outputs_outl):
         y_true, y_score = sc(outputs_true, outputs_pred, outputs_outl,
-                             thr_ratio)
+                             thr.thr_ratio)
         return y_true, y_score, 'Single ratio threshold'
     
     ###################    Multiple thresholds    #############################
     @staticmethod
     def score_outp_m( outputs_true, outputs_pred, outputs_outl):
         y_m_true, y_m_score = sc_m(outputs_true, outputs_pred, outputs_outl,
-                                   thr_output)
+                                   thr.thr_output)
         return y_m_true, y_m_score, 'Multiple output threshold'
     
     @staticmethod
     def score_diff_m(outputs_true, outputs_pred, outputs_outl):
         y_m_true, y_m_score = sc_m(outputs_true, outputs_pred, outputs_outl,
-                                   thr_diff)
+                                   thr.thr_diff)
         return y_m_true, y_m_score, 'Multiple differential threshold'
     
     @staticmethod
     def score_rati_m(outputs_true, outputs_pred, outputs_outl):
         y_m_true, y_m_score = sc_m(outputs_true, outputs_pred, outputs_outl,
-                                   thr_ratio)
+                                   thr.thr_ratio)
         return y_m_true, y_m_score, 'Multiple ratio threshold'

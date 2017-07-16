@@ -3,13 +3,13 @@ Created on Jun 24, 2017
 
 @author: anton
 '''
+import csv
+import numpy as np
+import pandas as pd
+from scipy.stats import ranksums
+import time
 from DataSet import DataSet
 from MLP import MLP
-import time
-import numpy as np
-import csv
-import pandas as pd
-import scipy
 from RBF import RBF
 from klnvch.rejection_option.core import RejectionOption, get_labels
 
@@ -21,15 +21,17 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
     print('Test accuracy: {0:f}'.format(score))
     
     ro = RejectionOption(rbf, ds.n_classes, False, 'simple')
-    line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
+    ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
+    ro.print_classification_report()
+    line = ro.calc_metrics()
     if show:
-        ro.plot_confusion_matrix(ds.target_names)
-        ro.plot()
-        ro.plot_multiclass_roc(ds.target_names)
-        ro.plot_multiclass_precision_recall(ds.target_names)
-        ro.print_thresholds()
+        ro.plot_confusion_matrix()
+        ro.plot_roc()
+        ro.plot_roc_precision_recall()
+        ro.plot_multiclass_roc()
+        ro.plot_multiclass_precision_recall()
     
-    return '{:9f}, {:s}'.format(score, line)
+    return np.concatenate(([score], line))
 
 def test_unit_mlp(ds, clf, rej, noise_size, units,
                   beta, dropout, es, targets, show):
@@ -64,25 +66,29 @@ def test_unit_mlp(ds, clf, rej, noise_size, units,
     if show:
         ro.plot_confusion_matrix()
         ro.plot_roc()
+        ro.plot_roc_precision_recall()
         ro.plot_multiclass_roc()
         ro.plot_multiclass_precision_recall()
     
     return np.concatenate(([result[2], result[3], result[4], score], line))
 
-def test_block_RBF(ds_name, ds_id, attempts, params):
+def test_block_rbf(ds_name, ds_id, attempts, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
-    colums = 'DS,Attempt,Units,Tst acc,' + get_labels(3)
+    colums = 'DS,Attempt,Units,Beta,Tst acc,' + get_labels(3)
     with open(filename, 'a+') as f:
         print(colums, file=f)
     
     for attempt in attempts:
-        ds = DataSet(ds_id, split=[0.2, 0.8], add_noise=3)
+        ds = DataSet(ds_id, add_noise=3)
         for param in params:
-            n_hidden = param
-            msg = test_unit_RBF(ds, n_hidden)
-            msg = '{:s}, {:d}, {:d}, '.format(ds_name, attempt, n_hidden) + msg
+            distance, n_hidden = param
+            msg = test_unit_RBF(ds, n_hidden, distance)
+            
+            row = np.concatenate(([ds_name, attempt, n_hidden, distance], msg))
+            
             with open(filename, 'a+') as f:
-                print(msg, file=f)
+                writer = csv.writer(f)
+                writer.writerow(row)
 
 def test_block_mlp(ds_id, ds_name, rej, attempts, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
@@ -111,7 +117,7 @@ def test_block_mlp(ds_id, ds_name, rej, attempts, params):
             with open(filename, 'a+') as f:
                 writer = csv.writer(f)
                 writer.writerow(row)
-                
+
 params_0 = [
     [0, 'mlp-sigmoid', None, 16,  0.00001,  1.0, 0,  (0.0, 1.0)],
     [0, 'mlp-sigmoid', None, 32,  0.00001,  1.0, 0,  (0.0, 1.0)],
@@ -151,6 +157,70 @@ params_1 = [
     [1, 'mlp-sigmoid', None, 128, 0.00001,  0.5, 0,  (0.1, 0.9)],
     ]
 
+params_2 = [
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
+    [2, 'mlp-sigmoid', None, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
+    
+    [2, 'mlp-softmax', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
+    [2, 'mlp-softmax', None, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
+    ]
+
+params_4 = [
+    [0.000001, 32],
+    [0.000001, 64],
+    [0.000001, 128],
+    [0.000001, 256],
+    [0.000001, 512],
+    
+    [0.00001, 32],
+    [0.00001, 64],
+    [0.00001, 128],
+    [0.00001, 256],
+    [0.00001, 512],
+    
+    [0.0001, 32],
+    [0.0001, 64],
+    [0.0001, 128],
+    [0.0001, 256],
+    [0.0001, 512],
+    
+    [0.001, 32],
+    [0.001, 64],
+    [0.001, 128],
+    [0.001, 256],
+    [0.001, 512],
+    
+    [0.01, 32],
+    [0.01, 64],
+    [0.01, 128],
+    [0.01, 256],
+    [0.01, 512]
+    ]
+
 def wicoxon_test(filename, params):
     df = pd.read_csv(filename)
     print(df.keys())
@@ -166,57 +236,21 @@ def wicoxon_test(filename, params):
     
     print(mrt)
     
-    A = [[scipy.stats.ranksums(a, b).statistic for a in mrt] for b in mrt]
+    A = [[ranksums(a, b).statistic for a in mrt] for b in mrt]
     
     print('\n'.join([','.join(['{:4f} '.format(item) for item in row]) for row in A]))
 
 if __name__ == '__main__':
     #wicoxon_test('tests/alphanumeric/run_0.csv', params_0)
-    wicoxon_test('tests/alphanumeric/run_1.csv', params_1)
-    """
-    ds = DataSet(13, add_noise=2)#, output=(0.1, 0.9))
-    test_unit_mlp(ds, 'mlp-sigmoid', 0, 4.0, 128, 0.00001, 0.5, 0, True)
-    """
+    #wicoxon_test('tests/alphanumeric/run_1.csv', params_1)
+    
+    #ds = DataSet(13, add_noise=0)#, output=(0.1, 0.9))
+    #test_unit_mlp(ds, 'mlp-sigmoid', 0, None, 32, 0.0, 1.0, 0, (0.0, 1.0), True)
+    
+    ds = DataSet(13, add_noise=3)
+    test_unit_RBF(ds, 128, 0.001, True)
+    
     #test_block_mlp(13, 'alphanumeric', 0, range(1,9), params_0)
     #test_block_mlp(13, 'alphanumeric', 1, range(9,10), params_1)
-    """
-    test_block_mlp(4, 'image_segmentation', 2, range(0,1),
-                   [
-                    [2, 'mlp-sigmoid', 0.5, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 1.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 2.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 8.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
-                    
-                    [2, 'mlp-softmax', 0.5, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 1.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 2.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 8.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
-                    ])
-    """
-    """
-    ds = DataSet(13, add_noise=3)
-    test_unit_RBF(ds, 256, 0.001, True)
-    """
-    """
-    test_block_RBF('alphanumeric', 13, range(0,1),[7,14,21,28,35,42,49,56])
-    """
+    #test_block_mlp(13, 'alphanumeric', 2, range(0,1), params_2)
+    #test_block_rbf('alphanumeric', 13, range(0,1), params_4)

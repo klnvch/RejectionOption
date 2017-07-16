@@ -3,12 +3,12 @@ Created on Jun 26, 2017
 
 @author: anton
 '''
-from data_utils import roc_s_thr, roc_m_thr
 import numpy as np
-from graphics import plot_roc_curves
 from sklearn import metrics
 from klnvch.rejection_option.plots import plot_confusion_matrix
 from klnvch.rejection_option.plots import plot_multiclass_curve
+from klnvch.rejection_option.plots import plot_curves
+from klnvch.rejection_option.utils import calc_s_thr
 from klnvch.rejection_option.utils import calc_multiclass_curve
 from klnvch.rejection_option.utils import validate_classes
 from klnvch.rejection_option.scoring import ScoringFunc as score_func
@@ -61,77 +61,6 @@ class RejectionOption:
         self.outputs_true = y
         self.outputs_pred = self.clf.predict_proba(x)
         self.outputs_outl = self.clf.predict_proba(outliers)
-    
-    def evaluate(self, x, y, outliers=None, output='csv'):
-        """Computes all 
-        """
-        assert x is not None and y is not None
-        assert x.shape[0] == y.shape[0]
-        assert output == 'csv'
-        
-        if self.rc: return self.eval_rc(x, y)
-        else:       return self.eval(x, y, outliers)
-    
-    def eval(self, x, y, outliers=None):
-        outputs = self.clf.predict_proba(x)
-        outputs_outl = self.clf.predict_proba(outliers)
-        
-        self.y = y
-        self.outputs = outputs
-        self.outputs_outl = outputs_outl
-        
-        scores_s = [score_func.score_outp, score_func.score_diff,
-                    score_func.score_rati]
-        self.curves_s = roc_s_thr(y, outputs, outputs_outl, scores_s)
-        
-        if self.thresholds == 'all':
-            scores_m = [score_func.score_outp_m]
-            self.curves_m = roc_m_thr(self.n_classes, y, outputs,
-                                      outputs_outl, scores_m)
-            curves = np.concatenate([self.curves_s, self.curves_m])
-        else:
-            self.curves_m = None
-            curves = self.curves_s
-        
-        self.curve_mc = calc_multiclass_curve(y, outputs, self.n_classes,
-                                              outputs_outl)
-        fpr_mc, tpr_mc, auc_mc = self.curve_mc
-        
-        for i in range(self.n_classes):
-            curves = np.vstack([curves, [fpr_mc[i], tpr_mc[i],
-                                         None, auc_mc[i], '']])
-        
-        if 'micro' in auc_mc and 'macro' in auc_mc:
-            curves = np.vstack([curves, [fpr_mc['micro'], tpr_mc['micro'],
-                                         None, auc_mc['micro'], '']])
-            curves = np.vstack([curves, [fpr_mc['macro'], tpr_mc['macro'],
-                                         None, auc_mc['macro'], '']])
-        
-        aucs = curves[:,3]
-        
-        print(aucs)
-        return ','.join([' %.5f' % num for num in aucs])
-    
-    def eval_rc(self, x, y):
-        
-        outputs = self.clf.predict_proba(x)
-        
-        scores_s = [score_outp_ir, score_diff_ir, score_rati_ir,
-                  score_outp_or, score_diff_r, score_rati_r]
-        self.curves_s = roc_s_thr(y, outputs, None, scores_s)
-        
-        if self.thresholds == 'all':
-            scores_m = [score_outp_ir_m, score_diff_r_m]
-            self.curves_m = roc_m_thr(self.n_classes, y, outputs,
-                                      None, scores_m)
-            curves = np.concatenate([curves_s, curves_m])
-        else:
-            self.curves_m = None
-            curves = self.curves_s
-        
-        aucs = curves[:,3]
-        
-        return ','.join([' %.5f' % num for num in aucs])
     
     def calc_metrics(self):
         # SOT - Single 0utput Threshold
@@ -217,11 +146,21 @@ class RejectionOption:
         scores_s = [score_func.score_outp,
                     score_func.score_diff,
                     score_func.score_rati]
-        curves_s = roc_s_thr(self.outputs_true,
+        curves_s = calc_s_thr(self.outputs_true,
                              self.outputs_pred,
                              self.outputs_outl,
                              scores_s)
-        plot_roc_curves(curves_s)
+        plot_curves(curves_s)
+    
+    def plot_roc_precision_recall(self):
+        scores_s = [score_func.score_outp,
+                    score_func.score_diff,
+                    score_func.score_rati]
+        curves_s = calc_s_thr(self.outputs_true,
+                             self.outputs_pred,
+                             self.outputs_outl,
+                             scores_s, curve_func='precision_recall')
+        plot_curves(curves_s, curve_func='precision_recall')
     
     def plot_multiclass_roc(self):
         x, y, v = calc_multiclass_curve(self.outputs_true,

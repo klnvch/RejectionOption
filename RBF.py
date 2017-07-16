@@ -16,7 +16,6 @@ import numpy as np
 from DataSet import DataSet
 from sklearn.cluster import KMeans
 from graphics import plot_decision_regions
-from thresholds import thr_output
 import time
 from sklearn import metrics
 

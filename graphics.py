@@ -5,7 +5,6 @@ Created on Oct 29, 2016
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-import itertools
 
 def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
     if y.ndim == 2: y = y.argmax(axis=1)
@@ -69,61 +68,3 @@ def plot_decision_regions(x, y, classifier, reject=None,
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
     else: plt.close()
-
-def plot_binary_roc_curve(fpr, tpr, roc_auc, savefig=None, show=True):
-    colors = plt.cm.rainbow(np.linspace(0,1,4))  # @UndefinedVariable
-    labels = ['Single output threshold (AUC: {0:0.4f})',
-              'Single differential threshold (AUC: {0:0.4f})',
-              'Single ratio threshold (AUC: {0:0.4f})',
-              'Multiple output thresholds (AUC: {0:0.4f})']
-    plt.figure()
-    for i, color, label in zip([0, 1, 2, 'm'], colors, labels):
-        plt.plot(fpr[i], tpr[i], color=color, lw=2,
-                 label=label.format(roc_auc[i]))
-    
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    #plt.title('ROC curves for single threshold')
-    plt.legend(loc="lower right")
-    if savefig is not None: plt.savefig(savefig)
-    if show: plt.show()
-    else: plt.close()
-
-def plot_roc_curves(curves, savefig=None, show=True):
-    colors = plt.cm.rainbow(np.linspace(0,1,curves.shape[0]))  # @UndefinedVariable
-    label_auc = ' (AUC: {0:0.4f})'
-    
-    plt.figure(figsize=(4.1, 4.1))
-    for curve, color in zip(curves, colors):
-        fpr, tpr, _, auc, label = curve
-        plt.plot(fpr, tpr, color=color, lw=2,
-                 label=label + label_auc.format(auc))
-    
-    plt.plot([0, 1], [0, 1], 'k--', lw=2)
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    #plt.title('ROC curves for single threshold')
-    plt.legend(loc="lower right")
-    if savefig is not None: plt.savefig(savefig)
-    if show: plt.show()
-    else: plt.close()
-
-def draw_precision_recall(precision, recall, average_precision, filename=None):
-    colors = itertools.cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
-    for i, color in zip([0, 1, 2], colors):
-        plt.plot(recall[i], precision[i], color=color, lw=2, label='Precision-recall curve of method {0} (area = {1:0.4f})'.format(i, average_precision[i]))
-
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Precision-Recall curves for single treshold')
-    plt.legend(loc="lower right")
-    #
-    if filename is not None:
-        plt.savefig(filename)

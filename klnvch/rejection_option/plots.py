@@ -149,7 +149,9 @@ def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
         plt.plot(fpr["macro"], tpr["macro"], label=label_macro,
                  color='navy', linestyle=':', linewidth=4)
     
-    plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+    if curve_func == 'roc':
+        plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+    
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     if curve_func == 'precision_recall':
@@ -164,6 +166,35 @@ def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
     #plt.title('ROC curves for multiple thresholds')
     plt.legend(loc="lower right")
     
+    if savefig is not None: plt.savefig(savefig)
+    if show: plt.show()
+    else: plt.close()
+
+def plot_curves(curves, savefig=None, show=True, curve_func = 'roc'):
+    colors = plt.cm.rainbow(np.linspace(0,1,curves.shape[0]))  # @UndefinedVariable
+    label_auc = ' (AUC: {0:0.4f})'
+    
+    fig = plt.figure(figsize=(4.1, 4.1))
+    for curve, color in zip(curves, colors):
+        fpr, tpr, _, auc, label = curve
+        plt.plot(fpr, tpr, color=color, lw=2,
+                 label=label + label_auc.format(auc))
+    
+    if curve_func == 'roc':
+        plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.0])
+    if curve_func == 'precision_recall':
+        fig.canvas.set_window_title('Single_Precision_Recall_Curve')
+        plt.xlabel('Precision')
+        plt.ylabel('Recall')
+    elif curve_func == 'roc':
+        fig.canvas.set_window_title('Single_ROC_Curve')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+    #plt.title('ROC curves for single threshold')
+    plt.legend(loc="lower right")
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
     else: plt.close()

@@ -7,7 +7,6 @@ import numpy as np
 from sklearn import metrics
 import itertools
 import time
-from thresholds import rejection_score
 
 def remove_class(x, y, names, indices):
     """
@@ -31,28 +30,6 @@ def remove_class(x, y, names, indices):
             new_x.append(x)
             new_y.append(np.delete(_y, indices))
     return np.array(new_x), np.array(new_y), new_names, np.array(outliers)
-
-def roc_s_thr(outputs_true, outputs_pred, outputs_outl, scores):
-    """
-    Calcs binary ROC curve or for single threshold
-    Args:
-        outputs_true : desired output
-        outputs_pred : real output
-        outputs_outliers : output for outliers
-    Returns:
-        FPR, TPR, AUC
-    """
-    def calc(outputs_true, outputs_pred, outputs_outl, score):
-        y_true, y_score, label = score(outputs_true, outputs_pred, outputs_outl)
-        fpr, tpr, thr = metrics.roc_curve(y_true, y_score)
-        # add 0 and 1 to get full curve
-        fpr = np.concatenate(([0.], fpr, [1.]))
-        tpr = np.concatenate(([0.], tpr, [1.]))
-        roc_auc = metrics.auc(fpr, tpr)
-        return fpr, tpr, thr, roc_auc, label
-    
-    result = [calc(outputs_true, outputs_pred, outputs_outl, i) for i in scores]
-    return np.array(result)
 
 def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
     """Calculates ROC for multiple output thresholds
@@ -131,21 +108,3 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
               for i in scores]
     
     return np.array(result)
-
-def calc_precision_recall(y, outputs):
-    """
-    Check if needed
-    """
-    precision = dict()
-    recall = dict()
-    average_precision = dict()
-    
-    predictions = [np.argmax(o) for o in outputs]
-    y_true = [a==b for a,b in zip(np.array(y), np.array(predictions))]
-    
-    for i in [0,1,2]:
-        y_score = rejection_score(outputs, i)
-        precision[i], recall[i], _ = metrics.precision_recall_curve(y_true, y_score)
-        average_precision[i] = metrics.average_precision_score(y_true, y_score)
-        
-    return precision, recall, average_precision
