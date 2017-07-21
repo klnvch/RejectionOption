@@ -31,53 +31,53 @@ class MLP:
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.optimizer_name = optimizer_name
-        self.num_input = layers[0]
-        self.num_hidden = layers[1:-1]
-        self.num_output = layers[-1]
+        self.n_input = layers[0]
+        self.n_hidden = layers[1:-1]
+        self.n_output = layers[-1]
         
-        self.x = tf.placeholder(tf.float32, [None, self.num_input])
-        self.y_ = tf.placeholder(tf.float32, [None, self.num_output])
+        self.x = tf.placeholder(tf.float32, [None, self.n_input])
+        self.y_ = tf.placeholder(tf.float32, [None, self.n_output])
         self.keep_prob = tf.placeholder(tf.float32)
         
-        if len(self.num_hidden) == 0:
+        if len(self.n_hidden) == 0:
             y, r1 = self.add_layer(self.x,
-                                   [self.num_input, self.num_output],
+                                   [self.n_input, self.n_output],
                                    None, '', self.keep_prob)
             regularizers = r1
             
-        elif len(self.num_hidden) == 1:
+        elif len(self.n_hidden) == 1:
             h, r1 = self.add_layer(self.x,
-                                   [self.num_input, self.num_hidden[0]],
+                                   [self.n_input, self.n_hidden[0]],
                                    functions[0], '1', self.keep_prob)
             y, r2 = self.add_layer(h,
-                                   [self.num_hidden[0], self.num_output],
+                                   [self.n_hidden[0], self.n_output],
                                    None, '2', self.keep_prob)
             regularizers = r1 + r2
             
-        elif len(self.num_hidden) == 2:
+        elif len(self.n_hidden) == 2:
             h1, r1 = self.add_layer(self.x,
-                                    [self.num_input, self.num_hidden[0]],
+                                    [self.n_input, self.n_hidden[0]],
                                     functions[0], '1', self.keep_prob)
             h2, r2 = self.add_layer(h1,
-                                    [self.num_hidden[0], self.num_hidden[1]],
+                                    [self.n_hidden[0], self.n_hidden[1]],
                                     functions[1], '2', self.keep_prob)
             y, r3 = self.add_layer(h2,
-                                    [self.num_hidden[1], self.num_output],
+                                    [self.n_hidden[1], self.n_output],
                                     None, '3', self.keep_prob)
             regularizers = r1 + r2 + r3
             
-        elif len(self.num_hidden) == 3:
+        elif len(self.n_hidden) == 3:
             h1, r1 = self.add_layer(self.x,
-                                    [self.num_input, self.num_hidden[0]],
+                                    [self.n_input, self.n_hidden[0]],
                                     functions[0], '1', self.keep_prob)
             h2, r2 = self.add_layer(h1,
-                                    [self.num_hidden[0], self.num_hidden[1]],
+                                    [self.n_hidden[0], self.n_hidden[1]],
                                     functions[1], '2', self.keep_prob)
             h3, r3 = self.add_layer(h2,
-                                    [self.num_hidden[1], self.num_hidden[2]],
+                                    [self.n_hidden[1], self.n_hidden[2]],
                                     functions[2], '3', self.keep_prob)
             y, r4 = self.add_layer(h3,
-                                    [self.num_hidden[2], self.num_output],
+                                    [self.n_hidden[2], self.n_output],
                                     None, '4', self.keep_prob)
             regularizers = r1 + r2 + r3 + r4
             
@@ -246,7 +246,7 @@ class MLP:
             filename = 'tests/{:s}_{:g}_{:d}_{:d}_{:s}_{:d}.csv'
             filename.format(self.optimizer_name,
                             self.learning_rate, steps, batch_size,
-                            str(self.num_hidden), int(time.time()))
+                            str(self.n_hidden), int(time.time()))
             self.log_file = open(filename, 'w+')
             print('Step,Loss,Train accuracy,Validation accuracy,'\
                   'ROC AUC: output threshold,ROC AUC: differential threshold,'\
