@@ -275,9 +275,9 @@ def print_classes_stats(y, classes, path=None):
             writer.writerow(dist)
 
 if __name__ == '__main__':
-    #x, y, _ = generate_moons(1000, 0.1)
-    #plot_2d_dataset(x, y)
-    
+    x, y, _ = generate_moons(1000, 0.1)
+    plot_2d_dataset(x, y)
+    """
     x, y, classes = read_marcin_file('LirykaLearning.csv')
     
     from sklearn.decomposition import PCA
@@ -288,3 +288,4 @@ if __name__ == '__main__':
     print(x.shape)
     print(pca.explained_variance_ratio_)
     print(pca.components_)
+    """

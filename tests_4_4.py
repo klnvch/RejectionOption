@@ -19,6 +19,8 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
     rbf.train(ds.trn.x, ds.trn.y)
     
     score = rbf.score(ds.tst)
+    guess = rbf.predict_proba([np.random.rand(153)])[0]
+    print('Random output: {:d}'.format(guess.argmax()))
     print('Test accuracy: {0:f}'.format(score))
     
     ro = RejectionOption(rbf, ds.n_classes, False, 'simple')
@@ -254,7 +256,7 @@ if __name__ == '__main__':
     test_unit_mlp(ds, 'mlp-sigmoid', 0, None, 128, 0.00001, 0.5, 0, (0.0, 1.0), True)
     
     #ds = DataSet(13, add_noise=3)
-    #test_unit_RBF(ds, 128, 0.001, True)
+    #test_unit_RBF(ds, 128, 0.0001, True)
     
     #test_block_mlp(13, 'alphanumeric', 0, range(1,9), params_0)
     #test_block_mlp(13, 'alphanumeric', 1, range(9,10), params_1)

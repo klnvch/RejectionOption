@@ -9,15 +9,17 @@ TODO: impove performance of predict_proba
       init center properly
 
 '''
-from scipy import random, zeros, exp, dot
+from scipy import random, exp, dot
 from scipy.linalg import norm, pinv
 from scipy.spatial.distance import pdist
+import math
 import numpy as np
 from DataSet import DataSet
 from sklearn.cluster import KMeans
 from graphics import plot_decision_regions
 import time
 from sklearn import metrics
+from klnvch.rejection_option.thresholds import Thresholds
 
 class RBF:
     
@@ -27,25 +29,30 @@ class RBF:
         self.n_features = n_features
         self.n_classes = n_classes
         self.n_centers = n_centers
-        self.beta = beta
+        self.beta = np.full(n_centers, beta)
     
-    def _basisfunc(self, c, d):
-        assert len(d) == self.n_features
-        return exp(-self.beta * norm(c - d) ** 2)
+    def _basisfunc(self, i, x):
+        assert len(x) == self.n_features
+        return exp(-self.beta[i] * norm(self.centers[i] - x) ** 2)
+    
+    @staticmethod
+    def sigmoid(x):
+        return 1.0 / (1.0 + math.exp(-x))
     
     def _calcAct(self, X):
         # calculate activations of RBFs
-        G = zeros((X.shape[0], self.n_centers), float)
-        for ci, c in enumerate(self.centers):
-            for xi, x in enumerate(X):
-                G[xi, ci] = self._basisfunc(c, x)
+        # init matrix with extra column for bias
+        G = np.ones((X.shape[0], self.n_centers + 1))
+        for i in range(self.n_centers):
+            for j, x in enumerate(X):
+                G[j, i] = self._basisfunc(i, x)
         return G
     
     def set_random_centers(self, X):
         # choose random center vectors from training set
         rnd_idx = random.permutation(X.shape[0])[:self.n_centers]
         self.centers = [X[i, :] for i in rnd_idx]
-        self.beta = 8.0
+        self.beta = np.full(self.n_centers, 8.0)
         print('center: {}'.format(self.centers))
     
     def set_kmeans_centers(self, X):
@@ -54,15 +61,23 @@ class RBF:
         kmeans.fit(X)
         self.centers = kmeans.cluster_centers_
         # find distance
-        if self.beta is None:
-            dists = pdist(self.centers)
-            max_dist = dists.max()
-            avg_dist = np.average(dists)
-            self.beta = 8.0 / (2.0 * avg_dist ** 2)
+        if self.beta is None or True:
+            for i in range(self.n_centers):
+                dists = [norm(self.centers[i] - c) for c in self.centers]
+                dists = np.sort(dists)
+                avg_norm = (dists[1] + dists[2] + dists[2]) / 3.0
+                self.beta[i] = 1.0 / (2.0 * avg_norm)
             
-            print('max distance: ' + str(max_dist) + 
-                    ', avg distance: ' + str(avg_dist) + 
-                    ', beta = ' + str(self.beta))
+            print(self.beta)
+            
+            #dists = pdist(self.centers)
+            #max_dist = dists.max()
+            #avg_dist = np.average(dists)
+            #self.beta = 1 / (2.0 * avg_dist ** 2)
+            
+            #print('max distance: ' + str(max_dist) + 
+            #        ', avg distance: ' + str(avg_dist) + 
+            #        ', beta = ' + str(self.beta))
     
     def train(self, X, Y):
         """ X: matrix of dimensions n x indim 
@@ -77,12 +92,16 @@ class RBF:
     
     def predict_proba(self, X):
         if X is None: return None
+        X = np.array(X)
         """ X: matrix of dimensions n x indim """
         #print('RBF.test: size {:d}'.format(len(X)))
         start_time = time.time()
         
         G = self._calcAct(X)
         Y = dot(G, self.W)
+        
+        sigmoid = np.vectorize(self.sigmoid)
+        Y = sigmoid(Y)
         
         print('RBF.test: {:9f} seconds'.format(time.time() - start_time))
         
@@ -95,8 +114,8 @@ class RBF:
         return metrics.accuracy_score(y_true, y_pred)
 
 if __name__ == '__main__':
-    ds = DataSet(12)
+    ds = DataSet(9)
     rbf = RBF(ds.n_features, 16, ds.n_classes)
     rbf.train(ds.trn.x, ds.trn.y)
-    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, thr_output,
+    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, Thresholds.thr_output,
                           (4.1, 4.1), None, True, 0.05)

@@ -81,6 +81,8 @@ class MLP:
                                     None, '4', self.keep_prob)
             regularizers = r1 + r2 + r3 + r4
             
+        self.y_final = functions[-1](y)
+            
         if functions[-1] == tf.nn.softmax:
             self.loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(labels=self.y_,
@@ -89,6 +91,8 @@ class MLP:
             self.loss = tf.reduce_mean(
                 tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_,
                                                         logits=y))
+        
+        #self.loss = tf.reduce_mean(tf.square(self.y_ - self.y_final))
         
         self.loss = tf.reduce_mean(self.loss + beta * regularizers)
         
@@ -120,8 +124,6 @@ class MLP:
         # grads_and_vars = optimizer.compute_gradients(self.loss)
         # grad_norms = [tf.nn.l2_loss(g) for g, _ in grads_and_vars]
         # self.grad_norm = tf.add_n(grad_norms)
-        
-        self.y_final = functions[-1](y)
         
         y_true = tf.equal(tf.argmax(self.y_final, 1), tf.argmax(self.y_, 1))
         self.accuracy = tf.reduce_mean(tf.cast(y_true, tf.float32))
