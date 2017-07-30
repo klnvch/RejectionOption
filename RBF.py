@@ -65,8 +65,8 @@ class RBF:
             for i in range(self.n_centers):
                 dists = [norm(self.centers[i] - c) for c in self.centers]
                 dists = np.sort(dists)
-                avg_norm = (dists[1] + dists[2] + dists[2]) / 3.0
-                self.beta[i] = 1.0 / (2.0 * avg_norm)
+                avg_dist = (dists[1] + dists[2] + dists[3]) / 3.0
+                self.beta[i] = 1.0 / (2.0 * avg_dist**2)
             
             print(self.beta)
             
@@ -115,7 +115,7 @@ class RBF:
 
 if __name__ == '__main__':
     ds = DataSet(9)
-    rbf = RBF(ds.n_features, 16, ds.n_classes)
+    rbf = RBF(ds.n_features, 20, ds.n_classes)
     rbf.train(ds.trn.x, ds.trn.y)
     plot_decision_regions(ds.tst.x, ds.tst.y, rbf, Thresholds.thr_output,
                           (4.1, 4.1), None, True, 0.05)

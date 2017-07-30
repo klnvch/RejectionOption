@@ -252,11 +252,11 @@ if __name__ == '__main__':
     #wicoxon_test('tests/alphanumeric/run_0.csv', params_0)
     #wicoxon_test('tests/alphanumeric/run_1.csv', params_1)
     
-    ds = DataSet(13, add_noise=0)#, output=(0.1, 0.9))
-    test_unit_mlp(ds, 'mlp-sigmoid', 0, None, 128, 0.00001, 0.5, 0, (0.0, 1.0), True)
+    #ds = DataSet(13, add_noise=0)#, output=(0.1, 0.9))
+    #test_unit_mlp(ds, 'mlp-sigmoid', 0, None, 128, 0.00001, 0.5, 0, (0.0, 1.0), True)
     
-    #ds = DataSet(13, add_noise=3)
-    #test_unit_RBF(ds, 128, 0.0001, True)
+    ds = DataSet(13, add_noise=3)
+    test_unit_RBF(ds, 128, 0.0001, True)
     
     #test_block_mlp(13, 'alphanumeric', 0, range(1,9), params_0)
     #test_block_mlp(13, 'alphanumeric', 1, range(9,10), params_1)

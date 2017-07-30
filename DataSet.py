@@ -162,6 +162,15 @@ class DataSet:
         y[y==0.0] = neg_label
         y[y==1.0] = pos_label
     
+    def pca(self):
+        pca = PCA(n_components=self.n_features).fit(self.trn.x)
+        self.trn.x = pca.transform(self.trn.x)
+        if self.vld is not None:
+            self.vld.x = pca.transform(self.vld.x)
+        self.tst.x = pca.transform(self.tst.x)
+        if self.outliers is not None:
+            self.outliers = pca.transform(self.outliers)
+    
     def load_marcin_dataset(self, add_noise, output):
         # load data
         x_trn, y_trn, self.target_names = read_marcin_file('LirykaLearning.csv')
@@ -216,21 +225,24 @@ class DataSet:
             self.outliers = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
         
         #self.n_features = 64
-        #pca = PCA(n_components=self.n_features).fit(x_trn)
-        #x_trn = pca.transform(x_trn)
-        #x_vld = pca.transform(x_vld)
-        #x_tst = pca.transform(x_tst)
+        pca = PCA(n_components=self.n_features).fit(x_trn)
+        x_trn = pca.transform(x_trn)
+        x_vld = pca.transform(x_vld)
+        x_tst = pca.transform(x_tst)
+        self.outliers = pca.transform(self.outliers)
         
         #vt = VarianceThreshold(threshold=50).fit(x_trn)
         #x_trn = vt.transform(x_trn)
         #x_vld = vt.transform(x_vld)
         #x_tst = vt.transform(x_tst)
+        #self.outliers = vt.transform(self.outliers)
         #self.n_features = x_trn.shape[1]
         
         scaler = preprocessing.StandardScaler().fit(x_trn)
         x_trn = scaler.transform(x_trn)
         x_vld = scaler.transform(x_vld)
         x_tst = scaler.transform(x_tst)
+        self.outliers = scaler.transform(self.outliers)
 
         self.trn = Set(x_trn, y_trn)
         self.vld = Set(x_vld, y_vld)
