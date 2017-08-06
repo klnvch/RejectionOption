@@ -9,14 +9,14 @@ Those images are not part of results and are only used to illustrate
 some basic definitions
 '''
 import matplotlib.pyplot as plt
-from graphics import get_cmap, plot_2d_dataset
+from graphics import plot_2d_dataset
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from DataSet import DataSet
 from MLP import MLP
 from graphics import plot_decision_regions
 from RBF import RBF
-from data_utils import threshold_output
+from klnvch.rejection_option.thresholds import Thresholds as thr
 
 FIG_HALF_SIZE = 4.1
 IMAGES_DIR = '/home/anton/Desktop/diploma_text/images/'
@@ -42,7 +42,7 @@ def plot_pca_vs_lda(X, y, target_names):
     
     fig = plt.figure(figsize=(FIG_HALF_SIZE, FIG_HALF_SIZE))
     fig.canvas.set_window_title('PCA') 
-    colors = get_cmap(n_classes)
+    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
     lw = 2
     
     for i in range(n_classes):
@@ -132,17 +132,18 @@ def decision_boundries_4():
 def decision_boundries_56():
     ds = DataSet(9)
     # MLP
-    mlp = MLP(0.01, [ds.num_features, 8, ds.num_classes], 'sigmoid', 'Adam')
-    result = mlp.train(10000, ds.trn, ds.vld, 1, logging=True)
+    mlp = MLP(0.01, [ds.n_features, 8, ds.n_classes], ['sigmoid', 'softmax'],
+              'Adam', 0, 32)
+    result = mlp.train(5000, ds.trn, ds.vld, 1, 0, False)
     print(result)
     # RBF
-    rbf = RBF(ds.num_features, 8, ds.num_classes)
+    rbf = RBF(ds.n_features, 12, ds.n_classes)
     rbf.train(ds.trn.x, ds.trn.y)
     # plot_2d_dataset(ds.tst.x, ds.tst.y)
-    plot_decision_regions(ds.tst.x, ds.tst.y, mlp, threshold_output,
+    plot_decision_regions(ds.tst.x, ds.tst.y, mlp, thr.thr_output,
                           (FIG_HALF_SIZE, FIG_HALF_SIZE),
                           IMAGES_DIR + 'chapter_3/boundaries_5.png')
-    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, threshold_output,
+    plot_decision_regions(ds.tst.x, ds.tst.y, rbf, thr.thr_output,
                           (FIG_HALF_SIZE, FIG_HALF_SIZE),
                           IMAGES_DIR + 'chapter_3/boundaries_6.png')
 
@@ -201,7 +202,7 @@ if __name__ == '__main__':
     # decision_boundries_2()
     # decision_boundries_3()
     # decision_boundries_4()
-     decision_boundries_56()
+    decision_boundries_56()
     
     # plot_roc_space_figure_1()
     # plot_roc_space_figure_2()

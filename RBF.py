@@ -11,7 +11,6 @@ TODO: impove performance of predict_proba
 '''
 from scipy import random, exp, dot
 from scipy.linalg import norm, pinv
-from scipy.spatial.distance import pdist
 import math
 import numpy as np
 from DataSet import DataSet
@@ -20,6 +19,21 @@ from graphics import plot_decision_regions
 import time
 from sklearn import metrics
 from klnvch.rejection_option.thresholds import Thresholds
+
+def get_kmeans_centers(X, k):
+    # find centers
+    kmeans = KMeans(n_clusters=k)
+    kmeans.fit(X)
+    centers = kmeans.cluster_centers_
+    variances = np.zeros(k)
+    # find distance
+    for i in range(k):
+        dists = [norm(centers[i] - c) for c in centers]
+        dists = np.sort(dists)
+        variances[i] = (dists[1] + dists[2] + dists[3]) / 3.0
+    
+    print(variances)
+    return centers, variances
 
 class RBF:
     
@@ -33,7 +47,7 @@ class RBF:
     
     def _basisfunc(self, i, x):
         assert len(x) == self.n_features
-        return exp(-self.beta[i] * norm(self.centers[i] - x) ** 2)
+        return exp(self.beta[i] * norm(self.centers[i] - x) ** 2)
     
     @staticmethod
     def sigmoid(x):
@@ -55,35 +69,12 @@ class RBF:
         self.beta = np.full(self.n_centers, 8.0)
         print('center: {}'.format(self.centers))
     
-    def set_kmeans_centers(self, X):
-        # find centers
-        kmeans = KMeans(n_clusters=self.n_centers)
-        kmeans.fit(X)
-        self.centers = kmeans.cluster_centers_
-        # find distance
-        if self.beta is None or True:
-            for i in range(self.n_centers):
-                dists = [norm(self.centers[i] - c) for c in self.centers]
-                dists = np.sort(dists)
-                avg_dist = (dists[1] + dists[2] + dists[3]) / 3.0
-                self.beta[i] = 1.0 / (2.0 * avg_dist**2)
-            
-            print(self.beta)
-            
-            #dists = pdist(self.centers)
-            #max_dist = dists.max()
-            #avg_dist = np.average(dists)
-            #self.beta = 1 / (2.0 * avg_dist ** 2)
-            
-            #print('max distance: ' + str(max_dist) + 
-            #        ', avg distance: ' + str(avg_dist) + 
-            #        ', beta = ' + str(self.beta))
-    
     def train(self, X, Y):
         """ X: matrix of dimensions n x indim 
             y: column vector of dimension n x 1 """
         #self.set_random_centers(X)
-        self.set_kmeans_centers(X)
+        self.centers, variances = get_kmeans_centers(X, self.n_centers)
+        self.beta = - 1.0 / (2.0 * variances**2)
         # calculate activations of RBFs
         G = self._calcAct(X)
         #print(G)

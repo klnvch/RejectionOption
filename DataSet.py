@@ -225,11 +225,11 @@ class DataSet:
             self.outliers = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
         
         #self.n_features = 64
-        pca = PCA(n_components=self.n_features).fit(x_trn)
-        x_trn = pca.transform(x_trn)
-        x_vld = pca.transform(x_vld)
-        x_tst = pca.transform(x_tst)
-        self.outliers = pca.transform(self.outliers)
+        #pca = PCA(n_components=self.n_features).fit(x_trn)
+        #x_trn = pca.transform(x_trn)
+        #x_vld = pca.transform(x_vld)
+        #x_tst = pca.transform(x_tst)
+        #self.outliers = pca.transform(self.outliers)
         
         #vt = VarianceThreshold(threshold=50).fit(x_trn)
         #x_trn = vt.transform(x_trn)
@@ -242,7 +242,8 @@ class DataSet:
         x_trn = scaler.transform(x_trn)
         x_vld = scaler.transform(x_vld)
         x_tst = scaler.transform(x_tst)
-        self.outliers = scaler.transform(self.outliers)
+        if self.outliers is not None:
+            self.outliers = scaler.transform(self.outliers)
 
         self.trn = Set(x_trn, y_trn)
         self.vld = Set(x_vld, y_vld)

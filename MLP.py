@@ -9,6 +9,7 @@ This module keeps all code for Tensorflow to implement MLP
 import time, os
 import tensorflow as tf
 from sklearn.utils import shuffle
+#from RBF import get_kmeans_centers
 
 class MLP:
     
@@ -39,7 +40,18 @@ class MLP:
         self.y_ = tf.placeholder(tf.float32, [None, self.n_output])
         self.keep_prob = tf.placeholder(tf.float32)
         
-        if len(self.n_hidden) == 0:
+        if 'rbf' in functions or 'rbf-reg' in functions:
+            if 'rbf' in functions:
+                h = self.add_rbf(self.x, self.n_input, self.n_hidden[0])
+            elif 'rbf-reg' in functions:
+                h = self.add_rbf_reg(self.x, self.n_input, self.n_hidden[0])
+            
+            y, r2 = self.add_layer(h,
+                                   [self.n_hidden[0], self.n_output],
+                                   None, '2', self.keep_prob)
+            regularizers = r2
+            
+        elif len(self.n_hidden) == 0:
             y, r1 = self.add_layer(self.x,
                                    [self.n_input, self.n_output],
                                    None, '', self.keep_prob)
@@ -80,9 +92,11 @@ class MLP:
                                     [self.n_hidden[2], self.n_output],
                                     None, '4', self.keep_prob)
             regularizers = r1 + r2 + r3 + r4
-            
+        
         self.y_final = functions[-1](y)
-            
+        
+        #if 'rbf' in functions or 'rbf-reg' in functions:
+        #    self.loss = tf.reduce_mean(tf.square(self.y_ - self.y_final))
         if functions[-1] == tf.nn.softmax:
             self.loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(labels=self.y_,
@@ -91,8 +105,6 @@ class MLP:
             self.loss = tf.reduce_mean(
                 tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_,
                                                         logits=y))
-        
-        #self.loss = tf.reduce_mean(tf.square(self.y_ - self.y_final))
         
         self.loss = tf.reduce_mean(self.loss + beta * regularizers)
         
@@ -141,11 +153,53 @@ class MLP:
             layer = tf.nn.dropout(layer, keep_prob)
             return layer, l2_loss
     
+    def add_rfb(self, x, n_input, n_centers):
+        self.centers = tf.Variable(tf.random_uniform([n_centers, n_input],
+                                                      -1.0, 1.0),
+                                   name='centers')
+        self.variances = tf.Variable(tf.truncated_normal([n_centers],
+                                                         15.0, 5.0),
+                                     name='sigmas')
+        
+        e_x = tf.expand_dims(x, 1)
+        e_c = tf.expand_dims(self.centers, 0)
+        
+        a = tf.squared_difference(e_x, e_c, 'norm')
+        a = tf.reduce_sum(a, axis=2, name='reduce_sum')
+        b = 2.0 * tf.square(self.variances, 'sigma')
+        G = - tf.divide(a, b, 'divide')
+        G = tf.exp(G, 'exponent')
+        
+        return G
+    
+    def add_rbf_reg(self, x, n_input, n_centers):
+        self.centers = tf.Variable(tf.random_uniform([n_centers, n_input],
+                                                      -1.0, 1.0),
+                                   name='centers')
+        self.variances = tf.Variable(tf.truncated_normal([n_centers, n_input],
+                                                         15.0, 5.0),
+                                     name='sigmas')
+        
+        e_x = tf.expand_dims(x, 1)
+        e_c = tf.expand_dims(self.centers, 0)
+        
+        diff = tf.squared_difference(e_x, e_c)
+        
+        a = 1.0 / tf.square(self.variances)
+        a = tf.multiply(diff, a)
+        a = tf.reduce_sum(a, axis=2)
+    
+        G = tf.exp(- a / 2.0)
+        
+        return G
+    
     def parse_functions(self, functions):
         def find_match(f):
             if   f == 'relu'   : return tf.nn.relu
             elif f == 'sigmoid': return tf.nn.sigmoid
             elif f == 'softmax': return tf.nn.softmax
+            elif f == 'rbf':     return f
+            elif f == 'rbf-reg': return f
             else: raise ValueError('wrong function: ' + f)
         return [find_match(f) for f in functions]
     
@@ -171,8 +225,20 @@ class MLP:
         best_vld_acc = 0
         step = 0
         with tf.Session() as sess:
+            #if hasattr(self, 'centers') and hasattr(self, 'variances'):
+            #    c, v = get_kmeans_centers(trn.x, self.n_hidden[0])
+            #    self.centers = tf.assign(self.centers, c)
+            #    self.variances = tf.assign(self.variances, v)
+            
             tf.global_variables_initializer().run()
+            
+            if hasattr(self, 'centers') and hasattr(self, 'variances'):
+                print(sess.run(self.centers))
+                print(sess.run(self.variances))
+            
             for step in range(n_steps + 1):
+                #print(sess.run(self.variances, {self.x: trn.x}))
+                
                 # train 
                 start_time = time.time()
                 x, y = shuffle(trn.x, trn.y)
@@ -188,7 +254,7 @@ class MLP:
                                             self.keep_prob: keep_prob})
                 finish_time = time.time()
                 dt += (finish_time - start_time)
-                if step % 100 == 0:
+                if step % 1 == 0:
                     loss, trn_acc, vld_acc = \
                         self.log_step_info(sess, step, trn, vld, dt, log)
                     dt = 0
@@ -207,8 +273,8 @@ class MLP:
             if vld is None or early_stopping == 0:
                 info = [save_path, step, loss, trn_acc, vld_acc]
                 saver.save(sess, save_path)
-        
-        self.log_finish()
+            
+            self.log_finish(sess)
         
         return info
     
@@ -279,5 +345,71 @@ class MLP:
         
         return loss, trn_acc, vld_acc
     
-    def log_finish(self):
+    def log_finish(self, sess):
+        if hasattr(self, 'centers') and hasattr(self, 'variances'):
+            print(sess.run(self.centers))
+            print(sess.run(self.variances))
         print('train finished')
+
+if __name__ == '__main__':
+    
+    x = tf.placeholder(tf.float32, [None, 2])
+    c = tf.placeholder(tf.float32, [3, 2])
+    v = tf.placeholder(tf.float32, [3])
+    
+    e_x = tf.expand_dims(x, 1)
+    e_w = tf.expand_dims(c, 0)
+    
+    #input_x = [[1,2]]
+    input_x = [[1,2], [1,2], [1,2], [1,2], [1,2], [1,2]]
+    input_c = [[1,4], [0,3], [6,4]]
+    input_v = [1,2,3]
+    
+    a = tf.squared_difference(e_x, e_w, 'norm')
+    a = tf.reduce_sum(a, axis=2, name='reduce_sum')
+    
+    b = 2.0 * tf.square(v)
+    
+    G1 = - tf.divide(a, b)
+    G2 = tf.exp(G1)
+    
+    sess = tf.Session()
+    print(sess.run(a, {x: input_x, c: input_c, v: input_v}))
+    print('------------------------------------------')
+    print(sess.run(b, {x: input_x, c: input_c, v: input_v}))
+    print('------------------------------------------')
+    print(sess.run(G1, {x: input_x, c: input_c, v: input_v}))
+    print('------------------------------------------')
+    print(sess.run(G2, {x: input_x, c: input_c, v: input_v}))
+    print('------------------------------------------')
+    
+    """
+    x = tf.placeholder(tf.float32, [None, 2])
+    c = tf.placeholder(tf.float32, [3, 2])
+    v = tf.placeholder(tf.float32, [3, 2])
+    
+    e_x = tf.expand_dims(x, 1)
+    e_c = tf.expand_dims(c, 0)
+    
+    #input_x = [[1,2]]
+    input_x = [[1,2], [1,2], [1,2], [1,2], [1,2], [1,2]]
+    input_c = [[1,4], [0,3], [6,4]]
+    input_v = [[1,1], [2,2], [3,3]]
+    
+    sess = tf.Session()
+    
+    diff = tf.squared_difference(e_x, e_c)
+    
+    a = 1.0 / tf.square(v)
+    a = tf.multiply(diff, a)
+    a = tf.reduce_sum(a, axis=2)
+    
+    G = tf.exp(- a / 2.0)
+    
+    print(sess.run(diff, {x: input_x, c: input_c, v: input_v}))
+    print('------------------------------------------')
+    print(sess.run(a, {x: input_x, c: input_c, v: input_v}))
+    print('------------------------------------------')
+    print(sess.run(G, {x: input_x, c: input_c, v: input_v}))
+    """
+    

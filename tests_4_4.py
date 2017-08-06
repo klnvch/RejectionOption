@@ -18,10 +18,12 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
     rbf = RBF(ds.n_features, n_hidden, ds.n_classes, beta)
     rbf.train(ds.trn.x, ds.trn.y)
     
-    score = rbf.score(ds.tst)
+    trn_score = rbf.score(ds.trn)
+    tst_score = rbf.score(ds.tst)
     guess = rbf.predict_proba([np.random.rand(153)])[0]
     print('Random output: {:d}'.format(guess.argmax()))
-    print('Test accuracy: {0:f}'.format(score))
+    print('Train accuracy: {0:f}'.format(trn_score))
+    print('Test accuracy: {0:f}'.format(tst_score))
     
     ro = RejectionOption(rbf, ds.n_classes, False, 'simple')
     ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
@@ -34,7 +36,7 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
         ro.plot_multiclass_roc()
         ro.plot_multiclass_precision_recall()
     
-    return np.concatenate(([score], line))
+    return np.concatenate(([trn_score, tst_score], line))
 
 def test_unit_mlp(ds, clf, rej, noise_size, units,
                   beta, dropout, es, targets, show):
@@ -54,8 +56,15 @@ def test_unit_mlp(ds, clf, rej, noise_size, units,
     elif clf == 'mlp-relu':
         mlp = MLP(0.01, [ds.n_features, units, units, ds.n_classes],
                   ['relu', 'relu', 'softmax'], 'Adam', beta, 128)
+    elif clf == 'rbf':
+        mlp = MLP(0.1, [ds.n_features, units, ds.n_classes],
+                  ['rbf', 'sigmoid'], 'Adam', 0, 128)
+    elif clf == 'rbf-reg':
+        mlp = MLP(0.01, [ds.n_features, units, ds.n_classes],
+                  ['rbf-reg', 'softmax'], 'Adam', 0, 128)
     
-    result = mlp.train(5000, ds.trn, ds.vld, dropout, es, False)
+    result = mlp.train(500, ds.trn, ds.vld, dropout, es, False)
+    #result = mlp.train(5000, ds.trn, ds.vld, dropout, es, False)
     #result = mlp.train(5000, ds.trn, ds.vld, 128, es)
     #result = [1,2,3,4,5,6,7]
     print(result)
@@ -255,8 +264,14 @@ if __name__ == '__main__':
     #ds = DataSet(13, add_noise=0)#, output=(0.1, 0.9))
     #test_unit_mlp(ds, 'mlp-sigmoid', 0, None, 128, 0.00001, 0.5, 0, (0.0, 1.0), True)
     
+    #ds = DataSet(13, add_noise=3)
+    #test_unit_mlp(ds, 'rbf', 0, None, 128, 0.0, 1.0, 0, (0.0, 1.0), True)
+    
     ds = DataSet(13, add_noise=3)
-    test_unit_RBF(ds, 128, 0.0001, True)
+    test_unit_mlp(ds, 'rbf-reg', 0, None, 64, 0.0, 1.0, 0, (0.0, 1.0), True)
+    
+    #ds = DataSet(13, add_noise=3)
+    #test_unit_RBF(ds, 128, 0.0001, True)
     
     #test_block_mlp(13, 'alphanumeric', 0, range(1,9), params_0)
     #test_block_mlp(13, 'alphanumeric', 1, range(9,10), params_1)
