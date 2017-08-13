@@ -42,14 +42,14 @@ class MLP:
         
         if 'rbf' in functions or 'rbf-reg' in functions:
             if 'rbf' in functions:
-                h = self.add_rbf(self.x, self.n_input, self.n_hidden[0])
+                h, r1 = self.add_rbf(self.x, self.n_input, self.n_hidden[0])
             elif 'rbf-reg' in functions:
-                h = self.add_rbf_reg(self.x, self.n_input, self.n_hidden[0])
+                h, r1 = self.add_rbf_reg(self.x, self.n_input, self.n_hidden[0])
             
-            y, r2 = self.add_layer(h,
+            y, _ = self.add_layer(h,
                                    [self.n_hidden[0], self.n_output],
                                    None, '2', self.keep_prob)
-            regularizers = r2
+            regularizers = r1
             
         elif len(self.n_hidden) == 0:
             y, r1 = self.add_layer(self.x,
@@ -161,6 +161,8 @@ class MLP:
                                                          15.0, 5.0),
                                      name='sigmas')
         
+        l2_loss = tf.nn.l2_loss(self.variances)
+        
         e_x = tf.expand_dims(x, 1)
         e_c = tf.expand_dims(self.centers, 0)
         
@@ -170,7 +172,7 @@ class MLP:
         G = - tf.divide(a, b, 'divide')
         G = tf.exp(G, 'exponent')
         
-        return G
+        return G, l2_loss
     
     def add_rbf_reg(self, x, n_input, n_centers):
         self.centers = tf.Variable(tf.random_uniform([n_centers, n_input],
@@ -179,6 +181,8 @@ class MLP:
         self.variances = tf.Variable(tf.truncated_normal([n_centers, n_input],
                                                          15.0, 5.0),
                                      name='sigmas')
+        
+        l2_loss = tf.nn.l2_loss(self.variances)
         
         e_x = tf.expand_dims(x, 1)
         e_c = tf.expand_dims(self.centers, 0)
@@ -191,7 +195,7 @@ class MLP:
     
         G = tf.exp(- a / 2.0)
         
-        return G
+        return G, l2_loss
     
     def parse_functions(self, functions):
         def find_match(f):

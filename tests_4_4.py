@@ -58,10 +58,10 @@ def test_unit_mlp(ds, clf, rej, noise_size, units,
                   ['relu', 'relu', 'softmax'], 'Adam', beta, 128)
     elif clf == 'rbf':
         mlp = MLP(0.1, [ds.n_features, units, ds.n_classes],
-                  ['rbf', 'sigmoid'], 'Adam', 0, 128)
+                  ['rbf', 'sigmoid'], 'Adam', beta, 128)
     elif clf == 'rbf-reg':
         mlp = MLP(0.01, [ds.n_features, units, ds.n_classes],
-                  ['rbf-reg', 'softmax'], 'Adam', 0, 128)
+                  ['rbf-reg', 'softmax'], 'Adam', beta, 128)
     
     result = mlp.train(500, ds.trn, ds.vld, dropout, es, False)
     #result = mlp.train(5000, ds.trn, ds.vld, dropout, es, False)
