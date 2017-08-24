@@ -37,38 +37,37 @@ class Set:
 
 class DataSet:
     
-    def __init__(self, dataset, size=1000, split=[0.6, 0.2, 0.2], 
+    def __init__(self, ds_id, size=1000, split=[0.6, 0.2, 0.2], 
                  add_noise=None, noise_size=1.0, noise_output=0.0,
                  output=None):
         """
         Args:
-            dataset: index of the dataset.
+            ds_id: index of the dataset.
                 1 - Letter recognition image data
                 2 - Iris data
                 3 - Glass identification data
                 4 - Image segmentation data
                 
-                5 - Moons non-separable
+                5 - Moons Overlapping
                 6 - Blobs
                 7 - Circles
                 8 - Gaussian Quantiles modified
                 9 - Multiclass
                 10 - Gaussian Quantiles
                 11 - Noise
-                12 - Moons separable
+                12 - Moons Separable
                 
                 13 - Marcin Luckner Dataset
             
             add_noise: noise type
                 1: add noise as no class
         """
-        if dataset == 13:
+        if ds_id == 13:
             self.load_marcin_dataset(add_noise, output)
             return
         
         # load data
-        x, y, self.target_names = get_data(dataset, size,
-                                           binarize=True, preprocess=1)
+        x, y, self.target_names = get_data(ds_id, size, binarize=True)
         self.n_features = x.shape[1]
         self.n_classes = y.shape[1]
         self.outliers = None
@@ -96,6 +95,9 @@ class DataSet:
             self.outliers = np.random.uniform(self.tst.x.min()-1,
                                           self.tst.x.max()+1,
                                           [self.tst.size, self.n_features])
+        
+        # preprocess
+        self.scale()
     
     def copy(self):
         return copy.deepcopy(self)
@@ -170,6 +172,15 @@ class DataSet:
         self.tst.x = pca.transform(self.tst.x)
         if self.outliers is not None:
             self.outliers = pca.transform(self.outliers)
+    
+    def scale(self):
+        scaler = preprocessing.StandardScaler().fit(self.trn.x)
+        self.trn.x = scaler.transform(self.trn.x)
+        if self.vld is not None:
+            self.vld.x = scaler.transform(self.vld.x)
+        self.tst.x = scaler.transform(self.tst.x)
+        if self.outliers is not None:
+            self.outliers = scaler.transform(self.outliers)
     
     def load_marcin_dataset(self, add_noise, output):
         # load data

@@ -126,11 +126,11 @@ def generate_multiclass():
 def generate_blobs():
     x, y = datasets.make_blobs(n_samples=1000, 
                                n_features=2, 
-                               centers=8, 
+                               centers=2, 
                                cluster_std=1.0, 
                                center_box=(-10.0, 10.0), 
                                shuffle=True, 
-                               random_state=None)
+                               random_state=45)
     return x, y, ['0', '1', '2', '3', '4', '5', '6', '7']
 
 def generate_circles():
@@ -173,7 +173,7 @@ def generate_noise(size = 200):
     x = np.random.uniform(-1, 1, (size, 2))
     return x, [0]*size, ['0']
 
-def get_data(i, size, binarize=False, preprocess=0):
+def get_data(i, size, binarize=False):
     """Returns choosen dataset.
 
     Args:
@@ -222,15 +222,6 @@ def get_data(i, size, binarize=False, preprocess=0):
         else:
             y = preprocessing.label_binarize(y, range(len(classes)), 0, 1, False)
         count_distribution(y)
-        
-    if preprocess == 1:
-        x = preprocessing.scale(x)
-    elif preprocess == 2:
-        x = preprocessing.minmax_scale(x, feature_range=(0, 1))
-    elif preprocess == 3: # normilize row a = a / sqrt(a+b+...)
-        x = preprocessing.normalize(x)
-    elif preprocess == 4:
-        x = preprocessing.robust_scale(x)
     
     return np.array(x), np.array(y), classes
 

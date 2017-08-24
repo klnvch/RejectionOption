@@ -48,13 +48,13 @@ class MLP:
             
             y, _ = self.add_layer(h,
                                    [self.n_hidden[0], self.n_output],
-                                   None, '2', self.keep_prob)
+                                   None, '2', None)
             regularizers = r1
             
         elif len(self.n_hidden) == 0:
             y, r1 = self.add_layer(self.x,
                                    [self.n_input, self.n_output],
-                                   None, '', self.keep_prob)
+                                   None, '', None)
             regularizers = r1
             
         elif len(self.n_hidden) == 1:
@@ -63,7 +63,7 @@ class MLP:
                                    functions[0], '1', self.keep_prob)
             y, r2 = self.add_layer(h,
                                    [self.n_hidden[0], self.n_output],
-                                   None, '2', self.keep_prob)
+                                   None, '2', None)
             regularizers = r1 + r2
             
         elif len(self.n_hidden) == 2:
@@ -75,7 +75,7 @@ class MLP:
                                     functions[1], '2', self.keep_prob)
             y, r3 = self.add_layer(h2,
                                     [self.n_hidden[1], self.n_output],
-                                    None, '3', self.keep_prob)
+                                    None, '3', None)
             regularizers = r1 + r2 + r3
             
         elif len(self.n_hidden) == 3:
@@ -90,7 +90,7 @@ class MLP:
                                     functions[2], '3', self.keep_prob)
             y, r4 = self.add_layer(h3,
                                     [self.n_hidden[2], self.n_output],
-                                    None, '4', self.keep_prob)
+                                    None, '4', None)
             regularizers = r1 + r2 + r3 + r4
         
         self.y_final = functions[-1](y)
@@ -150,10 +150,11 @@ class MLP:
             return tf.matmul(x, w) + b, l2_loss
         else:
             layer = activation_function(tf.matmul(x, w) + b)
-            layer = tf.nn.dropout(layer, keep_prob)
+            if keep_prob is not None:
+                layer = tf.nn.dropout(layer, keep_prob)
             return layer, l2_loss
     
-    def add_rfb(self, x, n_input, n_centers):
+    def add_rbf(self, x, n_input, n_centers):
         self.centers = tf.Variable(tf.random_uniform([n_centers, n_input],
                                                       -1.0, 1.0),
                                    name='centers')
@@ -226,7 +227,7 @@ class MLP:
         save_path = 'saver/model.ckpt'
         dt = 0
         counter = 0
-        best_vld_acc = 0
+        best_vld_loss = 100000
         step = 0
         with tf.Session() as sess:
             #if hasattr(self, 'centers') and hasattr(self, 'variances'):
@@ -258,25 +259,22 @@ class MLP:
                                             self.keep_prob: keep_prob})
                 finish_time = time.time()
                 dt += (finish_time - start_time)
-                if step % 1 == 0:
-                    loss, trn_acc, vld_acc = \
+                if step % 100 == 0:
+                    trn_loss, trn_acc, vld_loss, vld_acc = \
                         self.log_step_info(sess, step, trn, vld, dt, log)
                     dt = 0
                     # early stopping
                     if vld is not None and early_stopping > 0:
-                        if vld_acc > best_vld_acc:
-                            best_vld_acc = vld_acc
+                        if vld_loss < best_vld_loss:
+                            best_vld_loss = vld_loss
                             counter = 0
-                            saver.save(sess, save_path)
-                            info = [save_path, step, loss, trn_acc, vld_acc]
                         else:
                             counter += 1
                         if counter >= early_stopping:
                             break
             
-            if vld is None or early_stopping == 0:
-                info = [save_path, step, loss, trn_acc, vld_acc]
-                saver.save(sess, save_path)
+            info = [save_path, step, trn_loss, trn_acc, vld_acc]
+            saver.save(sess, save_path)
             
             self.log_finish(sess)
         
@@ -331,23 +329,24 @@ class MLP:
         print(log_msg)
     
     def log_step_info(self, sess, step, trn, vld, train_time, logging):
-        loss, trn_acc = sess.run(
+        trn_loss, trn_acc = sess.run(
             [self.loss, self.accuracy],
             feed_dict={self.x: trn.x, self.y_: trn.y, self.keep_prob: 1.0})
         if vld is not None:
-            vld_acc = sess.run(self.accuracy,
+            vld_loss, vld_acc = sess.run([self.loss, self.accuracy],
                                feed_dict={self.x: vld.x,
                                           self.y_: vld.y,
                                           self.keep_prob: 1.0})
         else:
+            vld_loss = 0
             vld_acc = 0
         
         log_msg = '{:8d}, {:9f}, {:9f}, {:9f}, {:9f}, {:f}'
-        log_msg = log_msg.format(step, 0, loss, trn_acc, vld_acc, train_time)
+        log_msg = log_msg.format(step, trn_loss, vld_loss, trn_acc, vld_acc, train_time)
         if logging: print(log_msg, file=self.log_file)
         print(log_msg)
         
-        return loss, trn_acc, vld_acc
+        return trn_loss, trn_acc, vld_loss, vld_acc
     
     def log_finish(self, sess):
         if hasattr(self, 'centers') and hasattr(self, 'variances'):

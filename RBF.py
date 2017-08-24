@@ -15,7 +15,7 @@ import math
 import numpy as np
 from DataSet import DataSet
 from sklearn.cluster import KMeans
-from graphics import plot_decision_regions
+from klnvch.rejection_option.plots import plot_decision_regions
 import time
 from sklearn import metrics
 from klnvch.rejection_option.thresholds import Thresholds

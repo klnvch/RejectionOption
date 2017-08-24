@@ -11,6 +11,8 @@ from klnvch.rejection_option.scoring import ScoringFunc as score_func
 
 def validate_classes(y_true):
     return len(np.unique(y_true)) == 2
+def check_nan(a):
+    return np.isnan(a).any()
 
 def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
                           recall_threshold = 0.9,
