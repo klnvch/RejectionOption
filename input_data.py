@@ -105,7 +105,7 @@ def print_marcin_data():
     _, y, classes = read_marcin_file('RestsTesting.csv')
     print_classes_stats(y, classes, 'tests/marcin_dataset.csv')
 
-def generate_multiclass():
+def generate_multiclass(random_state=None):
     x, y = datasets.make_classification(n_samples=1000,
                                         n_features=2,
                                         n_informative=2,
@@ -120,17 +120,17 @@ def generate_multiclass():
                                         shift=0.0,
                                         scale=1.0,
                                         shuffle=True,
-                                        random_state=None)
+                                        random_state=random_state)
     return x, y, ['1', '2', '3']
 
-def generate_blobs():
+def generate_blobs(random_state=None):
     x, y = datasets.make_blobs(n_samples=1000, 
                                n_features=2, 
                                centers=2, 
                                cluster_std=1.0, 
                                center_box=(-10.0, 10.0), 
                                shuffle=True, 
-                               random_state=45)
+                               random_state=random_state)
     return x, y, ['0', '1', '2', '3', '4', '5', '6', '7']
 
 def generate_circles():
@@ -141,7 +141,7 @@ def generate_circles():
                                  factor=.5)
     return x, y, ['0', '1']
 
-def generate_moons(n_samples=1000, noise=0.3):
+def generate_moons(n_samples=1000, noise=0.3, random_state=None):
     """
     Keep noise=0.3  to create two classes with overlapping regions,
     so it can be possible to separate them by three hyperplanes
@@ -152,7 +152,7 @@ def generate_moons(n_samples=1000, noise=0.3):
     x, y = datasets.make_moons(n_samples=n_samples,
                                shuffle=True,
                                noise=noise,
-                               random_state=None)
+                               random_state=random_state)
     return x, y, ['0', '1']
 
 def generate_quantiles(mode=1):
@@ -173,7 +173,7 @@ def generate_noise(size = 200):
     x = np.random.uniform(-1, 1, (size, 2))
     return x, [0]*size, ['0']
 
-def get_data(i, size, binarize=False):
+def get_data(i, size, binarize=False, random_state=None):
     """Returns choosen dataset.
 
     Args:
@@ -206,14 +206,16 @@ def get_data(i, size, binarize=False):
     elif i == 2: x, y, classes = read_iris_data()
     elif i == 3: x, y, classes = read_glass_identification_data()
     elif i == 4: x, y, classes = read_image_segmentation_data()
-    elif i == 5: x, y, classes = generate_moons(size, 0.3)
-    elif i == 6: x, y, classes = generate_blobs()
+    elif i == 5: x, y, classes = generate_moons(size, 0.3,
+                                                random_state=random_state)
+    elif i == 6: x, y, classes = generate_blobs(random_state=random_state)
     elif i == 7: x, y, classes = generate_circles()
     elif i == 8: x, y, classes = generate_quantiles(mode=2)
-    elif i == 9: x, y, classes = generate_multiclass()
+    elif i == 9: x, y, classes = generate_multiclass(random_state=random_state)
     elif i == 10: x, y, classes = generate_quantiles(mode=1)
     elif i == 11: x, y, classes = generate_noise()
-    elif i == 12: x, y, classes = generate_moons(size, 0.1)
+    elif i == 12: x, y, classes = generate_moons(size, 0.1,
+                                                 random_state=random_state)
     else: raise ValueError("unknown dataset: " + i)
     
     if binarize:
@@ -266,7 +268,9 @@ def print_classes_stats(y, classes, path=None):
             writer.writerow(dist)
 
 if __name__ == '__main__':
-    x, y, _ = generate_moons(1000, 0.1)
+    #x, y, _ = generate_moons(1000, 0.1)
+    #x, y, _ = generate_multiclass(random_state=50)
+    x, y, _ = generate_blobs(random_state=47)
     plot_2d_dataset(x, y)
     """
     x, y, classes = read_marcin_file('LirykaLearning.csv')

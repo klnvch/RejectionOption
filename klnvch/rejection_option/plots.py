@@ -199,7 +199,7 @@ def plot_curves(curves, savefig=None, show=True, curve_func = 'roc'):
     if show: plt.show()
     else: plt.close()
 
-def plot_decision_regions(x, y, clf, reject=None,
+def plot_decision_regions(x, y, clf, threshold_func=None,
                           figsize=(4.1, 4.1), savefig=None, show=True,
                           step_size=0.02, reject_output=False):
     """ Plot decision regions
@@ -214,6 +214,14 @@ def plot_decision_regions(x, y, clf, reject=None,
       step_szie:
       reject_otput: indicates if the last class ignored as the region
     """
+    # delete rejection class, that is the last column in y
+    if reject_output:
+        x = [a for a,b in zip(x,y) if b.argmax()!=(len(b)-1)]
+        x = np.array(x)
+        y = [b for b in y if b.argmax()!=(len(b)-1)]
+        y = np.array(y)
+        y = y[:,:-1]
+        
     # create a mesh to plot in
     x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
     y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
@@ -229,13 +237,13 @@ def plot_decision_regions(x, y, clf, reject=None,
     # imshow_handle = plt.imshow(Z, interpolation='nearest', 
     #           extent=(x_min, x_max, y_min, y_max), aspect='auto', 
     #           origin="lower", cmap=plt.cm.PuOr_r)  # @UndefinedVariable
+    if reject_output: outputs = outputs[:,:-1]
     Z = outputs
-    if reject_output: Z = Z[:,:-1]
     Z = Z.argmax(axis=1)
     Z = Z.reshape(xx.shape)
     plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)  # @UndefinedVariable
-    if reject is not None:
-        scores = reject(outputs)
+    if threshold_func is not None:
+        scores = threshold_func(outputs)
         scores = scores.reshape(xx.shape)
         cnt = plt.contourf(xx, yy, scores, cmap=plt.cm.Greys, alpha=.4)  # @UndefinedVariable
         plt.clabel(cnt, fmt='%2.1f', inline=False, colors='red', fontsize=14)

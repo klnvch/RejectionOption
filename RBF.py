@@ -46,7 +46,8 @@ class RBF:
         self.beta = np.full(n_centers, beta)
     
     def _basisfunc(self, i, x):
-        assert len(x) == self.n_features
+        if len(x) != self.n_features:
+            raise ValueError('mismatch: {:d} and {:d}'.format(len(x), self.n_features))
         return exp(self.beta[i] * norm(self.centers[i] - x) ** 2)
     
     @staticmethod
@@ -56,7 +57,7 @@ class RBF:
     def _calcAct(self, X):
         # calculate activations of RBFs
         # init matrix with extra column for bias
-        G = np.ones((X.shape[0], self.n_centers + 1))
+        G = np.ones((X.shape[0], self.n_centers))
         for i in range(self.n_centers):
             for j, x in enumerate(X):
                 G[j, i] = self._basisfunc(i, x)

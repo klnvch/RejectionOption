@@ -39,12 +39,19 @@ class RejectionOption:
         assert x is not None and y is not None
         assert x.shape[0] == y.shape[0]
         
-        self.labels= labels
+        self.labels = labels
         self.x = x
         self.y = y
         self.outputs_true = y
         self.outputs_pred = self.clf.predict_proba(x)
         self.outputs_outl = self.clf.predict_proba(outliers)
+        
+        if self.rc:
+            self.outputs_true = self.outputs_true[:,:-1]
+            self.outputs_pred = self.outputs_pred[:,:-1]
+            self.outputs_outl = self.outputs_outl[:,:-1]
+            self.labels = labels[:-1]
+            self.n_classes -= 1
     
     def calc_metrics(self):
         if check_nan(self.outputs_pred):
@@ -185,9 +192,12 @@ class RejectionOption:
     
     def plot_decision_regions(self):
         if self.x.shape[1] == 2:
-            plot_decision_regions(self.x, self.y, self.clf, thr.thr_output)
-            plot_decision_regions(self.x, self.y, self.clf, thr.thr_diff)
-            plot_decision_regions(self.x, self.y, self.clf, thr.thr_ratio)
+            plot_decision_regions(self.x, self.y, self.clf, thr.thr_output,
+                                  reject_output=self.rc)
+            plot_decision_regions(self.x, self.y, self.clf, thr.thr_diff,
+                                  reject_output=self.rc)
+            plot_decision_regions(self.x, self.y, self.clf, thr.thr_ratio,
+                                  reject_output=self.rc)
     
     def print_thresholds(self):
         if self.curves_m is None: return

@@ -6,35 +6,35 @@ Created on May 31, 2017
 Tests to generate results for Chapter 4 and Section 1 about generated classes
 '''
 from DataSet import DataSet
-from tests_common import test_unit_mlp, test_block_mlp
+from tests_common import test_unit_mlp, test_block_mlp, test_unit_RBF
 
 # rej, clf, noisi_size, units, beta, dropout, es, targets, epochs
 
 params_0 = [
     
-    ['mlp-sigmoid',  3, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid',  6, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 0.0,  1.0, 10, (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
-    ['mlp-sigmoid', 12, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
-    ['mlp-sigmoid', 12, 1e-4, 0.9, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm',  3, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm',  6, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 0.0,  1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
+    ['mlp-sgm', 12, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 12, 1e-4, 0.9, 10, (0.0, 1.0), 5000],
     
-    ['mlp-softmax',  3, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax',  6, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 0.0,  1.0, 10, (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
-    ['mlp-softmax', 12, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
-    ['mlp-softmax', 12, 1e-4, 0.9, 10, (0.0, 1.0), 5000],
+    ['mlp-sft',  3, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft',  6, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 0.0,  1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
+    ['mlp-sft', 12, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 12, 1e-4, 0.9, 10, (0.0, 1.0), 5000],
     
     ['rbf',  3, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
     ['rbf',  6, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
@@ -62,65 +62,93 @@ params_0 = [
     
     ]
 
+params_1 = [
+    ['mlp-sgm', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 0.0,  1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 0.6, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 0.9, 10, (0.0, 1.0), 5000]
+    ]
+
+params_2 = [
+    ['mlp-sgm', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 0.0,  1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 0.6, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 0.9, 10, (0.0, 1.0), 5000],
+    
+    ['mlp-sft', 12, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 0.0,  1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 0.0,  1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-4, 1.0, 0,  (0.1, 0.9), 5000],
+    ['mlp-sft', 32, 1e-4, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-4, 0.9, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-4, 0.6, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 32, 1e-4, 0.9, 10, (0.0, 1.0), 5000]
+    ]
+
+params_3 = [
+    ['rbf', 16, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['rbf', 16, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['rbf', 16, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['rbf', 16, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
+    
+    ['rbf-reg', 16, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['rbf-reg', 16, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['rbf-reg', 16, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['rbf-reg', 16, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
+    ]
+
 if __name__ == '__main__':
+    #  misclassifications
+    
     #ds = DataSet(ds_id=5, size=1000, split=[0.1, 0.1, 0.8], add_noise=0)
-    #test_unit_mlp(ds=ds, clf='mlp-softmax', rej=0, units=12,
+    #test_unit_mlp(ds=ds, clf='mlp-sft', rej=0, units=12,
     #              beta=0.0001, dropout=1.0, es=0, targets=(0.0, 1.0),
     #              n_epochs=5000, show=True)
     
-    #ds = DataSet(ds_id=5, size=1000, split=[0.1, 0.1, 0.8], add_noise=0)
-    #test_unit_mlp(ds=ds, clf='rbf-reg', rej=0, units=12,
-    #              beta=0.001, dropout=1.0, es=0, targets=(0.0, 1.0),
+    #ds = DataSet(ds_id=9, size=1000, split=[0.1, 0.1, 0.8], add_noise=0,
+    #             random_state=47)
+    #test_unit_mlp(ds=ds, clf='mlp-sgm', rej=0, units=12,
+    #              beta=0.0001, dropout=1.0, es=0, targets=(0.0, 1.0),
     #              n_epochs=5000, show=True)
     
-    test_block_mlp(5, 'moons_overlapping', 0, range(0,1), params_0)
-    """
-    test_block('moons_separable', 12, range(1,2),
-               [['mlp-sigmoid',  3, 0.0,  1.0, 0],
-                ['mlp-sigmoid',  8, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 16, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 32, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 64, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 64, 0.0,  1.0, 100],
-                ['mlp-sigmoid', 64, 1e-3, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-4, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-5, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-6, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-4, 1.0, 100],
-                ['mlp-sigmoid', 64, 1e-4, 0.9, 0],
-                ['mlp-sigmoid', 64, 1e-4, 0.6, 0],
-                ['mlp-sigmoid', 64, 1e-4, 0.9, 100]])
-    """
-    """
-    test_block_rc('moons_separable', 12, range(1,2),
-               [['mlp-sigmoid',  3, 0.0,  1.0, 0],
-                ['mlp-sigmoid',  8, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 16, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 32, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 64, 0.0,  1.0, 0],
-                ['mlp-sigmoid', 64, 0.0,  1.0, 100],
-                ['mlp-sigmoid', 64, 1e-3, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-4, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-5, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-6, 1.0, 0],
-                ['mlp-sigmoid', 64, 1e-4, 1.0, 100],
-                ['mlp-sigmoid', 64, 1e-4, 0.9, 0],
-                ['mlp-sigmoid', 64, 1e-4, 0.6, 0],
-                ['mlp-sigmoid', 64, 1e-4, 0.9, 100],
-                ['mlp-softmax',  3, 0.0,  1.0, 0],
-                ['mlp-softmax',  8, 0.0,  1.0, 0],
-                ['mlp-softmax', 16, 0.0,  1.0, 0],
-                ['mlp-softmax', 32, 0.0,  1.0, 0],
-                ['mlp-softmax', 64, 0.0,  1.0, 0],
-                ['mlp-softmax', 64, 0.0,  1.0, 100],
-                ['mlp-softmax', 64, 1e-3, 1.0, 0],
-                ['mlp-softmax', 64, 1e-4, 1.0, 0],
-                ['mlp-softmax', 64, 1e-5, 1.0, 0],
-                ['mlp-softmax', 64, 1e-6, 1.0, 0],
-                ['mlp-softmax', 64, 1e-4, 1.0, 100],
-                ['mlp-softmax', 64, 1e-4, 0.9, 0],
-                ['mlp-softmax', 64, 1e-4, 0.6, 0],
-                ['mlp-softmax', 64, 1e-4, 0.9, 100]])
-    """
-    #test_block_RBF('moons_overlapping', 5, range(0,1), [4,8,12,16,20,24,32,36,40,44,48,52,56,60])
-    #test_block_RBF('moons_separable', 12, range(0,1), [4,8,12,16,20,24,32,36,40,44,48,52,56,60])
+    ds = DataSet(ds_id=9, size=1000, split=[0.1, 0.1, 0.8], add_noise=1,
+                 random_state=47)
+    test_unit_mlp(ds=ds, clf='mlp-sgm', rej=1, units=16,
+                  beta=0.0001, dropout=1.0, es=0, targets=(0.0, 1.0),
+                  n_epochs=5000, show=True)
+    
+    #ds = DataSet(ds_id=12, size=1000, split=[0.1, 0.1, 0.8], add_noise=3)
+    #test_unit_RBF(ds, 16, 0.0001, True)
+    
+    # outliers
+    
+    #ds = DataSet(ds_id=12, size=1000, split=[0.1, 0.1, 0.8], add_noise=2,
+    #             random_state=47)
+    #test_unit_mlp(ds=ds, clf='mlp-sgm', rej=2, units=32,
+    #              beta=0.0001, dropout=1.0, es=0, targets=(0.0, 1.0),
+    #              n_epochs=5000, show=True)
+    
+    # blocks
+    #test_block_mlp(5, 'moons_overlapping', 0, range(0,1), params_0)
+    #test_block_mlp(9, 'multiclass', 0, range(0,1), params_0)
+    # ----
+    #test_block_mlp(12, 'moons_separable', 1, range(0,1), params_1)
+    #test_block_mlp(12, 'moons_separable', 2, range(0,1), params_2)
+    #test_block_mlp(12, 'moons_separable', 3, range(0,1), params_3)

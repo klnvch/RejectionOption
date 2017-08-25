@@ -39,7 +39,7 @@ class DataSet:
     
     def __init__(self, ds_id, size=1000, split=[0.6, 0.2, 0.2], 
                  add_noise=None, noise_size=1.0, noise_output=0.0,
-                 output=None):
+                 output=None, random_state=None):
         """
         Args:
             ds_id: index of the dataset.
@@ -60,14 +60,18 @@ class DataSet:
                 13 - Marcin Luckner Dataset
             
             add_noise: noise type
+                0: no outliers
                 1: add noise as no class
+                2: add noise as a class
+                3: only outliers
         """
         if ds_id == 13:
             self.load_marcin_dataset(add_noise, output)
             return
         
         # load data
-        x, y, self.target_names = get_data(ds_id, size, binarize=True)
+        x, y, self.target_names = get_data(ds_id, size, binarize=True,
+                                           random_state=random_state)
         self.n_features = x.shape[1]
         self.n_classes = y.shape[1]
         self.outliers = None
@@ -90,11 +94,12 @@ class DataSet:
         if add_noise == 1:
             self.add_noise_as_no_class(noise_size, noise_output)
         elif add_noise == 2:
-            self.add_noise_as_a_class(None)
+            self.add_noise_as_a_class()
         elif add_noise == 3:
             self.outliers = np.random.uniform(self.tst.x.min()-1,
                                           self.tst.x.max()+1,
                                           [self.tst.size, self.n_features])
+        self.print_info()
         
         # preprocess
         self.scale()
@@ -150,7 +155,12 @@ class DataSet:
         
         self.trn.add_noise_class(noise_size)
         if self.vld is not None: self.vld.add_noise_class(noise_size)
-        self.tst.add_noise_class(1.0)
+        #self.tst.add_noise_class(1.0)
+        self.tst.y = np.append(self.tst.y, np.array([[0]] * self.tst.size), axis=1)
+        self.outliers = np.random.uniform(self.tst.x.min()-1,
+                                          self.tst.x.max()+1,
+                                          [self.tst.size, self.n_features])
+        
         self.target_names = np.concatenate([self.target_names, ['Outliers']])
         self.n_classes += 1
         
