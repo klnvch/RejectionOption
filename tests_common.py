@@ -63,7 +63,7 @@ def test_unit_mlp(ds, clf, rej, units,
     
     return np.concatenate(([result[2], result[3], result[4], score], line))
 
-def test_block_mlp(ds_id, ds_name, rej, attempts, params):
+def test_block_mlp(ds_id, ds_name, rej, attempts, size, split, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
     
     columns = 'DS,Clf,Epochs,Attempt,Type,Units,Beta,Dropout,ES,' \
@@ -73,11 +73,7 @@ def test_block_mlp(ds_id, ds_name, rej, attempts, params):
         print(columns, file=f)
     
     for attempt in attempts:
-        if ds_id in [5,9,12]:
-            ds = DataSet(ds_id=ds_id, size=1000, split=[0.1, 0.1, 0.8],
-                         add_noise=rej)
-        else:
-            ds = DataSet(ds_id, add_noise=rej)
+        ds = DataSet(ds_id, size=size, split=split, add_noise=rej)
         for param in params:
             clf, units, beta, dropout, es, targets, \
                 n_epochs = param
@@ -117,14 +113,14 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
     
     return np.concatenate(([trn_score, tst_score], line))
 
-def test_block_rbf(ds_name, ds_id, attempts, params):
+def test_block_rbf(ds_name, ds_id, attempts, size, split, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
     colums = 'DS,Attempt,Units,Beta,Tst acc,'
     with open(filename, 'a+') as f:
         print(colums, file=f)
     
     for attempt in attempts:
-        ds = DataSet(ds_id, add_noise=3)
+        ds = DataSet(ds_id, size=size, split=split, add_noise=3)
         for param in params:
             distance, n_hidden = param
             msg = test_unit_RBF(ds, n_hidden, distance)

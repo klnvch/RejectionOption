@@ -58,7 +58,7 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
     n_classes = outputs_true.shape[1]
     for i in range(n_classes):
         # skip if few outputs or nothing to reject
-        if (len(y_m_true[i]) > 1 and
+        if (len(y_m_true[i]) > 1 and validate_classes(y_m_true[i]) and
             calc_recall(y_m_true[i]) <= recall_threshold):
             
             fpr[i], tpr[i], _ = curve_func(y_m_true[i],

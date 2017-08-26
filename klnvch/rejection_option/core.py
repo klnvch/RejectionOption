@@ -170,15 +170,24 @@ class RejectionOption:
         plot_curves(curves_s, curve_func='precision_recall')
     
     def plot_multiclass_roc(self):
-        x, y, v = calc_multiclass_curve(self.outputs_true,
-                                        self.outputs_pred,
-                                        self.outputs_outl)
-        plot_multiclass_curve(x, y, v, self.labels)
-    
-    def plot_multiclass_precision_recall(self):
+        if self.n_classes < 8:  recall_threshold = 1.0
+        else:                   recall_threshold = 0.9
+        
         x, y, v = calc_multiclass_curve(self.outputs_true,
                                         self.outputs_pred,
                                         self.outputs_outl,
+                                        recall_threshold=recall_threshold,
+                                        curve_func='roc')
+        plot_multiclass_curve(x, y, v, self.labels)
+    
+    def plot_multiclass_precision_recall(self):
+        if self.n_classes < 8:  recall_threshold = 1.0
+        else:                   recall_threshold = 0.9
+        
+        x, y, v = calc_multiclass_curve(self.outputs_true,
+                                        self.outputs_pred,
+                                        self.outputs_outl,
+                                        recall_threshold=recall_threshold,
                                         curve_func='precision_recall')
         plot_multiclass_curve(x, y, v, self.labels,
                               curve_func='precision_recall')

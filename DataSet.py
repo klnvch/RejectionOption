@@ -159,7 +159,7 @@ class DataSet:
         self.tst.y = np.append(self.tst.y, np.array([[0]] * self.tst.size), axis=1)
         self.outliers = np.random.uniform(self.tst.x.min()-1,
                                           self.tst.x.max()+1,
-                                          [self.tst.size, self.n_features])
+                                          [self.tst.size*4, self.n_features])
         
         self.target_names = np.concatenate([self.target_names, ['Outliers']])
         self.n_classes += 1

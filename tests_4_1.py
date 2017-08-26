@@ -146,9 +146,9 @@ if __name__ == '__main__':
     #              n_epochs=5000, show=True)
     
     # blocks
-    #test_block_mlp(5, 'moons_overlapping', 0, range(0,1), params_0)
-    #test_block_mlp(9, 'multiclass', 0, range(0,1), params_0)
+    #test_block_mlp(5, 'moons_overlapping', 0, range(0,1), 1000, [0.1, 0.1, 0.8], params_0)
+    #test_block_mlp(9, 'multiclass', 0, range(0,1), 1000, [0.1, 0.1, 0.8], params_0)
     # ----
-    #test_block_mlp(12, 'moons_separable', 1, range(0,1), params_1)
-    #test_block_mlp(12, 'moons_separable', 2, range(0,1), params_2)
-    #test_block_mlp(12, 'moons_separable', 3, range(0,1), params_3)
+    #test_block_mlp(12, 'moons_separable', 1, range(0,1), 1000, [0.1, 0.1, 0.8], params_1)
+    #test_block_mlp(12, 'moons_separable', 2, range(0,1), 1000, [0.1, 0.1, 0.8], params_2)
+    #test_block_mlp(12, 'moons_separable', 3, range(0,1), 1000, [0.1, 0.1, 0.8], params_3)
