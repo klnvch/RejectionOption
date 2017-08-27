@@ -40,10 +40,11 @@ def read_glass_identification_data():
             x.append([np.float32(i) for i in currentline[1:10]])
             y.append(classes.index(int(currentline[10])))
             
-    return x, y, ['building windows float processed', 
-                  'building windows non float processed', 
-                  'vehicle windows float processed', 
-                  'containers', 'tableware', 'headlamps']
+    #return x, y, ['building windows float processed', 
+    #              'building windows non float processed', 
+    #              'vehicle windows float processed', 
+    #              'containers', 'tableware', 'headlamps']
+    return x, y, ['1','2','3','5','6','7']
 
 def read_image_segmentation_data():
     x = []
@@ -173,7 +174,7 @@ def generate_noise(size = 200):
     x = np.random.uniform(-1, 1, (size, 2))
     return x, [0]*size, ['0']
 
-def get_data(i, size, binarize=False, random_state=None):
+def get_data(i, size=None, binarize=False, random_state=None):
     """Returns choosen dataset.
 
     Args:

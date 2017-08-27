@@ -26,9 +26,15 @@ def test_unit_mlp(ds, clf, rej, units,
     if clf == 'mlp-sft':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
                   ['sigmoid', 'softmax'], 'Adam', beta, BATCH_SIZE)
+    if clf == 'mlp-sft-2':
+        mlp = MLP(LEARNING_RATE, [ds.n_features, units, units, ds.n_classes],
+                  ['sigmoid', 'sigmoid', 'softmax'], 'Adam', beta, BATCH_SIZE)
     elif clf == 'mlp-sgm':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
                   ['sigmoid', 'sigmoid'], 'Adam', beta, BATCH_SIZE)
+    elif clf == 'mlp-sgm-2':
+        mlp = MLP(LEARNING_RATE, [ds.n_features, units, units, ds.n_classes],
+                  ['sigmoid', 'sigmoid', 'sigmoid'], 'Adam', beta, BATCH_SIZE)
     elif clf == 'mlp-relu':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, units, ds.n_classes],
                   ['relu', 'relu', 'softmax'], 'Adam', beta, BATCH_SIZE)
@@ -120,7 +126,7 @@ def test_block_rbf(ds_name, ds_id, attempts, size, split, params):
         print(colums, file=f)
     
     for attempt in attempts:
-        ds = DataSet(ds_id, size=size, split=split, add_noise=3)
+        ds = DataSet(ds_id, size=size, split=split, add_noise=0)
         for param in params:
             distance, n_hidden = param
             msg = test_unit_RBF(ds, n_hidden, distance)

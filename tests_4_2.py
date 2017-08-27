@@ -65,10 +65,10 @@ if __name__ == '__main__':
     #              beta=0.001, dropout=1.0, es=0, targets=(0.0, 1.0),
     #              n_epochs=5000, show=True)
     
-    #ds = DataSet(2, split=[0.4, 0.1, 0.5], add_noise=1)
-    #test_unit_mlp(ds=ds, clf='mlp-sgm', rej=1, units=12,
-    #              beta=0.001, dropout=1.0, es=0, targets=(0.0, 1.0),
-    #              n_epochs=5000, show=True)
+    ds = DataSet(2, split=[0.4, 0.1, 0.5], add_noise=1)
+    test_unit_mlp(ds=ds, clf='mlp-sgm', rej=1, units=12,
+                  beta=0.001, dropout=1.0, es=0, targets=(0.0, 1.0),
+                  n_epochs=5000, show=True)
     
     #ds = DataSet(2, split=[0.4, 0.1, 0.5], add_noise=2)
     #test_unit_mlp(ds=ds, clf='mlp-sgm', rej=2, units=12,
@@ -87,4 +87,4 @@ if __name__ == '__main__':
     #test_block_mlp(2, 'iris', 2, range(0,1), None, [0.4, 0.1, 0.5], params_2)
     #test_block_mlp(2, 'iris', 3, range(0,1), None, [0.4, 0.1, 0.5], params_3)
     
-    test_block_rbf('iris', 2, range(0,1), None, [0.4, 0.1, 0.5], params_4)
+    #test_block_rbf('iris', 2, range(0,1), None, [0.4, 0.1, 0.5], params_4)

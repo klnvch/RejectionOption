@@ -64,6 +64,7 @@ class RejectionOption:
                                                        self.outputs_outl)
         if validate_classes(y_true):
             auc_0 = metrics.roc_auc_score(y_true, y_score)
+            if auc_0 < .5:  auc_0 = 1. - auc_0
         else:
             auc_0 = 1.0
         print('{:40s}: {:0.4f}'.format(label, auc_0))
@@ -74,6 +75,7 @@ class RejectionOption:
                                                        self.outputs_outl)
         if validate_classes(y_true):
             auc_1 = metrics.roc_auc_score(y_true, y_score)
+            if auc_1 < .5:  auc_1 = 1. - auc_1
         else:
             auc_1 = 1.0
         print('{:40s}: {:0.4f}'.format(label, auc_1))
@@ -84,6 +86,7 @@ class RejectionOption:
                                                        self.outputs_outl)
         if validate_classes(y_true):
             auc_2 = metrics.roc_auc_score(y_true, y_score)
+            if auc_2 < .5:  auc_2 = 1. - auc_2
         else:
             auc_2 = 1.0
         print('{:40s}: {:0.4f}'.format(label, auc_2))
@@ -95,7 +98,9 @@ class RejectionOption:
         avg_auc_0 = 0
         for y_true, y_score in zip(y_m_true, y_m_score):
             if validate_classes(y_true):
-                avg_auc_0 += metrics.roc_auc_score(y_true, y_score)
+                auc = metrics.roc_auc_score(y_true, y_score)
+                if auc < .5:  auc = 1. - auc
+                avg_auc_0 += auc
             else:
                 avg_auc_0 += 1.0
         avg_auc_0 /= self.n_classes
@@ -108,7 +113,9 @@ class RejectionOption:
         avg_auc_1 = 0
         for y_true, y_score in zip(y_m_true, y_m_score):
             if validate_classes(y_true):
-                avg_auc_1 += metrics.roc_auc_score(y_true, y_score)
+                auc = metrics.roc_auc_score(y_true, y_score)
+                if auc < .5:  auc = 1. - auc
+                avg_auc_1 += auc
             else:
                 avg_auc_1 += 1.0
         avg_auc_1 /= self.n_classes
@@ -121,7 +128,9 @@ class RejectionOption:
         avg_auc_2 = 0
         for y_true, y_score in zip(y_m_true, y_m_score):
             if validate_classes(y_true):
-                avg_auc_2 += metrics.roc_auc_score(y_true, y_score)
+                auc = metrics.roc_auc_score(y_true, y_score)
+                if auc < .5:  auc = 1. - auc
+                avg_auc_2 += auc
             else:
                 avg_auc_2 += 1.0
         avg_auc_2 /= self.n_classes
@@ -173,9 +182,29 @@ class RejectionOption:
         if self.n_classes < 8:  recall_threshold = 1.0
         else:                   recall_threshold = 0.9
         
+        # multiple output thresholds
         x, y, v = calc_multiclass_curve(self.outputs_true,
                                         self.outputs_pred,
                                         self.outputs_outl,
+                                        score_func=score_func.score_outp_m,
+                                        recall_threshold=recall_threshold,
+                                        curve_func='roc')
+        plot_multiclass_curve(x, y, v, self.labels)
+        
+        # multiple differential thresholds
+        x, y, v = calc_multiclass_curve(self.outputs_true,
+                                        self.outputs_pred,
+                                        self.outputs_outl,
+                                        score_func=score_func.score_diff_m,
+                                        recall_threshold=recall_threshold,
+                                        curve_func='roc')
+        plot_multiclass_curve(x, y, v, self.labels)
+        
+        # multiple ratio thresholds
+        x, y, v = calc_multiclass_curve(self.outputs_true,
+                                        self.outputs_pred,
+                                        self.outputs_outl,
+                                        score_func=score_func.score_rati_m,
                                         recall_threshold=recall_threshold,
                                         curve_func='roc')
         plot_multiclass_curve(x, y, v, self.labels)

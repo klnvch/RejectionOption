@@ -8,15 +8,17 @@ This module keeps function to generate images for the thesis text
 Those images are not part of results and are only used to illustrate
 some basic definitions
 '''
+import numpy as np
 import matplotlib.pyplot as plt
 from graphics import plot_2d_dataset
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from DataSet import DataSet
 from MLP import MLP
-from graphics import plot_decision_regions
 from RBF import RBF
 from klnvch.rejection_option.thresholds import Thresholds as thr
+from input_data import get_data
+from klnvch.rejection_option.plots import plot_decision_regions
 
 FIG_HALF_SIZE = 4.1
 IMAGES_DIR = '/home/anton/Desktop/diploma_text/images/'
@@ -46,7 +48,7 @@ def plot_pca_vs_lda(X, y, target_names):
     lw = 2
     
     for i in range(n_classes):
-        plt.scatter(X_r[y == i, 0], X_r[y == i, 1], color=colors(i), alpha=.8,
+        plt.scatter(X_r[y == i, 0], X_r[y == i, 1], color=colors[i], alpha=.8,
                     lw=lw, s=4, label=target_names[i])
     plt.legend(loc='best', shadow=False, scatterpoints=1, markerscale=4)
     plt.savefig('/home/anton/Desktop/diploma_text/images/chapter_3/pca.png')
@@ -55,7 +57,7 @@ def plot_pca_vs_lda(X, y, target_names):
     fig = plt.figure(figsize=(FIG_HALF_SIZE, FIG_HALF_SIZE))
     fig.canvas.set_window_title('LDA') 
     for i in range(n_classes):
-        plt.scatter(X_r2[y == i, 0], X_r2[y == i, 1], alpha=.8, color=colors(i),
+        plt.scatter(X_r2[y == i, 0], X_r2[y == i, 1], alpha=.8, color=colors[i],
                     s=4, label=target_names[i])
     plt.legend(loc='best', shadow=False, scatterpoints=1, markerscale=4)
     plt.savefig('/home/anton/Desktop/diploma_text/images/chapter_3/lda.png')
@@ -194,15 +196,15 @@ if __name__ == '__main__':
     # dataset_examlpes()
     
     # Sources of errors
-    # x, y, classes = get_data(4, preprocess=None)
-    # plot_pca_vs_lda(x, y, classes)
+    x, y, classes = get_data(3)
+    plot_pca_vs_lda(x, y, classes)
     
     # decision boundaries
     # decision_boundries_1()
     # decision_boundries_2()
     # decision_boundries_3()
     # decision_boundries_4()
-    decision_boundries_56()
+    #decision_boundries_56()
     
     # plot_roc_space_figure_1()
     # plot_roc_space_figure_2()
