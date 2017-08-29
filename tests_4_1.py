@@ -3,7 +3,7 @@ Created on May 31, 2017
 
 @author: anton
 
-Tests to generate results for Chapter 4 and Section 1 about generated classes
+Tests for Generated Datasets
 '''
 from DataSet import DataSet
 from tests_common import test_unit_mlp, test_block_mlp, test_unit_RBF

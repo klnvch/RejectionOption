@@ -15,7 +15,7 @@ from RBF import RBF
 from klnvch.rejection_option.core import RejectionOption
 
 #N_EPOCHS = 5000
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
 def test_unit_mlp(ds, clf, rej, units,
@@ -121,12 +121,12 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
 
 def test_block_rbf(ds_name, ds_id, attempts, size, split, params):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
-    colums = 'DS,Attempt,Units,Beta,Tst acc,'
+    colums = 'DS,Attempt,Units,Beta,Tst acc,SOT,SDT,SRT,MOT,MDT,MRT'
     with open(filename, 'a+') as f:
         print(colums, file=f)
     
     for attempt in attempts:
-        ds = DataSet(ds_id, size=size, split=split, add_noise=0)
+        ds = DataSet(ds_id, size=size, split=split, add_noise=3)
         for param in params:
             distance, n_hidden = param
             msg = test_unit_RBF(ds, n_hidden, distance)

@@ -2,6 +2,8 @@
 Created on Jun 24, 2017
 
 @author: anton
+
+Tests for Alphanumeric Dataset
 '''
 import pandas as pd
 from scipy.stats import ranksums

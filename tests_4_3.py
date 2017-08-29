@@ -2,193 +2,139 @@
 Created on Jun 24, 2017
 
 @author: anton
+
+Tests for Image Segmentation Dataset
 '''
 from DataSet import DataSet
-from MLP import MLP
-import time
-from RBF import RBF
-from klnvch.rejection_option.core import RejectionOption, get_labels
+from tests_common import test_unit_mlp, test_block_mlp, test_block_rbf,\
+    test_unit_RBF
 
-def test_unit_RBF(ds, n_hidden):
-    rbf = RBF(ds.n_features, n_hidden, ds.n_classes)
-    rbf.train(ds.trn.x, ds.trn.y)
+params_0 = [
+    ['mlp-sgm', 16, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 16, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 16, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 16, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
     
-    score = rbf.score(ds.tst)
-    print('Test accuracy: {0:f}'.format(score))
+    ['mlp-sgm', 32, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 32, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
     
-    ro = RejectionOption(rbf, ds.n_classes, False, 'simple')
-    line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
+    ['mlp-sgm', 64, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
     
-    return '{:9f}, {:s}'.format(score, line)
+    ['mlp-sgm', 128, 1e-3, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-6, 1.0, 0,  (0.0, 1.0), 5000]
+    ]
 
-def test_unit_mlp(ds, clf, type, noise_size, units, beta, dropout, es, show):
-    ds = ds.copy()
-    if type == 1:
-        ds.add_noise_as_no_class(noise_size)
-    elif type == 2:
-        ds.add_noise_as_a_class(noise_size)
+params_1 = [
+    ['mlp-sgm', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 64, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
     
-    if clf == 'mlp-softmax':
-        mlp = MLP(0.01, [ds.n_features, units, ds.n_classes],
-                  ['sigmoid', 'softmax'], 'Adam', beta, 128)
-    elif clf == 'mlp-sigmoid':
-        mlp = MLP(0.01, [ds.n_features, units, ds.n_classes],
-                  ['sigmoid', 'sigmoid'], 'Adam', beta, 128)
+    ['mlp-sft', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 64, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft', 64, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 64, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
     
-    result = mlp.train(5000, ds.trn, ds.vld, dropout, es, False)
-    print(result)
+    ['rbf', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 500],
     
-    score = mlp.score(ds.tst)
-    print('Test accuracy: {0:f}'.format(score))
-    
-    if type == 1 or type == 0:
-        ro = RejectionOption(mlp, ds.n_classes, False, 'simple')
-    elif type == 2:
-        ro = RejectionOption(mlp, ds.n_classes, True, 'simple')
-    
-    line = ro.evaluate(ds.tst.x, ds.tst.y, ds.outliers)
-    if show:
-        ro.plot_confusion_matrix(ds.target_names)
-        ro.plot()
-        ro.plot_multiclass(ds.target_names)
-        ro.print_thresholds()
-    
-    return '{:f}, {:f}, {:f}, {:f}, {:s}' \
-        .format(result[2], result[3], result[4], score, line)
+    ['rbf-reg', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf-reg', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf-reg', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 500]
+    ]
 
-def test_block_RBF(ds_name, ds_id, attempts, params):
-    filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
-    colums = 'DS,Attempt,Units,Tst acc,' + get_labels(3)
-    with open(filename, 'a+') as f:
-        print(colums, file=f)
+params_2 = [
+    ['rbf', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf', 64, 1e-7, 1.0, 0,  (0.0, 1.0), 500],
     
-    for attempt in attempts:
-        ds = DataSet(ds_id, split=[0.2, 0.8], add_noise=3)
-        for param in params:
-            n_hidden = param
-            msg = test_unit_RBF(ds, n_hidden)
-            msg = '{:s}, {:d}, {:d}, '.format(ds_name, attempt, n_hidden) + msg
-            with open(filename, 'a+') as f:
-                print(msg, file=f)
+    ['rbf-reg', 64, 1e-4, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf-reg', 64, 1e-5, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf-reg', 64, 1e-6, 1.0, 0,  (0.0, 1.0), 500],
+    ['rbf-reg', 64, 1e-7, 1.0, 0,  (0.0, 1.0), 500]
+    ]
 
-def test_block_mlp(ds_id, ds_name, type, attempts, params):
-    filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
+params_3 = [
+    [1, 32],
+    [1, 64],
+    [1, 128],
+    [1, 256],
+    ]
+
+params_4 = [
+    ['mlp-sgm', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
     
-    if type == 1 or type == 0:
-        colums = 'DS,Clf,Attempt,Type,Noise,Units,Beta,Dropout,ES,' \
-                'Loss,Trn acc,Vld acc,Tst acc,' + get_labels(3)
-    elif type == 2:
-        colums = 'DS,Clf,Attempt,Type,Noise,Units,Beta,Dropout,ES,' \
-                'Loss,Trn acc,Vld acc,Tst acc,' + get_labels(3, rc=True)
+    ['mlp-sgm-2', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm-2', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm-2', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm-2', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
+    ]
+
+params_5 = [
+    ['mlp-sgm', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
     
-    with open(filename, 'a+') as f:
-        print(colums, file=f)
+    ['mlp-sft', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
     
-    for attempt in attempts:
-        ds = DataSet(ds_id, split=[0.3, 0.1, 0.6])
-        for param in params:
-            noise_type, clf, noise_size, units, beta, dropout, es, _ = param
-            
-            msg = test_unit_mlp(ds, clf, noise_type, noise_size, units,
-                                beta, dropout, es, False)
-            
-            msg = '{:s}, {:s}, {:d}, {:d}, {:f}, {:d}, {:f}, {:f}, {:d}, ' \
-                .format(ds_name, clf, attempt, noise_type, noise_size,
-                        units, beta, dropout, es) + msg
-            
-            with open(filename, 'a+') as f:
-                print(msg, file=f)
+    ['mlp-sgm-2', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm-2', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sgm-2', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sgm-2', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
+    
+    ['mlp-sft-2', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft-2', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-sft-2', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-sft-2', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000]
+    ]
+
+params_6 = [
+    ['mlp-relu', 128, 1e-5, 1.0, 0,  (0.0, 1.0), 5000],
+    ['mlp-relu', 128, 1e-5, 1.0, 10, (0.0, 1.0), 5000],
+    ['mlp-relu', 128, 1e-5, 0.8, 0,  (0.0, 1.0), 5000],
+    ['mlp-relu', 128, 1e-5, 0.8, 10, (0.0, 1.0), 5000],
+    ]
 
 if __name__ == '__main__':
-    #ds = DataSet(4, split=[0.3, 0.1, 0.6])
-    #test_unit_mlp(ds, 'mlp-sigmoid', 0, 4.0, 64, 0.001, 1.0, 0, True)
-    """
-    test_block_mlp(4, 'image_segmentation', 1, range(0,1),
-                   [
-                    [1, 'mlp-sigmoid', 0.5,  64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 1.0,  64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 2.0,  64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 8.0,  64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,   8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0, 128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [1, 'mlp-sigmoid', 4.0,  64, 0.00001,  1.0, 50, (0.0, 1.0)]
-                    ])
-    """
-    """
-    test_block_mlp(4, 'image_segmentation', 2, range(0,1),
-                   [
-                    [2, 'mlp-sigmoid', 0.5, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 1.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 2.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 8.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
-                    [2, 'mlp-sigmoid', 4.0, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
-                    
-                    [2, 'mlp-softmax', 0.5, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 1.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 2.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 8.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
-                    [2, 'mlp-softmax', 4.0, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
-                    ])
-    """
+    ds = DataSet(4, split=[0.4, 0.1, 0.5], add_noise=2)
+    test_unit_mlp(ds=ds, clf='mlp-sft', rej=2, units=128,
+                  beta=0.00001, dropout=1.0, es=0, targets=(0.0, 1.0),
+                  n_epochs=5000, show=True)
     
-    test_block_mlp(4, 'image_segmentation', 0, range(0,1),
-                   [
-                    [0, 'mlp-sigmoid', 0.5, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 1.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 2.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 8.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
-                    [0, 'mlp-sigmoid', 4.0, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
-                    
-                    [0, 'mlp-softmax', 0.5, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 1.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 2.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 8.0, 64, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0,  8, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 16, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 32, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0,128, 0.00001,  1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 64, 0.0001,   1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 64, 0.000001, 1.0, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 64, 0.00001,  0.8, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 64, 0.00001,  0.9, 0,  (0.0, 1.0)],
-                    [0, 'mlp-softmax', 4.0, 64, 0.00001,  1.0, 50, (0.0, 1.0)],
-                    ])
+    #ds = DataSet(4, split=[0.4, 0.1, 0.5], add_noise=0)
+    #test_unit_mlp(ds=ds, clf='rbf-reg', rej=0, units=64,
+    #              beta=0.00001, dropout=1.0, es=0, targets=(0.0, 1.0),
+    #              n_epochs=500, show=True)
     
-    """
-    test_block_RBF('image_segmentation', 4, range(0,1),[7,14,21,28,35,42,49,56])
-    """
+    #test_block_mlp(4, 'segmentation', 0, range(0,1), None, [0.4, 0.1, 0.5], params_0)
+    #test_block_mlp(4, 'segmentation', 0, range(0,1), None, [0.4, 0.1, 0.5], params_1)
+    #test_block_mlp(4, 'segmentation', 0, range(0,1), None, [0.4, 0.1, 0.5], params_2)
+    
+    #test_block_rbf('segmentation', 4, range(0,1), None, [0.4, 0.1, 0.5], params_3)
+    
+    # test outliers rejection
+    #test_block_mlp(4, 'segmentation', 1, range(0,1), None, [0.4, 0.1, 0.5], params_4)
+    #test_block_mlp(4, 'segmentation', 2, range(0,1), None, [0.4, 0.1, 0.5], params_5)
+    #test_block_mlp(4, 'segmentation', 2, range(0,1), None, [0.4, 0.1, 0.5], params_6)
+    #test_block_mlp(4, 'segmentation', 3, range(0,1), None, [0.4, 0.1, 0.5], params_2)
+    #test_block_rbf('segmentation', 4, range(0,1), None, [0.4, 0.1, 0.5], params_3)
