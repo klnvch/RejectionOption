@@ -9,7 +9,7 @@ import csv
 from sklearn import datasets
 from sklearn import preprocessing
 from collections import Counter
-from graphics import plot_2d_dataset
+import matplotlib.pyplot as plt
 
 DATA_DIR = 'datasets/'
 
@@ -169,7 +169,7 @@ def generate_quantiles(mode=1):
     else:
         y[y==2] = 0
         return x, y, ['0', '1']
-    
+
 def generate_noise(size = 200):
     x = np.random.uniform(-1, 1, (size, 2))
     return x, [0]*size, ['0']
@@ -267,6 +267,16 @@ def print_classes_stats(y, classes, path=None):
             writer.writerow(dist)
             dist = 100 * dist / len(y)
             writer.writerow(dist)
+
+def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
+    if y.ndim == 2: y = y.argmax(axis=1)
+    
+    plt.figure(figsize=figsize)
+    plt.axis('off')
+    plt.scatter(x[:, 0], x[:, 1], c=y)
+    if savefig is not None:
+        plt.savefig(savefig)
+    plt.show()
 
 if __name__ == '__main__':
     #x, y, _ = generate_moons(1000, 0.1)

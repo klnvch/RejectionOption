@@ -4,6 +4,7 @@ Created on Oct 26, 2016
 @author: anton
 
 This module keeps all code for Tensorflow to implement MLP
+The code is imperfect and must be replaced with Keras library
 '''
 
 import time, os
@@ -50,6 +51,16 @@ class MLP:
                                    [self.n_hidden[0], self.n_output],
                                    None, '2', None)
             regularizers = r1
+            
+        elif 'conv' in functions:
+            x = self.add_conv(self.x)
+            h, _ = self.add_layer(x,
+                                   [7 * 7 * 64, self.n_hidden[0]],
+                                   functions[1], '1', self.keep_prob, None)
+            y, _ = self.add_layer(h,
+                                   [self.n_hidden[0], self.n_output],
+                                   None, '2', None, None)
+            regularizers = None
             
         elif len(self.n_hidden) == 0:
             y, r1 = self.add_layer(self.x,
@@ -106,7 +117,10 @@ class MLP:
                 tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y_,
                                                         logits=y))
         
-        self.loss = tf.reduce_mean(self.loss + beta * regularizers)
+        if regularizers is not None:
+            self.loss = tf.reduce_mean(self.loss + beta * regularizers)
+        else:
+            self.loss = tf.reduce_mean(self.loss)
         
         #self.global_step = tf.Variable(0, trainable=False)
         #starter_learning_rate = 0.1
@@ -140,12 +154,14 @@ class MLP:
         y_true = tf.equal(tf.argmax(self.y_final, 1), tf.argmax(self.y_, 1))
         self.accuracy = tf.reduce_mean(tf.cast(y_true, tf.float32))
     
-    def add_layer(self, x, shape, activation_function, postfix_name, keep_prob):
+    def add_layer(self, x, shape, activation_function, postfix_name,
+                  keep_prob, regularization = tf.nn.l2_loss):
         w = tf.Variable(tf.truncated_normal(shape, stddev=0.1),
                         name='weights_' + postfix_name)
         b = tf.Variable(tf.constant(0.1, shape=[shape[1]]),
                         name='biases_' + postfix_name)
-        l2_loss = tf.nn.l2_loss(w)
+        if regularization is not None:  l2_loss = regularization(w)
+        else:                           l2_loss = None
         if activation_function is None:
             return tf.matmul(x, w) + b, l2_loss
         else:
@@ -198,6 +214,29 @@ class MLP:
         
         return G, l2_loss
     
+    def add_conv(self, x):
+        """
+        only for MNIST dataset
+        """
+        # The first convolutional layer
+        x = tf.reshape(x, [-1, 28, 28, 1])
+        W_conv1 = tf.Variable(tf.truncated_normal([5, 5, 1, 32], stddev=0.1))
+        b_conv1 = tf.Variable(tf.constant(0.1, shape=[32]))
+        h_conv1 = tf.nn.relu(tf.nn.conv2d(x, W_conv1, strides=[1, 1, 1, 1],
+                                          padding='SAME') + b_conv1)
+        h_pool1 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1],
+                                 strides=[1, 2, 2, 1], padding='SAME')
+        # The second convolutional layer
+        W_conv2 = tf.Variable(tf.truncated_normal([5, 5, 32, 64], stddev=0.1))
+        b_conv2 = tf.Variable(tf.constant(0.1, shape=[64]))
+        h_conv2 = tf.nn.relu(tf.nn.conv2d(h_pool1, W_conv2, strides=[1, 1, 1, 1],
+                                          padding='SAME') + b_conv2)
+        h_pool2 = tf.nn.max_pool(h_conv2, ksize=[1, 2, 2, 1],
+                                 strides=[1, 2, 2, 1], padding='SAME')
+        # make flat again and return
+        h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+        return h_pool2_flat
+    
     def parse_functions(self, functions):
         def find_match(f):
             if   f == 'relu'   : return tf.nn.relu
@@ -205,6 +244,7 @@ class MLP:
             elif f == 'softmax': return tf.nn.softmax
             elif f == 'rbf':     return f
             elif f == 'rbf-reg': return f
+            elif f == 'conv':    return f
             else: raise ValueError('wrong function: ' + f)
         return [find_match(f) for f in functions]
     
@@ -259,7 +299,7 @@ class MLP:
                                             self.keep_prob: keep_prob})
                 finish_time = time.time()
                 dt += (finish_time - start_time)
-                if step % 100 == 0:
+                if step % 1 == 0:
                     trn_loss, trn_acc, vld_loss, vld_acc = \
                         self.log_step_info(sess, step, trn, vld, dt, log)
                     dt = 0
@@ -329,9 +369,14 @@ class MLP:
         print(log_msg)
     
     def log_step_info(self, sess, step, trn, vld, train_time, logging):
-        trn_loss, trn_acc = sess.run(
-            [self.loss, self.accuracy],
-            feed_dict={self.x: trn.x, self.y_: trn.y, self.keep_prob: 1.0})
+        if trn.size < 8000:
+            trn_loss, trn_acc = sess.run([self.loss, self.accuracy],
+                feed_dict={self.x: trn.x, self.y_: trn.y,
+                           self.keep_prob: 1.0})
+        else:
+            trn_loss, trn_acc = sess.run([self.loss, self.accuracy],
+                feed_dict={self.x: trn.x[:8000], self.y_: trn.y[:8000],
+                           self.keep_prob: 1.0})
         if vld is not None:
             vld_loss, vld_acc = sess.run([self.loss, self.accuracy],
                                feed_dict={self.x: vld.x,
@@ -355,64 +400,4 @@ class MLP:
         print('train finished')
 
 if __name__ == '__main__':
-    
-    x = tf.placeholder(tf.float32, [None, 2])
-    c = tf.placeholder(tf.float32, [3, 2])
-    v = tf.placeholder(tf.float32, [3])
-    
-    e_x = tf.expand_dims(x, 1)
-    e_w = tf.expand_dims(c, 0)
-    
-    #input_x = [[1,2]]
-    input_x = [[1,2], [1,2], [1,2], [1,2], [1,2], [1,2]]
-    input_c = [[1,4], [0,3], [6,4]]
-    input_v = [1,2,3]
-    
-    a = tf.squared_difference(e_x, e_w, 'norm')
-    a = tf.reduce_sum(a, axis=2, name='reduce_sum')
-    
-    b = 2.0 * tf.square(v)
-    
-    G1 = - tf.divide(a, b)
-    G2 = tf.exp(G1)
-    
-    sess = tf.Session()
-    print(sess.run(a, {x: input_x, c: input_c, v: input_v}))
-    print('------------------------------------------')
-    print(sess.run(b, {x: input_x, c: input_c, v: input_v}))
-    print('------------------------------------------')
-    print(sess.run(G1, {x: input_x, c: input_c, v: input_v}))
-    print('------------------------------------------')
-    print(sess.run(G2, {x: input_x, c: input_c, v: input_v}))
-    print('------------------------------------------')
-    
-    """
-    x = tf.placeholder(tf.float32, [None, 2])
-    c = tf.placeholder(tf.float32, [3, 2])
-    v = tf.placeholder(tf.float32, [3, 2])
-    
-    e_x = tf.expand_dims(x, 1)
-    e_c = tf.expand_dims(c, 0)
-    
-    #input_x = [[1,2]]
-    input_x = [[1,2], [1,2], [1,2], [1,2], [1,2], [1,2]]
-    input_c = [[1,4], [0,3], [6,4]]
-    input_v = [[1,1], [2,2], [3,3]]
-    
-    sess = tf.Session()
-    
-    diff = tf.squared_difference(e_x, e_c)
-    
-    a = 1.0 / tf.square(v)
-    a = tf.multiply(diff, a)
-    a = tf.reduce_sum(a, axis=2)
-    
-    G = tf.exp(- a / 2.0)
-    
-    print(sess.run(diff, {x: input_x, c: input_c, v: input_v}))
-    print('------------------------------------------')
-    print(sess.run(a, {x: input_x, c: input_c, v: input_v}))
-    print('------------------------------------------')
-    print(sess.run(G, {x: input_x, c: input_c, v: input_v}))
-    """
-    
+    pass

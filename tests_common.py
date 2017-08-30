@@ -15,37 +15,44 @@ from RBF import RBF
 from klnvch.rejection_option.core import RejectionOption
 
 #N_EPOCHS = 5000
-BATCH_SIZE = 128
+#BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
 def test_unit_mlp(ds, clf, rej, units,
-                  beta, dropout, es, targets, n_epochs, show):
+                  beta, dropout, es, targets, n_epochs, batch_size, show):
     ds = ds.copy()
     ds.change_targets(targets)
     
     if clf == 'mlp-sft':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
-                  ['sigmoid', 'softmax'], 'Adam', beta, BATCH_SIZE)
+                  ['sigmoid', 'softmax'], 'Adam', beta, batch_size)
     if clf == 'mlp-sft-2':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, units, ds.n_classes],
-                  ['sigmoid', 'sigmoid', 'softmax'], 'Adam', beta, BATCH_SIZE)
+                  ['sigmoid', 'sigmoid', 'softmax'], 'Adam', beta, batch_size)
     elif clf == 'mlp-sgm':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
-                  ['sigmoid', 'sigmoid'], 'Adam', beta, BATCH_SIZE)
+                  ['sigmoid', 'sigmoid'], 'Adam', beta, batch_size)
     elif clf == 'mlp-sgm-2':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, units, ds.n_classes],
-                  ['sigmoid', 'sigmoid', 'sigmoid'], 'Adam', beta, BATCH_SIZE)
+                  ['sigmoid', 'sigmoid', 'sigmoid'], 'Adam', beta, batch_size)
     elif clf == 'mlp-relu':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, units, ds.n_classes],
-                  ['relu', 'relu', 'softmax'], 'Adam', beta, BATCH_SIZE)
+                  ['relu', 'relu', 'softmax'], 'Adam', beta, batch_size)
     elif clf == 'rbf':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
-                  ['rbf', 'sigmoid'], 'Adam', beta, BATCH_SIZE)
+                  ['rbf', 'sigmoid'], 'Adam', beta, batch_size)
     elif clf == 'rbf-reg':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
-                  ['rbf-reg', 'softmax'], 'Adam', beta, BATCH_SIZE)
+                  ['rbf-reg', 'softmax'], 'Adam', beta, batch_size)
+    elif clf == 'conv-sgm':
+        mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
+                  ['conv', 'relu', 'sigmoid'], 'Adam', beta, batch_size)
+    elif clf == 'conv-sft':
+        mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
+                  ['conv', 'relu', 'softmax'], 'Adam', beta, batch_size)
     
     result = mlp.train(n_epochs, ds.trn, ds.vld, dropout, es, False)
+    #result = [0,0,0,0,0,0,0,0,0,0]
     print(result)
     
     score = mlp.score(ds.tst)
@@ -82,10 +89,10 @@ def test_block_mlp(ds_id, ds_name, rej, attempts, size, split, params):
         ds = DataSet(ds_id, size=size, split=split, add_noise=rej)
         for param in params:
             clf, units, beta, dropout, es, targets, \
-                n_epochs = param
+                n_epochs, batch_size = param
             
-            msg = test_unit_mlp(ds, clf, rej, units,
-                                beta, dropout, es, targets, n_epochs, False)
+            msg = test_unit_mlp(ds, clf, rej, units, beta, dropout,
+                                es, targets, n_epochs, batch_size, False)
             
             row = np.concatenate(([ds_name, clf, n_epochs, attempt, rej,
                                    units, beta, dropout, es], msg))

@@ -143,7 +143,7 @@ class RejectionOption:
                               self.outputs_outl, self.labels,
                               error_threshold=None)
         
-        if self.n_classes < 8: return
+        if self.n_classes <= 10: return
         
         plot_confusion_matrix(self.outputs_true, self.outputs_pred,
                               self.outputs_outl, self.labels,
@@ -179,8 +179,8 @@ class RejectionOption:
         plot_curves(curves_s, curve_func='precision_recall')
     
     def plot_multiclass_roc(self):
-        if self.n_classes < 8:  recall_threshold = 1.0
-        else:                   recall_threshold = 0.9
+        if self.n_classes <= 10:  recall_threshold = 1.0
+        else:                     recall_threshold = 0.9
         
         # multiple output thresholds
         x, y, v = calc_multiclass_curve(self.outputs_true,
@@ -210,8 +210,8 @@ class RejectionOption:
         plot_multiclass_curve(x, y, v, self.labels)
     
     def plot_multiclass_precision_recall(self):
-        if self.n_classes < 8:  recall_threshold = 1.0
-        else:                   recall_threshold = 0.9
+        if self.n_classes <= 10:  recall_threshold = 1.0
+        else:                     recall_threshold = 0.9
         
         x, y, v = calc_multiclass_curve(self.outputs_true,
                                         self.outputs_pred,

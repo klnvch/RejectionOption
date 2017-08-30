@@ -12,6 +12,7 @@ from sklearn.decomposition import PCA
 from input_data import get_data, read_marcin_file
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import VarianceThreshold
+from tensorflow.examples.tutorials.mnist import input_data
 
 class Set:
     def __init__(self, x, y):
@@ -34,6 +35,24 @@ class Set:
         
         self.size = self.y.shape[0]
         self.n_classes = self.y.shape[1]
+    
+    def remove_class(self, i):
+        new_x = []
+        new_y = []
+        outliers = []
+        for _x, _y in zip(self.x, self.y):
+            if _y.argmax() == i:
+                outliers.append(_x)
+            else:
+                new_x.append(_x)
+                new_y.append(np.delete(_y, i))
+        
+        self.x = np.array(new_x)
+        self.y = np.array(new_y)
+        self.size = self.x.shape[0]
+        self.n_classes = self.y.shape[1]
+        
+        return np.array(outliers)
 
 class DataSet:
     
@@ -58,6 +77,7 @@ class DataSet:
                 12 - Moons Separable
                 
                 13 - Marcin Luckner Dataset
+                14 - MNIST Dataset
             
             add_noise: noise type
                 0: no outliers
@@ -67,6 +87,9 @@ class DataSet:
         """
         if ds_id == 13:
             self.load_marcin_dataset(add_noise, output)
+            return
+        elif ds_id == 14:
+            self.load_mnist_data(add_noise)
             return
         
         # load data
@@ -143,7 +166,7 @@ class DataSet:
                                           [self.tst.size*4, self.n_features])
         
         self.print_info()
-        
+    
     def add_noise_as_a_class(self, noise_size=1.0):
         """
         Adds noise as a class to a dataset
@@ -165,7 +188,23 @@ class DataSet:
         self.n_classes += 1
         
         self.print_info()
+    
+    def remove_class(self, i):
+        """
+        Removes class of index i in the dataset
+        Args:
+            u: a class to be removed and added to outliers
+        """
+        out_1 = self.trn.remove_class(i)
+        out_2 = self.vld.remove_class(i)
+        out_3 = self.tst.remove_class(i)
         
+        self.outliers = np.concatenate([out_1, out_2, out_3])
+        self.n_classes -= 1
+        self.target_names = np.delete(self.target_names, i)
+        
+        self.print_info()
+    
     def change_targets(self, targets):
         y = self.trn.y
         
@@ -274,3 +313,24 @@ class DataSet:
             self.change_targets(output)
         
         self.print_info()
+    
+    def load_mnist_data(self, add_noise=None):
+        mnist = input_data.read_data_sets("datasets/MNIST/", one_hot=True)
+        
+        x_trn, y_trn = mnist.train.images, mnist.train.labels
+        x_vld, y_vld = mnist.validation.images, mnist.validation.labels
+        x_tst, y_tst = mnist.test.images[:8000], mnist.test.labels[:8000]
+        
+        self.target_names = ['0','1','2','3','4','5','6','7','8','9']
+        self.n_features = x_trn.shape[1]
+        self.n_classes = 10
+        self.outliers = None
+        
+        self.trn = Set(x_trn, y_trn)
+        self.vld = Set(x_vld, y_vld)
+        self.tst = Set(x_tst, y_tst)
+        
+        self.print_info()
+        
+        if add_noise == 3:
+            self.remove_class(6)
