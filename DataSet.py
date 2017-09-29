@@ -5,14 +5,16 @@ Created on Apr 13, 2017
 
 Class for preparation dataset for ANN
 '''
-import numpy as np
 import copy
+
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
-from input_data import get_data, read_marcin_file
 from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import VarianceThreshold
 from tensorflow.examples.tutorials.mnist import input_data
+
+from input_data import get_data, read_marcin_file
+import numpy as np
+
 
 class Set:
     def __init__(self, x, y):
@@ -22,16 +24,36 @@ class Set:
         self.n_features = x.shape[1]
         self.n_classes = y.shape[1]
     
-    def add_noise_class(self, noise_size=1.0):
-        noise_size = int(self.size * noise_size)
+    def add_noise(self, x=None, noise_size=1.0):
+        if x is None:
+            noise_size = int(self.size * noise_size)
+            x = np.random.uniform(self.x.min() - 1, self.x.max() + 1,
+                                        [noise_size, self.n_features])
+        else:
+            noise_size = x.shape[0]
         
-        noise_x = np.random.uniform(self.x.min()-1, self.x.max()+1,
-                                    [noise_size, self.n_features])
-        noise_y = np.array([[0]*(self.n_classes) + [1]] * noise_size)
+        noise_output = self.y.min()
+        y = np.array([[noise_output] * self.n_classes] * noise_size)
+        self.x = np.concatenate([self.x, x])
+        self.y = np.concatenate([self.y, y])
         
-        self.x = np.concatenate([self.x, noise_x])
-        self.y = np.append(self.y, np.array([[0]] * self.size), axis=1)
-        self.y = np.concatenate([self.y, noise_y])
+        self.size = self.y.shape[0]
+        self.n_classes = self.y.shape[1]
+    
+    def add_class(self, x=None, noise_size=1.0):
+        if x is None:
+            noise_size = int(self.size * noise_size)
+            x = np.random.uniform(self.x.min() - 1, self.x.max() + 1,
+                                  [noise_size, self.n_features])
+        else:
+            noise_size = x.shape[0]
+        
+        y = np.zeros((noise_size, self.n_classes + 1))
+        y[:, -1] = 1
+        
+        self.x = np.concatenate([self.x, x])
+        self.y = np.append(self.y, np.zeros((self.size, 1)), axis=1)
+        self.y = np.concatenate([self.y, y])
         
         self.size = self.y.shape[0]
         self.n_classes = self.y.shape[1]
@@ -56,7 +78,7 @@ class Set:
 
 class DataSet:
     
-    def __init__(self, ds_id, size=1000, split=[0.6, 0.2, 0.2], 
+    def __init__(self, ds_id, n_samples=1000, split=[0.6, 0.1, 0.3],
                  add_noise=None, noise_size=1.0, noise_output=0.0,
                  output=None, random_state=None):
         """
@@ -84,6 +106,11 @@ class DataSet:
                 1: add noise as no class
                 2: add noise as a class
                 3: only outliers
+                
+                5: add outliers as no class
+                6: add outliers as a class
+                
+                8: remove class
         """
         if ds_id == 13:
             self.load_marcin_dataset(add_noise, output)
@@ -93,19 +120,25 @@ class DataSet:
             return
         
         # load data
-        x, y, self.target_names = get_data(ds_id, size, binarize=True,
+        x, y, self.target_names = get_data(ds_id, n_samples, binarize=True,
                                            random_state=random_state)
         self.n_features = x.shape[1]
         self.n_classes = y.shape[1]
         self.outliers = None
-        # split into 60%, 20% and 20%
+        # split into 60%, 10% and 30%
         if len(split) == 3:
-            splt1 = train_test_split(x, y, test_size=split[0])
-            splt2 = train_test_split(splt1[0], splt1[2],
-                                     test_size=split[1] / (1.0 - split[0]))
-            self.trn = Set(splt1[1], splt1[3])
-            self.vld = Set(splt2[1], splt2[3])
-            self.tst = Set(splt2[0], splt2[2])
+            trn_size = split[0]
+            vld_size = split[1]
+            tst_size = split[2]
+            
+            x_trn, x_tst, y_trn, y_tst = \
+                train_test_split(x, y, train_size=trn_size)
+            x_vld, x_tst, y_vld, y_tst = \
+                train_test_split(x_tst, y_tst, train_size=vld_size / (vld_size + tst_size))
+            
+            self.trn = Set(x_trn, y_trn)
+            self.vld = Set(x_vld, y_vld)
+            self.tst = Set(x_tst, y_tst)
         elif len(split) == 2:
             splt1 = train_test_split(x, y, test_size=split[0])
             self.trn = Set(splt1[1], splt1[3])
@@ -113,19 +146,20 @@ class DataSet:
             self.tst = Set(splt1[0], splt1[2])
         
         self.print_info()
+        
+        # preprocess
+        self.scale()
+        
         # add noise
         if add_noise == 1:
             self.add_noise_as_no_class(noise_size, noise_output)
         elif add_noise == 2:
             self.add_noise_as_a_class()
         elif add_noise == 3:
-            self.outliers = np.random.uniform(self.tst.x.min()-1,
-                                          self.tst.x.max()+1,
+            self.outliers = np.random.uniform(self.tst.x.min() - 1,
+                                          self.tst.x.max() + 1,
                                           [self.tst.size, self.n_features])
         self.print_info()
-        
-        # preprocess
-        self.scale()
     
     def copy(self):
         return copy.deepcopy(self)
@@ -150,20 +184,10 @@ class DataSet:
         Returns:
             new dataset, ds_x,ds_y and outliers
         """
-        noise_size = int(self.trn.size * noise_size)
-        if noise_output is None: noise_output = self.trn.y.min()
-        
-        noise_x = np.random.uniform(self.trn.x.min()-1, self.trn.x.max()+1,
-                                    [noise_size, self.n_features])
-        noise_y = np.array([[noise_output] * self.n_classes] * noise_size)
-        
-        new_x = np.concatenate([self.trn.x, noise_x])
-        new_y = np.concatenate([self.trn.y, noise_y])
-        
-        self.trn = Set(new_x, new_y)
-        self.outliers = np.random.uniform(self.tst.x.min()-1,
-                                          self.tst.x.max()+1,
-                                          [self.tst.size*4, self.n_features])
+        self.trn.add_noise(noise_size)
+        self.outliers = np.random.uniform(self.tst.x.min() - 1,
+                                          self.tst.x.max() + 1,
+                                          [self.tst.size * 4, self.n_features])
         
         self.print_info()
     
@@ -178,11 +202,11 @@ class DataSet:
         
         self.trn.add_noise_class(noise_size)
         if self.vld is not None: self.vld.add_noise_class(noise_size)
-        #self.tst.add_noise_class(1.0)
-        self.tst.y = np.append(self.tst.y, np.array([[0]] * self.tst.size), axis=1)
-        self.outliers = np.random.uniform(self.tst.x.min()-1,
-                                          self.tst.x.max()+1,
-                                          [self.tst.size*4, self.n_features])
+        # self.tst.add_noise_class(1.0)
+        self.tst.y = np.append(self.tst.y, np.zeros((self.tst.size, 1)), axis=1)
+        self.outliers = np.random.uniform(self.tst.x.min() - 1,
+                                          self.tst.x.max() + 1,
+                                          [self.tst.size * 4, self.n_features])
         
         self.target_names = np.concatenate([self.target_names, ['Outliers']])
         self.n_classes += 1
@@ -210,8 +234,8 @@ class DataSet:
         
         neg_label, pos_label = targets
         y = y.astype(float)
-        y[y==0.0] = neg_label
-        y[y==1.0] = pos_label
+        y[y == 0.0] = neg_label
+        y[y == 1.0] = pos_label
     
     def pca(self):
         pca = PCA(n_components=self.n_features).fit(self.trn.x)
@@ -232,6 +256,14 @@ class DataSet:
             self.outliers = scaler.transform(self.outliers)
     
     def load_marcin_dataset(self, add_noise, output):
+        """
+        - load data
+        - binarize output
+        - load outliers if nesessary
+        - add outliers to the training set if nessasary
+        - scale
+        - create outliers if nessesary
+        """
         # load data
         x_trn, y_trn, self.target_names = read_marcin_file('LirykaLearning.csv')
         x_vld, y_vld, _ = read_marcin_file('LirykaValidate.csv')
@@ -241,73 +273,48 @@ class DataSet:
         self.n_classes = self.target_names.shape[0]
         self.outliers = None
         
-        if add_noise == 2:
-            o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')
-            o_trn_2, _, _ = read_marcin_file('DynamicsLearning.csv')
-            o_trn_3, _, _ = read_marcin_file('RestsLearning.csv')
-            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
-            
-            x_trn = np.concatenate((x_trn, o_trn))
-            y_trn = np.concatenate((y_trn,
-                                    np.array([self.n_classes]*o_trn.shape[0])))
-            
-            
-            o_trn_1, _, _ = read_marcin_file('AccidentalsTesting.csv')
-            o_trn_2, _, _ = read_marcin_file('DynamicsTesting.csv')
-            o_trn_3, _, _ = read_marcin_file('RestsTesting.csv')
-            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
-            
-            x_tst = np.concatenate((x_tst, o_trn))
-            y_tst = np.concatenate((y_tst,
-                                    np.array([self.n_classes]*o_trn.shape[0])))
-            
-            self.n_classes += 1
-            self.target_names = np.concatenate((self.target_names, ['Outliers']))
-        
         y_trn = preprocessing.label_binarize(y_trn, range(self.n_classes))
         y_vld = preprocessing.label_binarize(y_vld, range(self.n_classes))
         y_tst = preprocessing.label_binarize(y_tst, range(self.n_classes))
         
-        if add_noise == 1:
-            o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')
-            o_trn_2, _, _ = read_marcin_file('DynamicsLearning.csv')
-            o_trn_3, _, _ = read_marcin_file('RestsLearning.csv')
-            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
-            
-            x_trn = np.concatenate((x_trn, o_trn))
-            y_trn = np.concatenate((y_trn,
-                                    np.zeros((o_trn.shape[0], self.n_classes))))
+        self.trn = Set(x_trn, y_trn)
+        self.vld = Set(x_vld, y_vld)
+        self.tst = Set(x_tst, y_tst)
         
-        if add_noise == 1 or add_noise == 3:
+        if add_noise in [1, 2, 3, 5, 6]:
+            # init outliers
             o_trn_1, _, _ = read_marcin_file('AccidentalsTesting.csv')
             o_trn_2, _, _ = read_marcin_file('DynamicsTesting.csv')
             o_trn_3, _, _ = read_marcin_file('RestsTesting.csv')
             self.outliers = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
         
-        #self.n_features = 64
-        #pca = PCA(n_components=self.n_features).fit(x_trn)
-        #x_trn = pca.transform(x_trn)
-        #x_vld = pca.transform(x_vld)
-        #x_tst = pca.transform(x_tst)
-        #self.outliers = pca.transform(self.outliers)
+        if add_noise in [5, 6]:
+            o_trn_1, _, _ = read_marcin_file('AccidentalsLearning.csv')
+            o_trn_2, _, _ = read_marcin_file('DynamicsLearning.csv')
+            o_trn_3, _, _ = read_marcin_file('RestsLearning.csv')
+            o_trn = np.concatenate((o_trn_1, o_trn_2, o_trn_3))
+            
+            if add_noise == 5:
+                self.trn.add_noise(o_trn)
+            else:
+                self.trn.add_class(o_trn)
+                self.vld.add_class(np.empty((0, self.n_features)))
+                self.tst.add_class(np.empty((0, self.n_features)))
         
-        #vt = VarianceThreshold(threshold=50).fit(x_trn)
-        #x_trn = vt.transform(x_trn)
-        #x_vld = vt.transform(x_vld)
-        #x_tst = vt.transform(x_tst)
-        #self.outliers = vt.transform(self.outliers)
-        #self.n_features = x_trn.shape[1]
+        self.scale()
         
-        scaler = preprocessing.StandardScaler().fit(x_trn)
-        x_trn = scaler.transform(x_trn)
-        x_vld = scaler.transform(x_vld)
-        x_tst = scaler.transform(x_tst)
-        if self.outliers is not None:
-            self.outliers = scaler.transform(self.outliers)
-
-        self.trn = Set(x_trn, y_trn)
-        self.vld = Set(x_vld, y_vld)
-        self.tst = Set(x_tst, y_tst)
+        if add_noise in [1, 2]:
+            if add_noise == 1:
+                self.trn.add_noise()
+            else:
+                self.trn.add_class()
+                self.vld.add_class(np.empty((0, self.n_features)))
+                self.tst.add_class(np.empty((0, self.n_features)))
+        
+        if add_noise in [2, 6]:
+            self.n_classes += 1
+            self.target_names = np.concatenate((self.target_names,
+                                                ['Outliers']))
         
         if output is not None:
             self.change_targets(output)
@@ -321,7 +328,7 @@ class DataSet:
         x_vld, y_vld = mnist.validation.images, mnist.validation.labels
         x_tst, y_tst = mnist.test.images[:8000], mnist.test.labels[:8000]
         
-        self.target_names = ['0','1','2','3','4','5','6','7','8','9']
+        self.target_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         self.n_features = x_trn.shape[1]
         self.n_classes = 10
         self.outliers = None
@@ -332,5 +339,5 @@ class DataSet:
         
         self.print_info()
         
-        if add_noise == 3:
+        if add_noise == 8:
             self.remove_class(6)

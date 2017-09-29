@@ -5,16 +5,19 @@ Created on Jul 06, 2016
 '''
 
 import itertools
+
+from sklearn import metrics
+
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import confusion_matrix
+
 
 def remove_correct(cm, labels, error_threshold):
     n_classes = len(labels)
     delete_x = [i for i in range(n_classes)
-                if cm[i,i] / cm[:,i].sum() >= error_threshold]
+                if cm[i, i] / cm[:, i].sum() >= error_threshold]
     delete_y = [i for i in range(n_classes)
-                if cm[i,i] / cm[i,:].sum() >= error_threshold]
+                if cm[i, i] / cm[i, :].sum() >= error_threshold]
     
     labels_x = np.delete(labels, delete_x)
     labels_y = np.delete(labels, delete_y)
@@ -30,8 +33,8 @@ def print_misslcassification_errors(cm, labels, limit=8):
     for r, c in itertools.combinations(enumerate(labels), 2):
         i1, l1 = r
         i2, l2 = c
-        pairs.append([l1,l2])
-        values.append(cm[i1,i2] + cm[i2,i1])
+        pairs.append([l1, l2])
+        values.append(cm[i1, i2] + cm[i2, i1])
     values, pairs = zip(*sorted(zip(values, pairs), reverse=True))
     print(list(zip(pairs, values))[:limit])
 
@@ -40,7 +43,7 @@ def print_output_errors(cm, labels, limit=8):
     values = []
     for i, l in enumerate(labels):
         pairs.append(l)
-        values.append(cm[:,i].sum() - cm[i,i])
+        values.append(cm[:, i].sum() - cm[i, i])
     values, pairs = zip(*sorted(zip(values, pairs), reverse=True))
     print(list(zip(pairs, values))[:limit])
 
@@ -82,7 +85,7 @@ def plot_confusion_matrix(y_true, y_pred, y_outl, labels, savefig=None, show=Tru
     x_labels = np.copy(labels)
     y_labels = np.copy(labels)
     
-    cm = confusion_matrix(y_true, y_pred)
+    cm = metrics.confusion_matrix(y_true, y_pred)
     np.set_printoptions(precision=2)
     print(cm)
     print_misslcassification_errors(cm, labels)
@@ -96,17 +99,17 @@ def plot_confusion_matrix(y_true, y_pred, y_outl, labels, savefig=None, show=Tru
     fig.canvas.set_window_title(title)
     plt.imshow(cm, interpolation='nearest',
                cmap=plt.cm.Blues)  # @UndefinedVariable
-    #plt.colorbar()
+    # plt.colorbar()
     
     x_tick_marks = np.arange(len(x_labels))
     y_tick_marks = np.arange(len(y_labels))
     plt.xticks(x_tick_marks, x_labels, rotation=45)
     plt.yticks(y_tick_marks, y_labels)
     
-    #if normalize:
+    # if normalize:
     #    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     #    print('Normalized confusion matrix')
-    #else:
+    # else:
     #    print('Confusion matrix, without normalization')
     
     thresh = cm.max() / 2.
@@ -124,7 +127,7 @@ def plot_confusion_matrix(y_true, y_pred, y_outl, labels, savefig=None, show=Tru
     else:       plt.close()
 
 def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
-                          savefig=None, show=True, curve_func = 'roc'):
+                          savefig=None, show=True, curve_func='roc'):
     """
     Plot ROC curves for the multiclass problem
     
@@ -134,7 +137,7 @@ def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
     n_classes = len(labels)
     # Plot all ROC curves
     lw = 2
-    colors = plt.cm.rainbow(np.linspace(0,1,n_classes))  # @UndefinedVariable
+    colors = plt.cm.rainbow(np.linspace(0, 1, n_classes))  # @UndefinedVariable
     fig = plt.figure()
     for i, color in zip(range(n_classes), colors):
         if roc_auc[i] == 0: continue
@@ -163,15 +166,15 @@ def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
     else: raise ValueError('wrong curve function')
-    #plt.title('ROC curves for multiple thresholds')
+    # plt.title('ROC curves for multiple thresholds')
     plt.legend(loc="lower right")
     
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
     else: plt.close()
 
-def plot_curves(curves, savefig=None, show=True, curve_func = 'roc'):
-    colors = plt.cm.rainbow(np.linspace(0,1,curves.shape[0]))  # @UndefinedVariable
+def plot_curves(curves, savefig=None, show=True, curve_func='roc'):
+    colors = plt.cm.rainbow(np.linspace(0, 1, curves.shape[0]))  # @UndefinedVariable
     label_auc = ' (AUC: {0:0.4f})'
     
     fig = plt.figure(figsize=(4.1, 4.1))
@@ -193,7 +196,7 @@ def plot_curves(curves, savefig=None, show=True, curve_func = 'roc'):
         fig.canvas.set_window_title('Single_ROC_Curve')
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-    #plt.title('ROC curves for single threshold')
+    # plt.title('ROC curves for single threshold')
     plt.legend(loc="lower right")
     if savefig is not None: plt.savefig(savefig)
     if show: plt.show()
@@ -216,11 +219,11 @@ def plot_decision_regions(x, y, clf, threshold_func=None,
     """
     # delete rejection class, that is the last column in y
     if reject_output:
-        x = [a for a,b in zip(x,y) if b.argmax()!=(len(b)-1)]
+        x = [a for a, b in zip(x, y) if b.argmax() != (len(b) - 1)]
         x = np.array(x)
-        y = [b for b in y if b.argmax()!=(len(b)-1)]
+        y = [b for b in y if b.argmax() != (len(b) - 1)]
         y = np.array(y)
-        y = y[:,:-1]
+        y = y[:, :-1]
         
     # create a mesh to plot in
     x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
@@ -237,7 +240,7 @@ def plot_decision_regions(x, y, clf, threshold_func=None,
     # imshow_handle = plt.imshow(Z, interpolation='nearest', 
     #           extent=(x_min, x_max, y_min, y_max), aspect='auto', 
     #           origin="lower", cmap=plt.cm.PuOr_r)  # @UndefinedVariable
-    if reject_output: outputs = outputs[:,:-1]
+    if reject_output: outputs = outputs[:, :-1]
     Z = outputs
     Z = Z.argmax(axis=1)
     Z = Z.reshape(xx.shape)

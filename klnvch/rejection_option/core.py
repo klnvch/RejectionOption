@@ -3,18 +3,20 @@ Created on Jun 26, 2017
 
 @author: anton
 '''
-import numpy as np
 from numpy import nan
 from sklearn import metrics
+
 from klnvch.rejection_option.plots import plot_confusion_matrix
-from klnvch.rejection_option.plots import plot_multiclass_curve
 from klnvch.rejection_option.plots import plot_curves
 from klnvch.rejection_option.plots import plot_decision_regions
-from klnvch.rejection_option.utils import calc_s_thr, check_nan
-from klnvch.rejection_option.utils import calc_multiclass_curve
-from klnvch.rejection_option.utils import validate_classes
+from klnvch.rejection_option.plots import plot_multiclass_curve
 from klnvch.rejection_option.scoring import ScoringFunc as score_func
 from klnvch.rejection_option.thresholds import Thresholds as thr
+from klnvch.rejection_option.utils import calc_multiclass_curve
+from klnvch.rejection_option.utils import calc_s_thr, check_nan
+from klnvch.rejection_option.utils import validate_classes
+import numpy as np
+
 
 class RejectionOption:
     
@@ -28,7 +30,7 @@ class RejectionOption:
         assert clf is not None
         assert rc is True or rc is False
         assert n_classes > 0
-        assert thresholds in ['all','simple']
+        assert thresholds in ['all', 'simple']
         
         self.clf = clf
         self.rc = rc
@@ -47,9 +49,9 @@ class RejectionOption:
         self.outputs_outl = self.clf.predict_proba(outliers)
         
         if self.rc:
-            self.outputs_true = self.outputs_true[:,:-1]
-            self.outputs_pred = self.outputs_pred[:,:-1]
-            self.outputs_outl = self.outputs_outl[:,:-1]
+            self.outputs_true = self.outputs_true[:, :-1]
+            self.outputs_pred = self.outputs_pred[:, :-1]
+            self.outputs_outl = self.outputs_outl[:, :-1]
             self.labels = labels[:-1]
             self.n_classes -= 1
     
@@ -243,9 +245,9 @@ class RejectionOption:
         tpr = self.curves_m[0][1]
         thr = self.curves_m[0][2]
         
-        y_true = [a.argmax() == b.argmax() for a,b in zip(self.outputs, self.y)]
+        y_true = [a.argmax() == b.argmax() for a, b in zip(self.outputs, self.y)]
         if self.outputs_outl is not None:
-            y_true = np.concatenate((y_true, [False]*self.outputs_outl.shape[0]))
+            y_true = np.concatenate((y_true, [False] * self.outputs_outl.shape[0]))
         
         outputs = np.concatenate((self.outputs, self.outputs_outl))
         

@@ -3,8 +3,10 @@ Created on Jun 12, 2017
 
 @author: anton
 '''
-import numpy as np
 import heapq
+
+import numpy as np
+
 
 def rejection_score(outputs, i):
     """
@@ -49,15 +51,15 @@ class Thresholds:
     
     @staticmethod
     def thr_output_ignore_reject(outputs):
-        return np.max(outputs[:,:-1], axis=1)
+        return np.max(outputs[:, :-1], axis=1)
     
     @staticmethod
     def thr_diff_ignore_reject(outputs):
-        return np.array([diff_two_max(o) for o in outputs[:,:-1]])
+        return np.array([diff_two_max(o) for o in outputs[:, :-1]])
     
     @staticmethod
     def thr_ratio_ignore_reject(outputs):
-        return np.array([ratio_two_max(o) for o in outputs[:,:-1]])
+        return np.array([ratio_two_max(o) for o in outputs[:, :-1]])
     
     @staticmethod
     def thr_diff_reject(outputs):

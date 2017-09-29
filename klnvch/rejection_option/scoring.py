@@ -4,8 +4,9 @@ Created on Jul 11, 2017
 @author: anton
 '''
 
-import numpy as np
 from klnvch.rejection_option.thresholds import Thresholds as thr
+import numpy as np
+
 
 ###############################################################################
 #
@@ -27,7 +28,7 @@ def sc(outputs_true, outputs_pred, outputs_outl, threshold_func):
     """
     y_true = outputs_true.argmax(axis=1)
     y_real = outputs_pred.argmax(axis=1)
-    y_true = [a==b for a,b in zip(y_true, y_real)]
+    y_true = [a == b for a, b in zip(y_true, y_real)]
     
     if outputs_outl is not None:
         outputs_pred = np.concatenate([outputs_pred, outputs_outl])
@@ -50,8 +51,8 @@ def sc_ir(outputs_true, outputs_pred):
     |    R    |    x    |    x    |    x    |
     """
     y_true = outputs_true.argmax(axis=1)
-    y_real = outputs_pred[:,:-1].argmax(axis=1)
-    y_true = [a==b for a,b in zip(y_true, y_real)]
+    y_real = outputs_pred[:, :-1].argmax(axis=1)
+    y_true = [a == b for a, b in zip(y_true, y_real)]
     
     return y_true, outputs_pred
 
@@ -102,7 +103,7 @@ def sc_m(outputs_true, outputs_pred, outputs_outl, threshold_func):
     y_pred = outputs_pred.argmax(axis=1)
     
     # prepare data for sklearn metrics
-    y_true = [a==b for a,b in zip(y_true, y_pred)]
+    y_true = [a == b for a, b in zip(y_true, y_pred)]
     y_score = threshold_func(outputs_pred)
     
     # split in classes
@@ -131,18 +132,18 @@ def score_outp_ir_m(n_classes, outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     
     y_ideal = outputs_true.argmax(axis=1)
-    y_real = outputs_pred[:,:-1].argmax(axis=1)
-    y_true = [a==b for a,b in zip(y_ideal, y_real)]
+    y_real = outputs_pred[:, :-1].argmax(axis=1)
+    y_true = [a == b for a, b in zip(y_ideal, y_real)]
     y_score = thr.thr_output_ignore_reject(outputs_pred)
     
-    y_true_classes = [[] for _ in range(n_classes-1)]
-    y_score_classes = [[] for _ in range(n_classes-1)]
+    y_true_classes = [[] for _ in range(n_classes - 1)]
+    y_score_classes = [[] for _ in range(n_classes - 1)]
     
     for i, correctness, score in zip(y_real, y_true, y_score):
         y_true_classes[i].append(correctness)
         y_score_classes[i].append(score)
     
-    #if outputs_outl is not None:
+    # if outputs_outl is not None:
     #    for o in outputs_outl:
     #        i = o.argmax()
     #        y_true_classes[i].append(False)
@@ -155,18 +156,18 @@ def score_diff_r_m(n_classes, outputs_true, outputs_pred, outputs_outl):
     assert outputs_outl is None
     
     y_ideal = outputs_true.argmax(axis=1)
-    y_real = outputs_pred[:,:-1].argmax(axis=1)
-    y_true = [a==b for a,b in zip(y_ideal, y_real)]
+    y_real = outputs_pred[:, :-1].argmax(axis=1)
+    y_true = [a == b for a, b in zip(y_ideal, y_real)]
     y_score = thr.thr_diff_reject(outputs_pred)
     
-    y_true_classes = [[] for _ in range(n_classes-1)]
-    y_score_classes = [[] for _ in range(n_classes-1)]
+    y_true_classes = [[] for _ in range(n_classes - 1)]
+    y_score_classes = [[] for _ in range(n_classes - 1)]
     
     for i, correctness, score in zip(y_real, y_true, y_score):
         y_true_classes[i].append(correctness)
         y_score_classes[i].append(score)
     
-    #if outputs_outl is not None:
+    # if outputs_outl is not None:
     #    for o in outputs_outl:
     #        i = o.argmax()
     #        y_true_classes[i].append(False)
@@ -197,7 +198,7 @@ class ScoringFunc:
     
     ###################    Multiple thresholds    #############################
     @staticmethod
-    def score_outp_m( outputs_true, outputs_pred, outputs_outl):
+    def score_outp_m(outputs_true, outputs_pred, outputs_outl):
         y_m_true, y_m_score = sc_m(outputs_true, outputs_pred, outputs_outl,
                                    thr.thr_output)
         return y_m_true, y_m_score, 'Multiple output threshold'

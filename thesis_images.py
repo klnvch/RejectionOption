@@ -10,14 +10,13 @@ some basic definitions
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-from graphics import plot_2d_dataset
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from DataSet import DataSet
 from MLP import MLP
 from RBF import RBF
 from klnvch.rejection_option.thresholds import Thresholds as thr
-from input_data import get_data
+from input_data import get_data, plot_2d_dataset
 from klnvch.rejection_option.plots import plot_decision_regions
 
 FIG_HALF_SIZE = 4.1
@@ -196,7 +195,7 @@ if __name__ == '__main__':
     # dataset_examlpes()
     
     # Sources of errors
-    x, y, classes = get_data(3)
+    x, y, classes = get_data(4)
     plot_pca_vs_lda(x, y, classes)
     
     # decision boundaries

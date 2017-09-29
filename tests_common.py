@@ -6,20 +6,24 @@ Created on Aug 24, 2017
 Some common code between tests
 '''
 import csv
-import numpy as np
 import time
+
+from scipy.stats.stats import ranksums
 
 from DataSet import DataSet
 from MLP import MLP
 from RBF import RBF
 from klnvch.rejection_option.core import RejectionOption
+import numpy as np
+import pandas as pd
 
-#N_EPOCHS = 5000
-#BATCH_SIZE = 128
+
+# N_EPOCHS = 5000
+# BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
-def test_unit_mlp(ds, clf, rej, units,
-                  beta, dropout, es, targets, n_epochs, batch_size, show):
+def test_unit_mlp(ds, clf, rej, units, beta, dropout, es,
+                  targets, n_epochs, batch_size, print_step, show):
     ds = ds.copy()
     ds.change_targets(targets)
     
@@ -43,7 +47,7 @@ def test_unit_mlp(ds, clf, rej, units,
                   ['rbf', 'sigmoid'], 'Adam', beta, batch_size)
     elif clf == 'rbf-reg':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
-                  ['rbf-reg', 'softmax'], 'Adam', beta, batch_size)
+                  ['rbf-reg', 'sigmoid'], 'Adam', beta, batch_size)
     elif clf == 'conv-sgm':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
                   ['conv', 'relu', 'sigmoid'], 'Adam', beta, batch_size)
@@ -51,16 +55,16 @@ def test_unit_mlp(ds, clf, rej, units,
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],
                   ['conv', 'relu', 'softmax'], 'Adam', beta, batch_size)
     
-    result = mlp.train(n_epochs, ds.trn, ds.vld, dropout, es, False)
-    #result = [0,0,0,0,0,0,0,0,0,0]
+    result = mlp.train(n_epochs, ds.trn, ds.vld, dropout, es, print_step, False)
+    # result = [0,0,0,0,0,0,0,0,0,0]
     print(result)
     
     score = mlp.score(ds.tst)
     print('Test accuracy: {0:f}'.format(score))
     
-    if rej in [0,1,3]:
+    if rej in [0, 1, 3, 5, 8]:
         ro = RejectionOption(mlp, ds.n_classes, False, 'simple')
-    elif rej == 2:
+    elif rej in [2, 6]:
         ro = RejectionOption(mlp, ds.n_classes, True, 'simple')
     
     ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
@@ -89,10 +93,10 @@ def test_block_mlp(ds_id, ds_name, rej, attempts, size, split, params):
         ds = DataSet(ds_id, size=size, split=split, add_noise=rej)
         for param in params:
             clf, units, beta, dropout, es, targets, \
-                n_epochs, batch_size = param
+                n_epochs, batch_size, print_step = param
             
-            msg = test_unit_mlp(ds, clf, rej, units, beta, dropout,
-                                es, targets, n_epochs, batch_size, False)
+            msg = test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets,
+                                n_epochs, batch_size, print_step, False)
             
             row = np.concatenate(([ds_name, clf, n_epochs, attempt, rej,
                                    units, beta, dropout, es], msg))
@@ -107,8 +111,8 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
     
     trn_score = rbf.score(ds.trn)
     tst_score = rbf.score(ds.tst)
-    #guess = rbf.predict_proba([np.random.rand(153)])[0]
-    #print('Random output: {:d}'.format(guess.argmax()))
+    # guess = rbf.predict_proba([np.random.rand(153)])[0]
+    # print('Random output: {:d}'.format(guess.argmax()))
     print('Train accuracy: {0:f}'.format(trn_score))
     print('Test accuracy: {0:f}'.format(tst_score))
     
@@ -143,3 +147,22 @@ def test_block_rbf(ds_name, ds_id, attempts, size, split, params):
             with open(filename, 'a+') as f:
                 writer = csv.writer(f)
                 writer.writerow(row)
+
+def wicoxon_test(filename, params):
+    df = pd.read_csv(filename)
+    print(df.keys())
+    
+    mrt = [df.loc[(
+        (df['Clf'] == param[1])
+        & (df['Units'] == param[3])
+        & (df['Beta'] == param[4])
+        & (df['Dropout'] == param[5])
+        & (df['ES'] == param[6])
+        & (df['Targets'] == str(param[7]))
+        ), 'MDT'].values for param in params]
+    
+    print(mrt)
+    
+    A = [[ranksums(a, b).statistic for a in mrt] for b in mrt]
+    
+    print('\n'.join([','.join(['{:4f} '.format(item) for item in row]) for row in A]))

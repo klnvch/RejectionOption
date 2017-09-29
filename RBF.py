@@ -9,16 +9,19 @@ TODO: impove performance of predict_proba
       init center properly
 
 '''
+import math
+import time
+
 from scipy import random, exp, dot
 from scipy.linalg import norm, pinv
-import math
-import numpy as np
-from DataSet import DataSet
-from sklearn.cluster import KMeans
-from klnvch.rejection_option.plots import plot_decision_regions
-import time
 from sklearn import metrics
+from sklearn.cluster import KMeans
+
+from DataSet import DataSet
+from klnvch.rejection_option.plots import plot_decision_regions
 from klnvch.rejection_option.thresholds import Thresholds
+import numpy as np
+
 
 def get_kmeans_centers(X, k):
     # find centers
@@ -30,7 +33,7 @@ def get_kmeans_centers(X, k):
     for i in range(k):
         dists = [norm(centers[i] - c) for c in centers]
         dists = np.sort(dists)
-        variances[i] = (dists[1] + dists[2] + dists[3]) / 3.0
+        variances[i] = (dists[1] + dists[2]) / 2.0
     
     print(variances)
     return centers, variances
@@ -73,12 +76,12 @@ class RBF:
     def train(self, X, Y):
         """ X: matrix of dimensions n x indim 
             y: column vector of dimension n x 1 """
-        #self.set_random_centers(X)
+        # self.set_random_centers(X)
         self.centers, variances = get_kmeans_centers(X, self.n_centers)
-        self.beta = - 1.0 / (2.0 * variances**2)
+        self.beta = -1.0 / (2.0 * variances ** 2)
         # calculate activations of RBFs
         G = self._calcAct(X)
-        #print(G)
+        # print(G)
         # calculate output weights (pseudoinverse)
         self.W = dot(pinv(G), Y)
     
@@ -86,7 +89,7 @@ class RBF:
         if X is None: return None
         X = np.array(X)
         """ X: matrix of dimensions n x indim """
-        #print('RBF.test: size {:d}'.format(len(X)))
+        # print('RBF.test: size {:d}'.format(len(X)))
         start_time = time.time()
         
         G = self._calcAct(X)

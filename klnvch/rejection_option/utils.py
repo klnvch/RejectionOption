@@ -4,12 +4,15 @@ Created on Jul 10, 2017
 @author: anton
 '''
 
-import numpy as np
-from sklearn import metrics
-from scipy import interp
-from klnvch.rejection_option.scoring import ScoringFunc as score_func
-import time
 import itertools
+import time
+
+from scipy import interp
+from sklearn import metrics
+
+from klnvch.rejection_option.scoring import ScoringFunc as score_func
+import numpy as np
+
 
 def validate_classes(y_true):
     return len(np.unique(y_true)) == 2
@@ -17,9 +20,9 @@ def check_nan(a):
     return np.isnan(a).any()
 
 def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
-                          recall_threshold = 0.9,
+                          recall_threshold=0.9,
                           score_func=score_func.score_outp_m, avg=False,
-                          curve_func = 'roc'):
+                          curve_func='roc'):
     """ Calcs binary ROC curve or for multiple output thresholds
     
     Output i with threshold T_i must deal with:
@@ -40,7 +43,7 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
     """
     def calc_recall(a):
         a = np.array(a)
-        return np.count_nonzero(a==True) / len(a)
+        return np.count_nonzero(a == True) / len(a)
     
     if curve_func == 'precision_recall':
         curve_func = metrics.precision_recall_curve
@@ -55,7 +58,7 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
     tpr = dict()
     roc_auc = dict()
     
-    y_m_true, y_m_score, _ =score_func(outputs_true, outputs_pred, outputs_outl)
+    y_m_true, y_m_score, _ = score_func(outputs_true, outputs_pred, outputs_outl)
     
     n_classes = outputs_true.shape[1]
     for i in range(n_classes):
@@ -67,8 +70,8 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
                                            y_m_score[i],
                                            True)
             # add 0 and 1 to get full curve
-            #fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
-            #tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
+            # fpr[i] = np.concatenate(([0.], fpr[i], [1.]))
+            # tpr[i] = np.concatenate(([0.], tpr[i], [1.]))
             roc_auc[i] = metric_func(y_m_true[i], y_m_score[i])
         else:
             fpr[i] = tpr[i] = []
@@ -98,7 +101,7 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
     return fpr, tpr, roc_auc
 
 def calc_s_thr(outputs_true, outputs_pred, outputs_outl, scores,
-              curve_func = 'roc'):
+              curve_func='roc'):
     """
     Calcs binary ROC curve or for single threshold
     Args:
@@ -109,7 +112,7 @@ def calc_s_thr(outputs_true, outputs_pred, outputs_outl, scores,
         FPR, TPR, AUC
     """
     def calc(outputs_true, outputs_pred, outputs_outl,
-             score, curve_func = 'roc'):
+             score, curve_func='roc'):
         
         if curve_func == 'precision_recall':
             curve_func = metrics.precision_recall_curve
@@ -122,8 +125,8 @@ def calc_s_thr(outputs_true, outputs_pred, outputs_outl, scores,
         y_true, y_score, label = score(outputs_true, outputs_pred, outputs_outl)
         fpr, tpr, thr = curve_func(y_true, y_score)
         # add 0 and 1 to get full curve
-        #fpr = np.concatenate(([0.], fpr, [1.]))
-        #tpr = np.concatenate(([0.], tpr, [1.]))
+        # fpr = np.concatenate(([0.], fpr, [1.]))
+        # tpr = np.concatenate(([0.], tpr, [1.]))
         roc_auc = metric_func(y_true, y_score)
         return fpr, tpr, thr, roc_auc, label
     
@@ -159,7 +162,7 @@ def roc_m_thr(n_classes, outputs_true, outputs_pred, outputs_outl, scores):
                 new_thr.append(t)
         xs = np.concatenate(([0.], new_xs, [1.]))
         ys = np.concatenate(([0.], new_ys, [1.]))
-        stupid_thr = len(thr[0])*[None]
+        stupid_thr = len(thr[0]) * [None]
         thr = np.concatenate(([stupid_thr], new_thr, [stupid_thr]))
         return xs, ys, thr
     
