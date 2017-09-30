@@ -63,9 +63,9 @@ def test_unit_mlp(ds, clf, rej, units, beta, dropout, es,
     print('Test accuracy: {0:f}'.format(score))
     
     if rej in [0, 1, 3, 5, 8]:
-        ro = RejectionOption(mlp, ds.n_classes, False, 'simple')
+        ro = RejectionOption(mlp, ds.n_classes, False)
     elif rej in [2, 6]:
-        ro = RejectionOption(mlp, ds.n_classes, True, 'simple')
+        ro = RejectionOption(mlp, ds.n_classes, True)
     
     ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
     ro.print_classification_report()
@@ -116,7 +116,7 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False):
     print('Train accuracy: {0:f}'.format(trn_score))
     print('Test accuracy: {0:f}'.format(tst_score))
     
-    ro = RejectionOption(rbf, ds.n_classes, False, 'simple')
+    ro = RejectionOption(rbf, ds.n_classes, False)
     ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
     ro.print_classification_report()
     line = ro.calc_metrics()
@@ -163,6 +163,6 @@ def wicoxon_test(filename, params):
     
     print(mrt)
     
-    A = [[ranksums(a, b).statistic for a in mrt] for b in mrt]
+    A = [[ranksums(a, b) for a in mrt] for b in mrt]
     
     print('\n'.join([','.join(['{:4f} '.format(item) for item in row]) for row in A]))

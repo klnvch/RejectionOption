@@ -20,22 +20,20 @@ import numpy as np
 
 class RejectionOption:
     
-    def __init__(self, clf, n_classes, rc=False, thresholds='all'):
+    def __init__(self, clf, n_classes, rc=False):
         """
         Args:
-            thresholds:
-                'all' - all thresholds
-                'simple' - only single thresholds 
+            clf:    classifier
+            n_classes:    number of class
+            rc:    rejection class
         """
         assert clf is not None
         assert rc is True or rc is False
         assert n_classes > 0
-        assert thresholds in ['all', 'simple']
         
         self.clf = clf
         self.rc = rc
         self.n_classes = n_classes
-        self.thresholds = thresholds
     
     def init(self, labels, x, y, outliers=None):
         assert x is not None and y is not None
