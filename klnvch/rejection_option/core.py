@@ -20,32 +20,21 @@ import numpy as np
 
 class RejectionOption:
     
-    def __init__(self, clf, n_classes, rc=False):
-        """
-        Args:
-            clf:    classifier
-            n_classes:    number of class
-            rc:    rejection class
-        """
+    def __init__(self, clf, labels, tst_x, tst_y, outliers=None, rc=False):
+        assert tst_x is not None and tst_y is not None
+        assert tst_x.shape[0] == tst_y.shape[0]
         assert clf is not None
         assert rc is True or rc is False
-        assert n_classes > 0
-        
-        self.clf = clf
-        self.rc = rc
-        self.n_classes = n_classes
-    
-    def init(self, labels, x, y, outliers=None):
-        assert x is not None and y is not None
-        assert x.shape[0] == y.shape[0]
         
         self.labels = labels
-        self.x = x
-        self.y = y
-        self.outputs_true = y
-        self.outputs_pred = self.clf.predict_proba(x)
-        self.outputs_outl = self.clf.predict_proba(outliers)
+        self.n_classes = len(labels)
+        self.x = tst_x
+        self.y = tst_y
+        self.outputs_true = tst_y
+        self.outputs_pred = clf.predict_proba(tst_x)
+        self.outputs_outl = clf.predict_proba(outliers)
         
+        self.rc = rc
         if self.rc:
             self.outputs_true = self.outputs_true[:, :-1]
             self.outputs_pred = self.outputs_pred[:, :-1]
@@ -53,10 +42,23 @@ class RejectionOption:
             self.labels = labels[:-1]
             self.n_classes -= 1
     
+    def set_verbosity(self, show, dir_path, suff_file):
+        self.show = show
+        if dir_path is None or suff_file is None:
+            self.fig_path = None
+        else:
+            self.fig_path = dir_path + suff_file + '_{:s}.png'
+    
     def calc_metrics(self):
         if check_nan(self.outputs_pred):
             print('outputs have nan')
             return nan, nan, nan, nan, nan, nan
+        
+        # Classifier accuracy
+        y_true = self.outputs_true.argmax(axis=1)
+        y_pred = self.outputs_pred.argmax(axis=1)
+        tst_acc = metrics.accuracy_score(y_true, y_pred)
+        print('{:40s}: {:0.4f}'.format('Accuracy', tst_acc))
         
         # SOT - Single 0utput Threshold
         y_true, y_score, label = score_func.score_outp(self.outputs_true,
@@ -136,12 +138,17 @@ class RejectionOption:
         avg_auc_2 /= self.n_classes
         print('{:40s}: {:0.4f}'.format(label, avg_auc_2))
         
-        return auc_0, auc_1, auc_2, avg_auc_0, avg_auc_1, avg_auc_2
+        return tst_acc, auc_0, auc_1, auc_2, avg_auc_0, avg_auc_1, avg_auc_2
     
     def plot_confusion_matrix(self):
+        if not self.show and self.fig_path is None: return
+        if self.fig_path is None:   save_fig = None
+        else:   save_fig = self.fig_path.format('confusion_matrix')
+        
         plot_confusion_matrix(self.outputs_true, self.outputs_pred,
                               self.outputs_outl, self.labels,
-                              error_threshold=None)
+                              error_threshold=None,
+                              savefig=save_fig, show=self.show)
         
         if self.n_classes <= 10: return
         
@@ -159,6 +166,10 @@ class RejectionOption:
                               error_threshold=0.90)
     
     def plot_roc(self):
+        if not self.show and self.fig_path is None: return
+        if self.fig_path is None:   save_fig = None
+        else:   save_fig = self.fig_path.format('single_roc')
+        
         scores_s = [score_func.score_outp,
                     score_func.score_diff,
                     score_func.score_rati]
@@ -166,9 +177,13 @@ class RejectionOption:
                              self.outputs_pred,
                              self.outputs_outl,
                              scores_s)
-        plot_curves(curves_s)
+        plot_curves(curves_s, savefig=save_fig, show=self.show)
     
     def plot_roc_precision_recall(self):
+        if not self.show and self.fig_path is None: return
+        if self.fig_path is None:   save_fig = None
+        else:   save_fig = self.fig_path.format('single_prr')
+        
         scores_s = [score_func.score_outp,
                     score_func.score_diff,
                     score_func.score_rati]
@@ -176,9 +191,18 @@ class RejectionOption:
                              self.outputs_pred,
                              self.outputs_outl,
                              scores_s, curve_func='precision_recall')
-        plot_curves(curves_s, curve_func='precision_recall')
+        plot_curves(curves_s, curve_func='precision_recall',
+                    savefig=save_fig, show=self.show)
     
     def plot_multiclass_roc(self):
+        if not self.show and self.fig_path is None: return
+        if self.fig_path is None:
+            save_fig_0 = save_fig_1 = save_fig_2 = None
+        else:
+            save_fig_0 = self.fig_path.format('multi_roc_outp')
+            save_fig_1 = self.fig_path.format('multi_roc_diff')
+            save_fig_2 = self.fig_path.format('multi_roc_rati')
+        
         if self.n_classes <= 10:  recall_threshold = 1.0
         else:                     recall_threshold = 0.9
         
@@ -189,7 +213,8 @@ class RejectionOption:
                                         score_func=score_func.score_outp_m,
                                         recall_threshold=recall_threshold,
                                         curve_func='roc')
-        plot_multiclass_curve(x, y, v, self.labels)
+        plot_multiclass_curve(x, y, v, self.labels,
+                              savefig=save_fig_0, show=self.show)
         
         # multiple differential thresholds
         x, y, v = calc_multiclass_curve(self.outputs_true,
@@ -198,7 +223,8 @@ class RejectionOption:
                                         score_func=score_func.score_diff_m,
                                         recall_threshold=recall_threshold,
                                         curve_func='roc')
-        plot_multiclass_curve(x, y, v, self.labels)
+        plot_multiclass_curve(x, y, v, self.labels,
+                              savefig=save_fig_1, show=self.show)
         
         # multiple ratio thresholds
         x, y, v = calc_multiclass_curve(self.outputs_true,
@@ -207,9 +233,14 @@ class RejectionOption:
                                         score_func=score_func.score_rati_m,
                                         recall_threshold=recall_threshold,
                                         curve_func='roc')
-        plot_multiclass_curve(x, y, v, self.labels)
+        plot_multiclass_curve(x, y, v, self.labels,
+                              savefig=save_fig_2, show=self.show)
     
     def plot_multiclass_precision_recall(self):
+        if not self.show and self.fig_path is None: return
+        if self.fig_path is None:   save_fig = None
+        else:   save_fig = self.fig_path.format('multi_prr')
+        
         if self.n_classes <= 10:  recall_threshold = 1.0
         else:                     recall_threshold = 0.9
         
@@ -219,7 +250,8 @@ class RejectionOption:
                                         recall_threshold=recall_threshold,
                                         curve_func='precision_recall')
         plot_multiclass_curve(x, y, v, self.labels,
-                              curve_func='precision_recall')
+                              curve_func='precision_recall',
+                              savefig=save_fig, show=self.show)
     
     def print_classification_report(self):
         y_true = self.outputs_true.argmax(axis=1)
@@ -228,14 +260,25 @@ class RejectionOption:
                                                None, self.labels)
         print(report)
     
-    def plot_decision_regions(self):
-        if self.x.shape[1] == 2:
-            plot_decision_regions(self.x, self.y, self.clf, thr.thr_output,
-                                  reject_output=self.rc)
-            plot_decision_regions(self.x, self.y, self.clf, thr.thr_diff,
-                                  reject_output=self.rc)
-            plot_decision_regions(self.x, self.y, self.clf, thr.thr_ratio,
-                                  reject_output=self.rc)
+    def plot_decision_regions(self, clf):
+        if self.x.shape[1] == 2 and clf is not None:
+            if not self.show and self.fig_path is None: return
+            if self.fig_path is None:
+                save_fig_0 = save_fig_1 = save_fig_2 = None
+            else:
+                save_fig_0 = self.fig_path.format('boundaries_outp')
+                save_fig_1 = self.fig_path.format('boundaries_diff')
+                save_fig_2 = self.fig_path.format('boundaries_rati')
+            
+            plot_decision_regions(self.x, self.y, clf, thr.thr_output,
+                                  reject_output=self.rc,
+                                  savefig=save_fig_0, show=self.show)
+            plot_decision_regions(self.x, self.y, clf, thr.thr_diff,
+                                  reject_output=self.rc,
+                                  savefig=save_fig_1, show=self.show)
+            plot_decision_regions(self.x, self.y, clf, thr.thr_ratio,
+                                  reject_output=self.rc,
+                                  savefig=save_fig_2, show=self.show)
     
     def print_thresholds(self):
         if self.curves_m is None: return

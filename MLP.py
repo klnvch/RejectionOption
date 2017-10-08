@@ -49,9 +49,9 @@ class MLP:
             elif 'rbf-reg' in functions:
                 h, r1 = self.add_rbf_reg(self.x, self.n_input, self.n_hidden[0])
             
-            y, _ = self.add_layer(h, [self.n_hidden[0], self.n_output],
+            y, r2 = self.add_layer(h, [self.n_hidden[0], self.n_output],
                                   None, '2', None)
-            regularizers = r1
+            regularizers = r1 + r2
             
         elif 'conv' in functions:
             x = self.add_conv(self.x)
@@ -170,7 +170,7 @@ class MLP:
         
         a = tf.squared_difference(e_x, e_c, 'norm')
         a = tf.reduce_sum(a, axis=2, name='reduce_sum')
-        b = 2.0 * tf.square(self.variances, 'sigma')
+        b = 2.0 * tf.square(self.variances + 0.0001, 'sigma')
         G = -tf.divide(a, b, 'divide')
         G = tf.exp(G, 'exponent')
         
@@ -189,7 +189,7 @@ class MLP:
         
         diff = tf.squared_difference(e_x, e_c)
         
-        a = 1.0 / tf.square(self.variances)
+        a = 1.0 / tf.square(self.variances + 0.0001)
         a = tf.multiply(diff, a)
         a = tf.reduce_sum(a, axis=2)
     

@@ -22,9 +22,10 @@ import pandas as pd
 # BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
-def test_unit_mlp(ds, clf, rej, units, beta, dropout, es,
-                  targets, n_epochs, batch_size, print_step, show):
+def test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets, n_epochs,
+                  batch_size, print_step, show, path=None, suffix=None):
     ds = ds.copy()
+    ds.add_outliers(rej)
     ds.change_targets(targets)
     
     if clf == 'mlp-sft':
@@ -59,90 +60,103 @@ def test_unit_mlp(ds, clf, rej, units, beta, dropout, es,
     # result = [0,0,0,0,0,0,0,0,0,0]
     print(result)
     
-    score = mlp.score(ds.tst)
-    print('Test accuracy: {0:f}'.format(score))
+    rc = rej not in [0, 1, 3, 5, 8]
     
-    if rej in [0, 1, 3, 5, 8]:
-        ro = RejectionOption(mlp, ds.n_classes, False)
-    elif rej in [2, 6]:
-        ro = RejectionOption(mlp, ds.n_classes, True)
-    
-    ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
+    ro = RejectionOption(mlp, ds.target_names,
+                         ds.tst.x, ds.tst.y, ds.outliers, rc)
+    ro.set_verbosity(show, path, suffix)
     ro.print_classification_report()
-    line = ro.calc_metrics()
-    if show:
-        ro.plot_decision_regions()
-        ro.plot_confusion_matrix()
-        ro.plot_roc()
-        ro.plot_roc_precision_recall()
-        ro.plot_multiclass_roc()
-        ro.plot_multiclass_precision_recall()
+    metrics = ro.calc_metrics()
+    ro.plot_decision_regions(mlp)
+    ro.plot_confusion_matrix()
+    ro.plot_roc()
+    ro.plot_roc_precision_recall()
+    ro.plot_multiclass_roc()
+    ro.plot_multiclass_precision_recall()
     
-    return np.concatenate(([result[2], result[3], result[4], score], line))
+    _, step, trn_loss, trn_acc, vld_acc = result
+    return np.concatenate(([step, trn_loss, trn_acc, vld_acc], metrics))
 
-def test_block_mlp(ds_id, ds_name, rej, attempts, size, split, params):
+def test_block_mlp(ds_id, ds_name, attempts, n_samples, split, params,
+                   random_state=None):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
+    fig_path = 'tests/{:s}/figures/'.format(ds_name)
     
-    columns = 'DS,Clf,Epochs,Attempt,Type,Units,Beta,Dropout,ES,' \
+    columns = 'DS,Clf,Attempt,Type,Units,Beta,DO,ES,Trgt,Epochs,' \
                 'Loss,Trn acc,Vld acc,Tst acc,SOT,SDT,SRT,MOT,MDT,MRT'
     
     with open(filename, 'a+') as f:
         print(columns, file=f)
     
     for attempt in attempts:
-        ds = DataSet(ds_id, size=size, split=split, add_noise=rej)
+        ds = DataSet(ds_id, n_samples=n_samples, split=split,
+                     random_state=random_state)
         for param in params:
-            clf, units, beta, dropout, es, targets, \
+            fig_suff = '_'.join(map(str, param))
+            rej, clf, units, beta, dropout, es, targets, \
                 n_epochs, batch_size, print_step = param
             
             msg = test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets,
-                                n_epochs, batch_size, print_step, False)
+                                n_epochs, batch_size, print_step, False,
+                                fig_path, fig_suff)
             
-            row = np.concatenate(([ds_name, clf, n_epochs, attempt, rej,
-                                   units, beta, dropout, es], msg))
+            if es == 0: es = '-'
+            else:       es = '+'
+            if targets == (0.0, 1.0):   targets = '-'
+            else:                       targets = '+'
+            row = np.concatenate(([ds_name, clf, attempt, rej, units, beta,
+                                   dropout, es, targets], msg))
             
             with open(filename, 'a+') as f:
                 writer = csv.writer(f)
                 writer.writerow(row)
 
-def test_unit_RBF(ds, n_hidden, beta=None, show=False):
+def test_unit_RBF(ds, n_hidden, beta=None, show=False, path=None, suffix=None):
     rbf = RBF(ds.n_features, n_hidden, ds.n_classes, beta)
     rbf.train(ds.trn.x, ds.trn.y)
     
     trn_score = rbf.score(ds.trn)
-    tst_score = rbf.score(ds.tst)
     # guess = rbf.predict_proba([np.random.rand(153)])[0]
     # print('Random output: {:d}'.format(guess.argmax()))
     print('Train accuracy: {0:f}'.format(trn_score))
-    print('Test accuracy: {0:f}'.format(tst_score))
     
-    ro = RejectionOption(rbf, ds.n_classes, False)
-    ro.init(ds.target_names, ds.tst.x, ds.tst.y, ds.outliers)
+    ro = RejectionOption(rbf, ds.target_names,
+                         ds.tst.x, ds.tst.y, ds.outliers, False)
+    ro.set_verbosity(show, path, suffix)
     ro.print_classification_report()
-    line = ro.calc_metrics()
-    if show:
-        ro.plot_decision_regions()
-        ro.plot_confusion_matrix()
-        ro.plot_roc()
-        ro.plot_roc_precision_recall()
-        ro.plot_multiclass_roc()
-        ro.plot_multiclass_precision_recall()
+    metrics = ro.calc_metrics()
+    ro.plot_decision_regions(rbf)
+    ro.plot_confusion_matrix()
+    ro.plot_roc()
+    ro.plot_roc_precision_recall()
+    ro.plot_multiclass_roc()
+    ro.plot_multiclass_precision_recall()
     
-    return np.concatenate(([trn_score, tst_score], line))
+    return np.concatenate(([trn_score], metrics))
 
-def test_block_rbf(ds_name, ds_id, attempts, size, split, params):
+def test_block_rbf(ds_id, ds_name, attempts, n_samples, split, params,
+                   random_state=None):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
-    colums = 'DS,Attempt,Units,Beta,Tst acc,SOT,SDT,SRT,MOT,MDT,MRT'
+    fig_path = 'tests/{:s}/figures/'.format(ds_name)
+    
+    colums = 'DS,Clf,Attempt,Units,Beta,Trn acc,Tst acc,SOT,SDT,SRT,MOT,MDT,MRT'
+    
     with open(filename, 'a+') as f:
         print(colums, file=f)
     
     for attempt in attempts:
-        ds = DataSet(ds_id, size=size, split=split, add_noise=3)
+        ds = DataSet(ds_id, n_samples=n_samples, split=split,
+                     random_state=random_state)
+        ds.add_outliers(3)
         for param in params:
             distance, n_hidden = param
-            msg = test_unit_RBF(ds, n_hidden, distance)
+            fig_suff = '3_rbf-km_'.join(map(str, param))
             
-            row = np.concatenate(([ds_name, attempt, n_hidden, distance], msg))
+            msg = test_unit_RBF(ds, n_hidden, distance,
+                                False, fig_path, fig_suff)
+            
+            row = np.concatenate(([ds_name, 'rbf-km', attempt, n_hidden,
+                                   distance], msg))
             
             with open(filename, 'a+') as f:
                 writer = csv.writer(f)
@@ -156,9 +170,9 @@ def wicoxon_test(filename, params):
         (df['Clf'] == param[1])
         & (df['Units'] == param[3])
         & (df['Beta'] == param[4])
-        & (df['Dropout'] == param[5])
+        & (df['DO'] == param[5])
         & (df['ES'] == param[6])
-        & (df['Targets'] == str(param[7]))
+        & (df['Trgt'] == str(param[7]))
         ), 'MDT'].values for param in params]
     
     print(mrt)

@@ -35,18 +35,19 @@ def get_kmeans_centers(X, k):
         dists = np.sort(dists)
         variances[i] = (dists[1] + dists[2]) / 2.0
     
+    print(centers)
     print(variances)
     return centers, variances
 
 class RBF:
     
-    def __init__(self, n_features, n_centers, n_classes, beta=None):
+    def __init__(self, n_features, n_centers, n_classes, mult=None):
         print('Create RBF network...')
         print('{:d}-{:d}-{:d}'.format(n_features, n_centers, n_classes))
         self.n_features = n_features
         self.n_classes = n_classes
         self.n_centers = n_centers
-        self.beta = np.full(n_centers, beta)
+        self.mult = mult
     
     def _basisfunc(self, i, x):
         if len(x) != self.n_features:
@@ -79,6 +80,7 @@ class RBF:
         # self.set_random_centers(X)
         self.centers, variances = get_kmeans_centers(X, self.n_centers)
         self.beta = -1.0 / (2.0 * variances ** 2)
+        self.beta *= self.mult
         # calculate activations of RBFs
         G = self._calcAct(X)
         # print(G)

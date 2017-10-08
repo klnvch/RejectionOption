@@ -267,8 +267,8 @@ def plot_2d_dataset(x, y, figsize=(4.1, 4.1), savefig=None):
 
 if __name__ == '__main__':
     # x, y, _ = generate_moons(1000, 0.1)
-    # x, y, _ = generate_multiclass(1000, random_state=50)
-    x, y, _ = generate_blobs(random_state=47)
+    x, y, _ = generate_multiclass(1000, random_state=47)
+    # x, y, _ = generate_blobs(random_state=47)
     plot_2d_dataset(x, y)
     """
     x, y, classes = read_marcin_file('LirykaLearning.csv')

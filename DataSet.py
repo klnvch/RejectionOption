@@ -79,7 +79,6 @@ class Set:
 class DataSet:
     
     def __init__(self, ds_id, n_samples=1000, split=[0.6, 0.1, 0.3],
-                 add_noise=None, noise_size=1.0, noise_output=0.0,
                  output=None, random_state=None):
         """
         Args:
@@ -100,23 +99,13 @@ class DataSet:
                 
                 13 - Marcin Luckner Dataset
                 14 - MNIST Dataset
-            
-            add_noise: noise type
-                0: no outliers
-                1: add noise as no class
-                2: add noise as a class
-                3: only outliers
-                
-                5: add outliers as no class
-                6: add outliers as a class
-                
-                8: remove class
         """
+        self.ds_id = ds_id
         if ds_id == 13:
-            self.load_marcin_dataset(add_noise, output)
+            self.load_marcin_dataset(0, output)
             return
         elif ds_id == 14:
-            self.load_mnist_data(add_noise)
+            self.load_mnist_data(0)
             return
         
         # load data
@@ -149,20 +138,39 @@ class DataSet:
         
         # preprocess
         self.scale()
+    
+    def copy(self):
+        return copy.deepcopy(self)
+    
+    def add_outliers(self, add_noise, noise_size=1.0):
+        """
+            add_noise: noise type
+                0: no outliers
+                1: add noise as no class
+                2: add noise as a class
+                3: only outliers
+                
+                5: add outliers as no class
+                6: add outliers as a class
+                
+                8: remove class
+        """
+        if self.ds_id == 13:
+            self.load_marcin_dataset(add_noise)
+            return
         
-        # add noise
         if add_noise == 1:
-            self.add_noise_as_no_class(noise_size, noise_output)
+            self.add_noise_as_no_class(noise_size)
         elif add_noise == 2:
             self.add_noise_as_a_class()
         elif add_noise == 3:
             self.outliers = np.random.uniform(self.tst.x.min() - 1,
                                           self.tst.x.max() + 1,
-                                          [self.tst.size, self.n_features])
+                                          [self.tst.size * 4, self.n_features])
+        elif add_noise == 8:
+            self.remove_class(6)
+        
         self.print_info()
-    
-    def copy(self):
-        return copy.deepcopy(self)
     
     def print_info(self):
         if self.vld is None:
@@ -174,7 +182,7 @@ class DataSet:
         if self.outliers is not None:
             print('outliers: {:s}'.format(str(self.outliers.shape)))
     
-    def add_noise_as_no_class(self, noise_size=1.0, noise_output=None):
+    def add_noise_as_no_class(self, noise_size=1.0):
         """
         Adds noise with low output to the training set
         Adds outliers set
@@ -184,7 +192,8 @@ class DataSet:
         Returns:
             new dataset, ds_x,ds_y and outliers
         """
-        self.trn.add_noise(noise_size)
+        self.trn.add_noise(None, noise_size)
+        if self.vld is not None: self.vld.add_noise(None, noise_size)
         self.outliers = np.random.uniform(self.tst.x.min() - 1,
                                           self.tst.x.max() + 1,
                                           [self.tst.size * 4, self.n_features])
@@ -200,8 +209,8 @@ class DataSet:
             new dataset, ds_x,ds_y and outliers
         """
         
-        self.trn.add_noise_class(noise_size)
-        if self.vld is not None: self.vld.add_noise_class(noise_size)
+        self.trn.add_class(None, noise_size)
+        if self.vld is not None: self.vld.add_class(None, noise_size)
         # self.tst.add_noise_class(1.0)
         self.tst.y = np.append(self.tst.y, np.zeros((self.tst.size, 1)), axis=1)
         self.outliers = np.random.uniform(self.tst.x.min() - 1,
@@ -255,7 +264,7 @@ class DataSet:
         if self.outliers is not None:
             self.outliers = scaler.transform(self.outliers)
     
-    def load_marcin_dataset(self, add_noise, output):
+    def load_marcin_dataset(self, add_noise):
         """
         - load data
         - binarize output
@@ -316,12 +325,9 @@ class DataSet:
             self.target_names = np.concatenate((self.target_names,
                                                 ['Outliers']))
         
-        if output is not None:
-            self.change_targets(output)
-        
         self.print_info()
     
-    def load_mnist_data(self, add_noise=None):
+    def load_mnist_data(self):
         mnist = input_data.read_data_sets("datasets/MNIST/", one_hot=True)
         
         x_trn, y_trn = mnist.train.images, mnist.train.labels
@@ -338,6 +344,3 @@ class DataSet:
         self.tst = Set(x_tst, y_tst)
         
         self.print_info()
-        
-        if add_noise == 8:
-            self.remove_class(6)
