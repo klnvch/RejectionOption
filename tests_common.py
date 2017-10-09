@@ -112,6 +112,9 @@ def test_block_mlp(ds_id, ds_name, attempts, n_samples, split, params,
                 writer.writerow(row)
 
 def test_unit_RBF(ds, n_hidden, beta=None, show=False, path=None, suffix=None):
+    ds = ds.copy()
+    ds.add_outliers(3)
+    
     rbf = RBF(ds.n_features, n_hidden, ds.n_classes, beta)
     rbf.train(ds.trn.x, ds.trn.y)
     
@@ -139,7 +142,8 @@ def test_block_rbf(ds_id, ds_name, attempts, n_samples, split, params,
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
     fig_path = 'tests/{:s}/figures/'.format(ds_name)
     
-    colums = 'DS,Clf,Attempt,Units,Beta,Trn acc,Tst acc,SOT,SDT,SRT,MOT,MDT,MRT'
+    colums = 'DS,Clf,Attempt,Type,Units,Beta,' \
+                'Trn acc,Tst acc,SOT,SDT,SRT,MOT,MDT,MRT'
     
     with open(filename, 'a+') as f:
         print(colums, file=f)
@@ -155,7 +159,7 @@ def test_block_rbf(ds_id, ds_name, attempts, n_samples, split, params,
             msg = test_unit_RBF(ds, n_hidden, distance,
                                 False, fig_path, fig_suff)
             
-            row = np.concatenate(([ds_name, 'rbf-km', attempt, n_hidden,
+            row = np.concatenate(([ds_name, 'rbf-km', attempt, '3', n_hidden,
                                    distance], msg))
             
             with open(filename, 'a+') as f:
