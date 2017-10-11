@@ -3,18 +3,17 @@ Created on Jun 26, 2017
 
 @author: anton
 '''
+
 from numpy import nan
 from sklearn import metrics
 
-from klnvch.rejection_option.plots import plot_confusion_matrix
-from klnvch.rejection_option.plots import plot_curves
-from klnvch.rejection_option.plots import plot_decision_regions
-from klnvch.rejection_option.plots import plot_multiclass_curve
+from klnvch.rejection_option.plots import plot_confusion_matrix, plot_curves, \
+    plot_multiclass_curve, plot_decision_regions
 from klnvch.rejection_option.scoring import ScoringFunc as score_func
 from klnvch.rejection_option.thresholds import Thresholds as thr
-from klnvch.rejection_option.utils import calc_multiclass_curve
-from klnvch.rejection_option.utils import calc_s_thr, check_nan
-from klnvch.rejection_option.utils import validate_classes
+from klnvch.rejection_option.utils import calc_multiclass_curve, \
+    calc_binary_auc_metric, calc_multiclass_auc_metric, check_nan, \
+    calc_binary_curve, calc_accuracy
 import numpy as np
 
 
@@ -46,8 +45,10 @@ class RejectionOption:
         self.show = show
         if dir_path is None or suff_file is None:
             self.fig_path = None
+            self.txt_path = None
         else:
             self.fig_path = dir_path + suff_file + '_{:s}.png'
+            self.txt_path = dir_path + suff_file + '_report.txt'
     
     def calc_metrics(self):
         if check_nan(self.outputs_pred):
@@ -55,88 +56,52 @@ class RejectionOption:
             return nan, nan, nan, nan, nan, nan
         
         # Classifier accuracy
-        y_true = self.outputs_true.argmax(axis=1)
-        y_pred = self.outputs_pred.argmax(axis=1)
-        tst_acc = metrics.accuracy_score(y_true, y_pred)
-        print('{:40s}: {:0.4f}'.format('Accuracy', tst_acc))
+        tst_acc = calc_accuracy(self.outputs_true, self.outputs_pred)
         
         # SOT - Single 0utput Threshold
-        y_true, y_score, label = score_func.score_outp(self.outputs_true,
-                                                       self.outputs_pred,
-                                                       self.outputs_outl)
-        if validate_classes(y_true):
-            auc_0 = metrics.roc_auc_score(y_true, y_score)
-            if auc_0 < .5:  auc_0 = 1. - auc_0
-        else:
-            auc_0 = 1.0
-        print('{:40s}: {:0.4f}'.format(label, auc_0))
-        
+        auc_0, msg_0 = calc_binary_auc_metric(score_func.score_outp,
+                                              self.outputs_true,
+                                              self.outputs_pred,
+                                              self.outputs_outl)
         # SDT - Single Differential Threshold
-        y_true, y_score, label = score_func.score_diff(self.outputs_true,
-                                                       self.outputs_pred,
-                                                       self.outputs_outl)
-        if validate_classes(y_true):
-            auc_1 = metrics.roc_auc_score(y_true, y_score)
-            if auc_1 < .5:  auc_1 = 1. - auc_1
-        else:
-            auc_1 = 1.0
-        print('{:40s}: {:0.4f}'.format(label, auc_1))
-        
+        auc_1, msg_1 = calc_binary_auc_metric(score_func.score_diff,
+                                              self.outputs_true,
+                                              self.outputs_pred,
+                                              self.outputs_outl)
         # SRT - Single Ratio Threshold
-        y_true, y_score, label = score_func.score_rati(self.outputs_true,
-                                                       self.outputs_pred,
-                                                       self.outputs_outl)
-        if validate_classes(y_true):
-            auc_2 = metrics.roc_auc_score(y_true, y_score)
-            if auc_2 < .5:  auc_2 = 1. - auc_2
-        else:
-            auc_2 = 1.0
-        print('{:40s}: {:0.4f}'.format(label, auc_2))
-        
+        auc_2, msg_2 = calc_binary_auc_metric(score_func.score_rati,
+                                              self.outputs_true,
+                                              self.outputs_pred,
+                                              self.outputs_outl)
         # MOT - Multiple Output Thresholds
-        y_m_true, y_m_score, label = score_func.score_outp_m(self.outputs_true,
-                                                             self.outputs_pred,
-                                                             self.outputs_outl)
-        avg_auc_0 = 0
-        for y_true, y_score in zip(y_m_true, y_m_score):
-            if validate_classes(y_true):
-                auc = metrics.roc_auc_score(y_true, y_score)
-                if auc < .5:  auc = 1. - auc
-                avg_auc_0 += auc
-            else:
-                avg_auc_0 += 1.0
-        avg_auc_0 /= self.n_classes
-        print('{:40s}: {:0.4f}'.format(label, avg_auc_0))
+        avg_auc_0, msg_3 = calc_multiclass_auc_metric(score_func.score_outp_m,
+                                                      self.n_classes,
+                                                      self.outputs_true,
+                                                      self.outputs_pred,
+                                                      self.outputs_outl)
+        # MDT - Multiple Differential Thresholds
+        avg_auc_1, msg_4 = calc_multiclass_auc_metric(score_func.score_diff_m,
+                                                      self.n_classes,
+                                                      self.outputs_true,
+                                                      self.outputs_pred,
+                                                      self.outputs_outl)
+        # MRT - Multiple Ratio Thresholds
+        avg_auc_2, msg_5 = calc_multiclass_auc_metric(score_func.score_rati_m,
+                                                      self.n_classes,
+                                                      self.outputs_true,
+                                                      self.outputs_pred,
+                                                      self.outputs_outl)
         
-        # MOT - Multiple Differential Thresholds
-        y_m_true, y_m_score, label = score_func.score_diff_m(self.outputs_true,
-                                                             self.outputs_pred,
-                                                             self.outputs_outl)
-        avg_auc_1 = 0
-        for y_true, y_score in zip(y_m_true, y_m_score):
-            if validate_classes(y_true):
-                auc = metrics.roc_auc_score(y_true, y_score)
-                if auc < .5:  auc = 1. - auc
-                avg_auc_1 += auc
-            else:
-                avg_auc_1 += 1.0
-        avg_auc_1 /= self.n_classes
-        print('{:40s}: {:0.4f}'.format(label, avg_auc_1))
-        
-        # MOT - Multiple Ratio Thresholds
-        y_m_true, y_m_score, label = score_func.score_rati_m(self.outputs_true,
-                                                             self.outputs_pred,
-                                                             self.outputs_outl)
-        avg_auc_2 = 0
-        for y_true, y_score in zip(y_m_true, y_m_score):
-            if validate_classes(y_true):
-                auc = metrics.roc_auc_score(y_true, y_score)
-                if auc < .5:  auc = 1. - auc
-                avg_auc_2 += auc
-            else:
-                avg_auc_2 += 1.0
-        avg_auc_2 /= self.n_classes
-        print('{:40s}: {:0.4f}'.format(label, avg_auc_2))
+        acc_report = '{:40s}: {:0.4f}\n' \
+                     '---------------------------------------------------' \
+                     .format('Accuracy', tst_acc)
+        report = msg_0 + msg_1 + msg_2 + msg_3 + msg_4 + msg_5
+        print(acc_report)
+        print(report)
+        if self.txt_path is not None:
+            with open(self.txt_path, 'a+') as f:
+                print(acc_report, file=f)
+                print(report, file=f)
         
         return tst_acc, auc_0, auc_1, auc_2, avg_auc_0, avg_auc_1, avg_auc_2
     
@@ -173,13 +138,13 @@ class RejectionOption:
         scores_s = [score_func.score_outp,
                     score_func.score_diff,
                     score_func.score_rati]
-        curves_s = calc_s_thr(self.outputs_true,
-                             self.outputs_pred,
-                             self.outputs_outl,
-                             scores_s)
+        curves_s = calc_binary_curve(self.outputs_true,
+                                     self.outputs_pred,
+                                     self.outputs_outl,
+                                     scores_s)
         plot_curves(curves_s, savefig=save_fig, show=self.show)
     
-    def plot_roc_precision_recall(self):
+    def plot_precision_recall(self):
         if not self.show and self.fig_path is None: return
         if self.fig_path is None:   save_fig = None
         else:   save_fig = self.fig_path.format('single_prr')
@@ -187,10 +152,10 @@ class RejectionOption:
         scores_s = [score_func.score_outp,
                     score_func.score_diff,
                     score_func.score_rati]
-        curves_s = calc_s_thr(self.outputs_true,
-                             self.outputs_pred,
-                             self.outputs_outl,
-                             scores_s, curve_func='precision_recall')
+        curves_s = calc_binary_curve(self.outputs_true,
+                                     self.outputs_pred,
+                                     self.outputs_outl,
+                                     scores_s, curve_func='precision_recall')
         plot_curves(curves_s, curve_func='precision_recall',
                     savefig=save_fig, show=self.show)
     
@@ -258,7 +223,11 @@ class RejectionOption:
         y_pred = self.outputs_pred.argmax(axis=1)
         report = metrics.classification_report(y_true, y_pred,
                                                None, self.labels)
+        
         print(report)
+        if self.txt_path is not None:
+            with open(self.txt_path, 'a+') as f:
+                print(report, file=f)
     
     def plot_decision_regions(self, clf):
         if self.x.shape[1] == 2 and clf is not None:

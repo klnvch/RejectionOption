@@ -175,13 +175,13 @@ def plot_multiclass_curve(fpr, tpr, roc_auc, labels,
 
 def plot_curves(curves, savefig=None, show=True, curve_func='roc'):
     colors = plt.cm.rainbow(np.linspace(0, 1, curves.shape[0]))  # @UndefinedVariable
-    label_auc = ' (AUC: {0:0.4f})'
+    label_auc = '{:s} (AUC: {:0.4f})'
     
     fig = plt.figure(figsize=(4.1, 4.1))
     for curve, color in zip(curves, colors):
         fpr, tpr, _, auc, label = curve
         plt.plot(fpr, tpr, color=color, lw=2,
-                 label=label + label_auc.format(auc))
+                 label=label_auc.format(label, auc))
     
     if curve_func == 'roc':
         plt.plot([0, 1], [0, 1], 'k--', lw=2)

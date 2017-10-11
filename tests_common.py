@@ -70,7 +70,7 @@ def test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets, n_epochs,
     ro.plot_decision_regions(mlp)
     ro.plot_confusion_matrix()
     ro.plot_roc()
-    ro.plot_roc_precision_recall()
+    ro.plot_precision_recall()
     ro.plot_multiclass_roc()
     ro.plot_multiclass_precision_recall()
     
@@ -131,7 +131,7 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False, path=None, suffix=None):
     ro.plot_decision_regions(rbf)
     ro.plot_confusion_matrix()
     ro.plot_roc()
-    ro.plot_roc_precision_recall()
+    ro.plot_precision_recall()
     ro.plot_multiclass_roc()
     ro.plot_multiclass_precision_recall()
     

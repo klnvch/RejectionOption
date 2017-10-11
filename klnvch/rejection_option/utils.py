@@ -14,10 +14,188 @@ from klnvch.rejection_option.scoring import ScoringFunc as score_func
 import numpy as np
 
 
+REPORT = 'ROC\n' \
+            '{:s}' \
+            '\t{:20s}: {:0.4f}\n' \
+            '\t{:20s}: {:0.4f}\n' \
+            '\t{:20s}: {:0.4f}\n' \
+            '\t{:20s}: {:0.4f}\n' \
+            'Precision-Recall\n' \
+            '{:s}' \
+            '\t{:20s}: {:0.4f}\n' \
+            '\t{:20s}: {:0.4f}\n' \
+            '\t{:20s}: {:0.4f}\n' \
+            '\t{:20s}: {:0.4f}\n' \
+            '{:40s}: {:0.4f}\n' \
+            '---------------------------------------------------\n'
+
+
 def validate_classes(y_true):
     return len(np.unique(y_true)) == 2
 def check_nan(a):
     return np.isnan(a).any()
+
+def calc_accuracy(outputs_true, outputs_pred):
+    y_true = outputs_true.argmax(axis=1)
+    y_pred = outputs_pred.argmax(axis=1)
+    return metrics.accuracy_score(y_true, y_pred)
+
+def calc_binary_auc_metric(score_func,
+                           outputs_true, outputs_pred, outputs_outl):
+    y_true, y_score, label = score_func(outputs_true,
+                                        outputs_pred,
+                                        outputs_outl)
+    if validate_classes(y_true):
+        auc = metrics.roc_auc_score(y_true, y_score)
+        if auc < .5:
+            auc = 1. - auc
+    else:
+        auc = 1.0
+    # threshold examples
+    thr_roc, y_pred = find_best_threshold(y_true, y_score, 'roc')
+    q, w, e, r = calc_thresholds_metrics(y_true, y_pred,
+                                         outputs_true, outputs_pred)
+    
+    thr_prr, y_pred = find_best_threshold(y_true, y_score, 'prr')
+    a, s, d, f = calc_thresholds_metrics(y_true, y_pred,
+                                         outputs_true, outputs_pred)
+    
+    report_thr_roc = '\t{:20s}: {:0.4f}\n'.format('Threshold', thr_roc)
+    report_thr_prr = '\t{:20s}: {:0.4f}\n'.format('Threshold', thr_prr)
+    
+    report = REPORT.format(report_thr_roc,
+                           'RO accuracy', q,
+                           'RO F1-score', w,
+                           'Rejecting Rate', e,
+                           'ANN accuracy', r,
+                           report_thr_prr,
+                           'RO accuracy', a,
+                           'RO F1-score', s,
+                           'Rejecting Rate', d,
+                           'ANN accuracy', f,
+                           label, auc)
+    
+    return auc, report
+
+def find_best_threshold(y_true, y_score, curve_func='roc'):
+    """
+    Find best thesholds and calc metrics for ANN and RO
+    the best point is the closest to the top-left corner in the ROC space
+    FPR = 0 and TPR = 1
+    or
+    Precision = 1 and Recall = 1
+    """
+    # some exceptions here
+    y_true = np.array(y_true)
+    if y_true.sum() == y_true.size:  # perfect ANN, accept everything
+        return 0.0, y_true
+    if y_true.sum() == 0:  # bad ANN, reject everything
+        return 1.0, y_true
+    
+    # produce ROC curve
+    if curve_func == 'roc':
+        x, y, thr = metrics.roc_curve(y_true, y_score)
+    elif curve_func == 'prr':
+        x, y, thr = metrics.precision_recall_curve(y_true, y_score)
+    
+    # find best point
+    if curve_func == 'roc':
+        dists = [(_x ** 2 + _y ** 2) for _x, _y in zip(x, (1.0 - y))]
+    elif curve_func == 'prr':
+        dists = [(_x ** 2 + _y ** 2) for _x, _y in zip((1.0 - x), (1.0 - y))]
+    idx = np.argmin(dists)
+    best_threshold = thr[idx]
+    # prepare RO decisions
+    y_pred = y_score >= best_threshold
+    
+    return best_threshold, y_pred
+    
+
+def calc_thresholds_metrics(y_true, y_pred, outputs_true, outputs_pred):
+    # RO accuracy
+    ro_acc = metrics.accuracy_score(y_true, y_pred)
+    
+    # RO f1-score
+    ro_f1_score = metrics.f1_score(y_true, y_pred)
+    
+    # Rejecting Rate
+    rej_rate = 1.0 - y_pred.sum() / y_pred.size
+    
+    # ANN accuracy
+    outputs_true_ = outputs_true[y_pred]
+    outputs_pred_ = outputs_pred[y_pred]
+    ann_acc = calc_accuracy(outputs_true_, outputs_pred_)
+    
+    return ro_acc, ro_f1_score, rej_rate, ann_acc
+    
+def calc_multiclass_auc_metric(score_func, n_classes,
+                               outputs_true, outputs_pred, outputs_outl):
+    y_m_true, y_m_score, label = score_func(outputs_true,
+                                            outputs_pred,
+                                            outputs_outl)
+    
+    thresholds_roc = np.empty((0), dtype=float)
+    y_true_roc = np.empty((0), dtype=bool)
+    y_pred_roc = np.empty((0), dtype=bool)
+    
+    thresholds_prr = np.empty((0), dtype=float)
+    y_true_prr = np.empty((0), dtype=bool)
+    y_pred_prr = np.empty((0), dtype=bool)
+    
+    avg_auc = 0
+    for y_true, y_score in zip(y_m_true, y_m_score):
+        if validate_classes(y_true):
+            auc = metrics.roc_auc_score(y_true, y_score)
+            if auc < .5:
+                auc = 1. - auc
+            avg_auc += auc
+        else:
+            avg_auc += 1.0
+        # threshold examples
+        # roc
+        thr, y_pred = find_best_threshold(y_true, y_score)
+        thresholds_roc = np.concatenate((thresholds_roc, [thr]))
+        y_true_roc = np.concatenate((y_true_roc, y_true))
+        y_pred_roc = np.concatenate((y_pred_roc, y_pred))
+        
+        # prr
+        thr, y_pred = find_best_threshold(y_true, y_score, curve_func='prr')
+        thresholds_prr = np.concatenate((thresholds_prr, [thr]))
+        y_true_prr = np.concatenate((y_true_prr, y_true))
+        y_pred_prr = np.concatenate((y_pred_prr, y_pred))
+        
+    
+    
+    # ROC
+    report_thr_roc = ''
+    for i, thr in enumerate(thresholds_roc):
+        thr_label = 'Threshold {:d}'.format(i)
+        report_thr_roc += '\t{:20s}: {:0.4f}\n'.format(thr_label, thr)
+    q, w, e, r = calc_thresholds_metrics(y_true_roc, y_pred_roc,
+                                         outputs_true, outputs_pred)
+    # Precision-Recall
+    report_thr_prr = ''
+    for i, thr in enumerate(thresholds_prr):
+        thr_label = 'Threshold {:d}'.format(i)
+        report_thr_prr += '\t{:20s}: {:0.4f}\n'.format(thr_label, thr)
+    a, s, d, f = calc_thresholds_metrics(y_true_prr, y_pred_prr,
+                                         outputs_true, outputs_pred)
+    
+    avg_auc /= n_classes
+    
+    report = REPORT.format(report_thr_roc,
+                           'RO accuracy', q,
+                           'RO F1-score', w,
+                           'Rejecting Rate', e,
+                           'ANN accuracy', r,
+                           report_thr_prr,
+                           'RO accuracy', a,
+                           'RO F1-score', s,
+                           'Rejecting Rate', d,
+                           'ANN accuracy', f,
+                           label, avg_auc)
+    
+    return avg_auc, report
 
 def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
                           recall_threshold=0.9,
@@ -100,8 +278,8 @@ def calc_multiclass_curve(outputs_true, outputs_pred, outputs_outl=None,
     
     return fpr, tpr, roc_auc
 
-def calc_s_thr(outputs_true, outputs_pred, outputs_outl, scores,
-              curve_func='roc'):
+def calc_binary_curve(outputs_true, outputs_pred, outputs_outl, scores,
+                      curve_func='roc'):
     """
     Calcs binary ROC curve or for single threshold
     Args:
