@@ -122,8 +122,9 @@ def calc_thresholds_metrics(y_true, y_pred, outputs_true, outputs_pred):
     rej_rate = 1.0 - y_pred.sum() / y_pred.size
     
     # ANN accuracy
-    outputs_true_ = outputs_true[y_pred]
-    outputs_pred_ = outputs_pred[y_pred]
+    y_pred_ = y_pred[:outputs_true.shape[0]]
+    outputs_true_ = outputs_true[y_pred_]
+    outputs_pred_ = outputs_pred[y_pred_]
     ann_acc = calc_accuracy(outputs_true_, outputs_pred_)
     
     return ro_acc, ro_f1_score, rej_rate, ann_acc

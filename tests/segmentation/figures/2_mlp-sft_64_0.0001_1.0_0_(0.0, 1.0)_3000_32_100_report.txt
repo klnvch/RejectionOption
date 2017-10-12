@@ -1,0 +1,135 @@
+             precision    recall  f1-score   support
+
+  BRICKFACE       1.00      0.98      0.99       160
+        SKY       1.00      1.00      1.00       168
+    FOLIAGE       0.92      0.89      0.91       158
+     CEMENT       0.99      0.93      0.96       163
+     WINDOW       0.85      0.94      0.89       159
+       PATH       0.98      1.00      0.99       179
+      GRASS       1.00      0.99      0.99       168
+
+avg / total       0.96      0.96      0.96      1155
+
+Accuracy                                : 0.9628
+---------------------------------------------------
+ROC
+	Threshold           : 0.5531
+	RO accuracy         : 0.9941
+	RO F1-score         : 0.9849
+	Rejecting Rate      : 0.8033
+	ANN accuracy        : 0.9745
+Precision-Recall
+	Threshold           : 0.5745
+	RO accuracy         : 0.9938
+	RO F1-score         : 0.9839
+	Rejecting Rate      : 0.8043
+	ANN accuracy        : 0.9761
+Single output threshold                 : 0.9994
+---------------------------------------------------
+ROC
+	Threshold           : 0.1070
+	RO accuracy         : 0.9932
+	RO F1-score         : 0.9827
+	Rejecting Rate      : 0.8024
+	ANN accuracy        : 0.9702
+Precision-Recall
+	Threshold           : 0.4561
+	RO accuracy         : 0.9927
+	RO F1-score         : 0.9811
+	Rejecting Rate      : 0.8085
+	ANN accuracy        : 0.9837
+Single differential threshold           : 0.9993
+---------------------------------------------------
+ROC
+	Threshold           : 0.9565
+	RO accuracy         : 0.9141
+	RO F1-score         : 0.7961
+	Rejecting Rate      : 0.7714
+	ANN accuracy        : 0.9938
+Precision-Recall
+	Threshold           : 0.9832
+	RO accuracy         : 0.9321
+	RO F1-score         : 0.8175
+	Rejecting Rate      : 0.8206
+	ANN accuracy        : 0.9955
+Single ratio threshold                  : 0.9543
+---------------------------------------------------
+ROC
+	Threshold 0         : 0.8967
+	Threshold 1         : 0.9719
+	Threshold 2         : 0.8153
+	Threshold 3         : 0.6429
+	Threshold 4         : 0.8301
+	Threshold 5         : 0.8166
+	Threshold 6         : 0.9898
+	RO accuracy         : 0.9917
+	RO F1-score         : 0.9781
+	Rejecting Rate      : 0.8126
+	ANN accuracy        : 0.9662
+Precision-Recall
+	Threshold 0         : 0.8967
+	Threshold 1         : 0.9719
+	Threshold 2         : 0.6539
+	Threshold 3         : 0.5128
+	Threshold 4         : 0.7219
+	Threshold 5         : 0.8166
+	Threshold 6         : 0.9898
+	RO accuracy         : 0.9946
+	RO F1-score         : 0.9861
+	Rejecting Rate      : 0.8059
+	ANN accuracy        : 0.9662
+Multiple output threshold               : 0.9640
+---------------------------------------------------
+ROC
+	Threshold 0         : 0.7949
+	Threshold 1         : 0.9455
+	Threshold 2         : 0.6672
+	Threshold 3         : 0.3632
+	Threshold 4         : 0.7352
+	Threshold 5         : 0.6405
+	Threshold 6         : 0.9810
+	RO accuracy         : 0.9908
+	RO F1-score         : 0.9758
+	Rejecting Rate      : 0.8135
+	ANN accuracy        : 0.9662
+Precision-Recall
+	Threshold 0         : 0.7949
+	Threshold 1         : 0.9455
+	Threshold 2         : 0.3112
+	Threshold 3         : 0.0304
+	Threshold 4         : 0.5933
+	Threshold 5         : 0.6405
+	Threshold 6         : 0.9810
+	RO accuracy         : 0.9945
+	RO F1-score         : 0.9857
+	Rejecting Rate      : 0.8064
+	ANN accuracy        : 0.9662
+Multiple differential threshold         : 0.9611
+---------------------------------------------------
+ROC
+	Threshold 0         : 0.9610
+	Threshold 1         : 0.9824
+	Threshold 2         : 0.8462
+	Threshold 3         : 0.6630
+	Threshold 4         : 0.8374
+	Threshold 5         : 0.8938
+	Threshold 6         : 0.9905
+	RO accuracy         : 0.9598
+	RO F1-score         : 0.9008
+	Rejecting Rate      : 0.7877
+	ANN accuracy        : 0.9615
+Precision-Recall
+	Threshold 0         : 0.9103
+	Threshold 1         : 0.9912
+	Threshold 2         : 0.5657
+	Threshold 3         : 0.0591
+	Threshold 4         : 0.8114
+	Threshold 5         : 0.8938
+	Threshold 6         : 0.9905
+	RO accuracy         : 0.9832
+	RO F1-score         : 0.9569
+	Rejecting Rate      : 0.8031
+	ANN accuracy        : 0.9655
+Multiple ratio threshold                : 0.9458
+---------------------------------------------------
+
