@@ -91,10 +91,10 @@ params_2 = [
     ]
 
 if __name__ == '__main__':
-    # ds = DataSet(4, split=[0.4, 0.1, 0.5])
-    # test_unit_mlp(ds=ds, clf='mlp-sft', rej=2, units=64,
-    #            beta=0.00001, dropout=1.0, es=0, targets=(0.0, 1.0),
-    #            n_epochs=1000, batch_size=32, print_step=100, show=True)
+    ds = DataSet(4, split=[0.4, 0.1, 0.5])
+    test_unit_mlp(ds=ds, clf='rbf-reg', rej=3, units=32,
+                 beta=1e-4, dropout=1.0, es=0, targets=(0.0, 1.0),
+                 n_epochs=3000, batch_size=32, print_step=100, show=True)
     
     # ds = DataSet(ds_id=4, split=[0.4, 0.1, 0.5])
     # test_unit_RBF(ds, 32, 0.125, True)
@@ -103,5 +103,5 @@ if __name__ == '__main__':
     #               params_0)
     # test_block_mlp(4, 'segmentation', range(0, 1), None, [0.4, 0.1, 0.5],
     #               params_1)
-    test_block_rbf(4, 'segmentation', range(0, 1), None, [0.4, 0.1, 0.5],
-                   params_2)
+    # test_block_rbf(4, 'segmentation', range(0, 1), None, [0.4, 0.1, 0.5],
+    #               params_2)

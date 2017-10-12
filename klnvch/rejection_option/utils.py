@@ -119,10 +119,10 @@ def calc_thresholds_metrics(y_true, y_pred, outputs_true, outputs_pred):
     ro_f1_score = metrics.f1_score(y_true, y_pred)
     
     # Rejecting Rate
-    rej_rate = 1.0 - y_pred.sum() / y_pred.size
+    y_pred_ = y_pred[:outputs_true.shape[0]]
+    rej_rate = 1.0 - y_pred_.sum() / y_pred_.size
     
     # ANN accuracy
-    y_pred_ = y_pred[:outputs_true.shape[0]]
     outputs_true_ = outputs_true[y_pred_]
     outputs_pred_ = outputs_pred[y_pred_]
     ann_acc = calc_accuracy(outputs_true_, outputs_pred_)
