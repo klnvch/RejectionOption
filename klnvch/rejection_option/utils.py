@@ -104,6 +104,9 @@ def find_best_threshold(y_true, y_score, curve_func='roc'):
     elif curve_func == 'prr':
         dists = [(_x ** 2 + _y ** 2) for _x, _y in zip((1.0 - x), (1.0 - y))]
     idx = np.argmin(dists)
+    # print('Best point: ({:0.4f}, {:0.4f})'.format(x[idx-1], y[idx-1]))
+    # print('Best point: ({:0.4f}, {:0.4f})'.format(x[idx], y[idx]))
+    # print('Best point: ({:0.4f}, {:0.4f})'.format(x[idx+1], y[idx+1]))
     best_threshold = thr[idx]
     # prepare RO decisions
     y_pred = y_score >= best_threshold

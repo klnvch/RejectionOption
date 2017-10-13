@@ -105,7 +105,7 @@ class DataSet:
             self.load_marcin_dataset(0, output)
             return
         elif ds_id == 14:
-            self.load_mnist_data(0)
+            self.load_mnist_data()
             return
         
         # load data
@@ -153,8 +153,13 @@ class DataSet:
                 5: add outliers as no class
                 6: add outliers as a class
                 
-                8: remove class
+                (8,i): remove class
         """
+        if type(add_noise) is tuple:
+            _, i = add_noise
+            self.remove_class(i)
+            return
+        
         if self.ds_id == 13:
             self.load_marcin_dataset(add_noise)
             return
@@ -167,8 +172,6 @@ class DataSet:
             self.outliers = np.random.uniform(self.tst.x.min() - 1,
                                           self.tst.x.max() + 1,
                                           [self.tst.size * 4, self.n_features])
-        elif add_noise == 8:
-            self.remove_class(6)
         
         self.print_info()
     
@@ -330,9 +333,12 @@ class DataSet:
     def load_mnist_data(self):
         mnist = input_data.read_data_sets("datasets/MNIST/", one_hot=True)
         
-        x_trn, y_trn = mnist.train.images, mnist.train.labels
-        x_vld, y_vld = mnist.validation.images, mnist.validation.labels
-        x_tst, y_tst = mnist.test.images[:8000], mnist.test.labels[:8000]
+        x_trn = mnist.train.images[:10000]
+        y_trn = mnist.train.labels[:10000]
+        x_vld = mnist.validation.images[:1000]
+        y_vld = mnist.validation.labels[:1000]
+        x_tst = mnist.test.images[:5000]
+        y_tst = mnist.test.labels[:5000]
         
         self.target_names = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
         self.n_features = x_trn.shape[1]

@@ -100,6 +100,7 @@ def test_block_mlp(ds_id, ds_name, attempts, n_samples, split, params,
                                 n_epochs, batch_size, print_step, False,
                                 fig_path, fig_suff)
             
+            if type(rej) is tuple: _, rej = rej
             if es == 0: es = '-'
             else:       es = '+'
             if targets == (0.0, 1.0):   targets = '-'
