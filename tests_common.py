@@ -60,7 +60,7 @@ def test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets, n_epochs,
     # result = [0,0,0,0,0,0,0,0,0,0]
     print(result)
     
-    rc = rej not in [0, 1, 3, 5, 8]
+    rc = rej not in [0, 1, 3, 5, 8] and type(rej) is not tuple
     
     ro = RejectionOption(mlp, ds.target_names,
                          ds.tst.x, ds.tst.y, ds.outliers, rc)
