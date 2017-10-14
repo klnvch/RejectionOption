@@ -102,7 +102,7 @@ class DataSet:
         """
         self.ds_id = ds_id
         if ds_id == 13:
-            self.load_marcin_dataset(0, output)
+            self.load_marcin_dataset(0)
             return
         elif ds_id == 14:
             self.load_mnist_data()

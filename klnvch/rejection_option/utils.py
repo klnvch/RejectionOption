@@ -86,7 +86,7 @@ def find_best_threshold(y_true, y_score, curve_func='roc'):
     Precision = 1 and Recall = 1
     """
     # some exceptions here
-    y_true = np.array(y_true)
+    y_true = np.array(y_true, dtype=bool)
     if y_true.sum() == y_true.size:  # perfect ANN, accept everything
         return 0.0, y_true
     if y_true.sum() == 0:  # bad ANN, reject everything

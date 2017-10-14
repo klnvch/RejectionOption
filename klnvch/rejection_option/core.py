@@ -117,18 +117,19 @@ class RejectionOption:
         
         if self.n_classes <= 10: return
         
-        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
-                              self.outputs_outl, self.labels,
-                              error_threshold=0.98)
-        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
-                              self.outputs_outl, self.labels,
-                              error_threshold=0.95)
-        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
-                              self.outputs_outl, self.labels,
-                              error_threshold=0.93)
-        plot_confusion_matrix(self.outputs_true, self.outputs_pred,
-                              self.outputs_outl, self.labels,
-                              error_threshold=0.90)
+        if self.show:
+            plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                                  self.outputs_outl, self.labels,
+                                  error_threshold=0.98)
+            plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                                  self.outputs_outl, self.labels,
+                                  error_threshold=0.95)
+            plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                                  self.outputs_outl, self.labels,
+                                  error_threshold=0.93)
+            plot_confusion_matrix(self.outputs_true, self.outputs_pred,
+                                  self.outputs_outl, self.labels,
+                                  error_threshold=0.90)
     
     def plot_roc(self):
         if not self.show and self.fig_path is None: return
