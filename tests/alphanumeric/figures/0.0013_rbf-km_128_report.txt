@@ -1,0 +1,457 @@
+             precision    recall  f1-score   support
+
+          0       0.62      0.85      0.72        33
+          1       0.67      0.71      0.69        28
+          2       1.00      0.73      0.85        30
+          3       0.84      0.97      0.90        33
+          4       0.94      0.97      0.96        33
+          5       0.86      0.89      0.87        27
+          6       0.94      0.97      0.95        31
+          7       0.96      1.00      0.98        26
+          8       1.00      0.72      0.84        29
+          9       0.89      0.96      0.93        26
+         _a       0.97      1.00      0.98        32
+         _b       0.82      0.77      0.79        30
+         _d       0.76      0.93      0.84        28
+         _e       0.95      0.62      0.75        32
+         _f       0.96      0.83      0.89        30
+         _g       1.00      0.97      0.99        35
+         _h       0.96      0.93      0.95        29
+         _i       0.95      0.60      0.74        35
+         _j       0.73      0.96      0.83        28
+         _k       0.97      0.88      0.92        33
+         _l       0.93      1.00      0.96        27
+         _m       0.88      0.88      0.88        24
+         _n       0.91      1.00      0.95        30
+         _q       1.00      1.00      1.00         8
+         _r       0.94      0.75      0.83        40
+         _t       0.97      0.88      0.92        32
+         _y       0.97      1.00      0.98        32
+          a       1.00      0.88      0.93        32
+          b       0.89      1.00      0.94        34
+          c       0.86      1.00      0.93        31
+          d       1.00      1.00      1.00        26
+          e       0.96      0.96      0.96        25
+          f       0.95      0.97      0.96        36
+          g       0.83      0.83      0.83        24
+          h       0.91      0.95      0.93        22
+          i       0.94      0.88      0.91        33
+          j       1.00      0.94      0.97        31
+          k       0.97      0.83      0.89        35
+          l       0.69      0.82      0.75        33
+          m       0.88      1.00      0.94        30
+          n       0.83      0.83      0.83        30
+          o       0.82      0.32      0.46        28
+          p       0.90      0.93      0.91        28
+          q       0.91      1.00      0.95        31
+          r       0.88      0.88      0.88        32
+          s       0.89      1.00      0.94        31
+          t       0.94      0.94      0.94        35
+          u       0.85      0.97      0.90        29
+          v       0.84      1.00      0.91        26
+          w       1.00      1.00      1.00        31
+          x       0.87      0.87      0.87        31
+          y       1.00      0.97      0.98        29
+          z       0.76      1.00      0.86        25
+
+avg / total       0.90      0.89      0.89      1579
+
+Accuracy                                : 0.8936
+---------------------------------------------------
+ROC
+	Threshold           : 0.5994
+	RO accuracy         : 0.6219
+	RO F1-score         : 0.6790
+	Rejecting Rate      : 0.4085
+	ANN accuracy        : 0.9797
+Precision-Recall
+	Threshold           : 0.5725
+	RO accuracy         : 0.6691
+	RO F1-score         : 0.7721
+	Rejecting Rate      : 0.1393
+	ANN accuracy        : 0.9433
+Single output threshold                 : 0.6721
+---------------------------------------------------
+ROC
+	Threshold           : 0.0337
+	RO accuracy         : 0.7815
+	RO F1-score         : 0.8141
+	Rejecting Rate      : 0.2951
+	ANN accuracy        : 0.9838
+Precision-Recall
+	Threshold           : 0.0261
+	RO accuracy         : 0.7880
+	RO F1-score         : 0.8317
+	Rejecting Rate      : 0.2236
+	ANN accuracy        : 0.9772
+Single differential threshold           : 0.8675
+---------------------------------------------------
+ROC
+	Threshold           : 0.0581
+	RO accuracy         : 0.7845
+	RO F1-score         : 0.8151
+	Rejecting Rate      : 0.3008
+	ANN accuracy        : 0.9846
+Precision-Recall
+	Threshold           : 0.0428
+	RO accuracy         : 0.7920
+	RO F1-score         : 0.8353
+	Rejecting Rate      : 0.2172
+	ANN accuracy        : 0.9765
+Single ratio threshold                  : 0.8735
+---------------------------------------------------
+ROC
+	Threshold 0         : 0.5779
+	Threshold 1         : 0.5943
+	Threshold 2         : 0.0000
+	Threshold 3         : 0.5934
+	Threshold 4         : 0.5926
+	Threshold 5         : 0.6016
+	Threshold 6         : 0.5740
+	Threshold 7         : 0.6147
+	Threshold 8         : 0.5492
+	Threshold 9         : 0.6043
+	Threshold 10        : 0.6088
+	Threshold 11        : 0.5608
+	Threshold 12        : 0.5646
+	Threshold 13        : 0.5526
+	Threshold 14        : 0.6058
+	Threshold 15        : 0.0000
+	Threshold 16        : 0.5611
+	Threshold 17        : 0.5500
+	Threshold 18        : 0.6291
+	Threshold 19        : 0.5803
+	Threshold 20        : 0.5887
+	Threshold 21        : 0.5925
+	Threshold 22        : 0.5783
+	Threshold 23        : 0.0000
+	Threshold 24        : 0.5851
+	Threshold 25        : 0.5963
+	Threshold 26        : 0.5725
+	Threshold 27        : 0.0000
+	Threshold 28        : 0.6059
+	Threshold 29        : 0.5992
+	Threshold 30        : 0.6068
+	Threshold 31        : 0.5650
+	Threshold 32        : 0.6291
+	Threshold 33        : 0.5714
+	Threshold 34        : 0.5856
+	Threshold 35        : 0.6572
+	Threshold 36        : 0.6528
+	Threshold 37        : 0.6148
+	Threshold 38        : 0.5856
+	Threshold 39        : 0.5767
+	Threshold 40        : 0.5624
+	Threshold 41        : 0.5583
+	Threshold 42        : 0.5807
+	Threshold 43        : 0.6192
+	Threshold 44        : 0.5787
+	Threshold 45        : 0.5925
+	Threshold 46        : 0.5700
+	Threshold 47        : 0.6200
+	Threshold 48        : 0.5738
+	Threshold 49        : 0.6105
+	Threshold 50        : 0.5895
+	Threshold 51        : 0.5764
+	Threshold 52        : 0.6116
+	RO accuracy         : 0.8007
+	RO F1-score         : 0.8436
+	Rejecting Rate      : 0.3559
+	ANN accuracy        : 0.8889
+Precision-Recall
+	Threshold 0         : 0.5683
+	Threshold 1         : 0.5660
+	Threshold 2         : 0.0000
+	Threshold 3         : 0.5769
+	Threshold 4         : 0.5717
+	Threshold 5         : 0.5969
+	Threshold 6         : 0.5655
+	Threshold 7         : 0.6068
+	Threshold 8         : 0.5492
+	Threshold 9         : 0.6043
+	Threshold 10        : 0.6088
+	Threshold 11        : 0.5531
+	Threshold 12        : 0.5580
+	Threshold 13        : 0.5526
+	Threshold 14        : 0.5510
+	Threshold 15        : 0.0000
+	Threshold 16        : 0.5611
+	Threshold 17        : 0.5500
+	Threshold 18        : 0.6449
+	Threshold 19        : 0.5803
+	Threshold 20        : 0.5874
+	Threshold 21        : 0.5925
+	Threshold 22        : 0.5783
+	Threshold 23        : 0.0000
+	Threshold 24        : 0.5369
+	Threshold 25        : 0.5742
+	Threshold 26        : 0.5725
+	Threshold 27        : 0.0000
+	Threshold 28        : 0.5929
+	Threshold 29        : 0.5633
+	Threshold 30        : 0.6068
+	Threshold 31        : 0.5499
+	Threshold 32        : 0.6291
+	Threshold 33        : 0.5714
+	Threshold 34        : 0.5575
+	Threshold 35        : 0.6278
+	Threshold 36        : 0.6528
+	Threshold 37        : 0.5612
+	Threshold 38        : 0.5856
+	Threshold 39        : 0.5767
+	Threshold 40        : 0.5624
+	Threshold 41        : 0.5521
+	Threshold 42        : 0.5899
+	Threshold 43        : 0.6192
+	Threshold 44        : 0.5619
+	Threshold 45        : 0.5786
+	Threshold 46        : 0.5648
+	Threshold 47        : 0.6200
+	Threshold 48        : 0.5738
+	Threshold 49        : 0.5905
+	Threshold 50        : 0.5582
+	Threshold 51        : 0.5764
+	Threshold 52        : 0.6116
+	RO accuracy         : 0.8169
+	RO F1-score         : 0.8655
+	Rejecting Rate      : 0.2489
+	ANN accuracy        : 0.8946
+Multiple output threshold               : 0.8787
+---------------------------------------------------
+ROC
+	Threshold 0         : 0.0220
+	Threshold 1         : 0.0300
+	Threshold 2         : 0.0000
+	Threshold 3         : 0.0320
+	Threshold 4         : 0.0276
+	Threshold 5         : 0.0500
+	Threshold 6         : 0.0276
+	Threshold 7         : 0.0582
+	Threshold 8         : 0.0111
+	Threshold 9         : 0.0462
+	Threshold 10        : 0.0412
+	Threshold 11        : 0.0110
+	Threshold 12        : 0.0154
+	Threshold 13        : 0.0071
+	Threshold 14        : 0.0204
+	Threshold 15        : 0.0000
+	Threshold 16        : 0.0182
+	Threshold 17        : 0.0019
+	Threshold 18        : 0.0416
+	Threshold 19        : 0.0111
+	Threshold 20        : 0.0310
+	Threshold 21        : 0.0319
+	Threshold 22        : 0.0145
+	Threshold 23        : 0.0000
+	Threshold 24        : 0.0147
+	Threshold 25        : 0.0430
+	Threshold 26        : 0.0080
+	Threshold 27        : 0.0000
+	Threshold 28        : 0.0459
+	Threshold 29        : 0.0319
+	Threshold 30        : 0.0503
+	Threshold 31        : 0.0067
+	Threshold 32        : 0.0427
+	Threshold 33        : 0.0094
+	Threshold 34        : 0.0205
+	Threshold 35        : 0.0509
+	Threshold 36        : 0.1125
+	Threshold 37        : 0.0292
+	Threshold 38        : 0.0235
+	Threshold 39        : 0.0334
+	Threshold 40        : 0.0143
+	Threshold 41        : 0.0133
+	Threshold 42        : 0.0414
+	Threshold 43        : 0.0555
+	Threshold 44        : 0.0065
+	Threshold 45        : 0.0305
+	Threshold 46        : 0.0192
+	Threshold 47        : 0.0695
+	Threshold 48        : 0.0490
+	Threshold 49        : 0.0378
+	Threshold 50        : 0.0156
+	Threshold 51        : 0.0224
+	Threshold 52        : 0.0312
+	RO accuracy         : 0.9073
+	RO F1-score         : 0.9240
+	Rejecting Rate      : 0.4148
+	ANN accuracy        : 0.8983
+Precision-Recall
+	Threshold 0         : 0.0184
+	Threshold 1         : 0.0283
+	Threshold 2         : 0.0000
+	Threshold 3         : 0.0204
+	Threshold 4         : 0.0276
+	Threshold 5         : 0.0382
+	Threshold 6         : 0.0087
+	Threshold 7         : 0.0419
+	Threshold 8         : 0.0036
+	Threshold 9         : 0.0462
+	Threshold 10        : 0.0412
+	Threshold 11        : 0.0053
+	Threshold 12        : 0.0136
+	Threshold 13        : 0.0045
+	Threshold 14        : 0.0049
+	Threshold 15        : 0.0000
+	Threshold 16        : 0.0182
+	Threshold 17        : 0.0012
+	Threshold 18        : 0.0595
+	Threshold 19        : 0.0111
+	Threshold 20        : 0.0310
+	Threshold 21        : 0.0319
+	Threshold 22        : 0.0145
+	Threshold 23        : 0.0000
+	Threshold 24        : 0.0030
+	Threshold 25        : 0.0223
+	Threshold 26        : 0.0080
+	Threshold 27        : 0.0000
+	Threshold 28        : 0.0593
+	Threshold 29        : 0.0006
+	Threshold 30        : 0.0503
+	Threshold 31        : 0.0067
+	Threshold 32        : 0.0427
+	Threshold 33        : 0.0094
+	Threshold 34        : 0.0205
+	Threshold 35        : 0.0331
+	Threshold 36        : 0.1125
+	Threshold 37        : 0.0292
+	Threshold 38        : 0.0235
+	Threshold 39        : 0.0100
+	Threshold 40        : 0.0067
+	Threshold 41        : 0.0019
+	Threshold 42        : 0.0414
+	Threshold 43        : 0.0299
+	Threshold 44        : 0.0065
+	Threshold 45        : 0.0082
+	Threshold 46        : 0.0192
+	Threshold 47        : 0.0695
+	Threshold 48        : 0.0205
+	Threshold 49        : 0.0268
+	Threshold 50        : 0.0097
+	Threshold 51        : 0.0224
+	Threshold 52        : 0.0312
+	RO accuracy         : 0.9331
+	RO F1-score         : 0.9462
+	Rejecting Rate      : 0.4104
+	ANN accuracy        : 0.9044
+Multiple differential threshold         : 0.9320
+---------------------------------------------------
+ROC
+	Threshold 0         : 0.0402
+	Threshold 1         : 0.0491
+	Threshold 2         : 0.0000
+	Threshold 3         : 0.0538
+	Threshold 4         : 0.0475
+	Threshold 5         : 0.0812
+	Threshold 6         : 0.0475
+	Threshold 7         : 0.1024
+	Threshold 8         : 0.0203
+	Threshold 9         : 0.0797
+	Threshold 10        : 0.0677
+	Threshold 11        : 0.0199
+	Threshold 12        : 0.0384
+	Threshold 13        : 0.0153
+	Threshold 14        : 0.0352
+	Threshold 15        : 0.0000
+	Threshold 16        : 0.0324
+	Threshold 17        : 0.0034
+	Threshold 18        : 0.0676
+	Threshold 19        : 0.0189
+	Threshold 20        : 0.0528
+	Threshold 21        : 0.0539
+	Threshold 22        : 0.0251
+	Threshold 23        : 0.0000
+	Threshold 24        : 0.0265
+	Threshold 25        : 0.0741
+	Threshold 26        : 0.0141
+	Threshold 27        : 0.0000
+	Threshold 28        : 0.0768
+	Threshold 29        : 0.0359
+	Threshold 30        : 0.0804
+	Threshold 31        : 0.0122
+	Threshold 32        : 0.0716
+	Threshold 33        : 0.0171
+	Threshold 34        : 0.0348
+	Threshold 35        : 0.0805
+	Threshold 36        : 0.1648
+	Threshold 37        : 0.0500
+	Threshold 38        : 0.0405
+	Threshold 39        : 0.0555
+	Threshold 40        : 0.0251
+	Threshold 41        : 0.0235
+	Threshold 42        : 0.0695
+	Threshold 43        : 0.0933
+	Threshold 44        : 0.0115
+	Threshold 45        : 0.0495
+	Threshold 46        : 0.0340
+	Threshold 47        : 0.1085
+	Threshold 48        : 0.0767
+	Threshold 49        : 0.0627
+	Threshold 50        : 0.0272
+	Threshold 51        : 0.0383
+	Threshold 52        : 0.0521
+	RO accuracy         : 0.9117
+	RO F1-score         : 0.9274
+	Rejecting Rate      : 0.4199
+	ANN accuracy        : 0.8996
+Precision-Recall
+	Threshold 0         : 0.0241
+	Threshold 1         : 0.0491
+	Threshold 2         : 0.0000
+	Threshold 3         : 0.0538
+	Threshold 4         : 0.0475
+	Threshold 5         : 0.0652
+	Threshold 6         : 0.0158
+	Threshold 7         : 0.0691
+	Threshold 8         : 0.0064
+	Threshold 9         : 0.0797
+	Threshold 10        : 0.0677
+	Threshold 11        : 0.0093
+	Threshold 12        : 0.0243
+	Threshold 13        : 0.0082
+	Threshold 14        : 0.0087
+	Threshold 15        : 0.0000
+	Threshold 16        : 0.0324
+	Threshold 17        : 0.0021
+	Threshold 18        : 0.0947
+	Threshold 19        : 0.0189
+	Threshold 20        : 0.0528
+	Threshold 21        : 0.0539
+	Threshold 22        : 0.0251
+	Threshold 23        : 0.0000
+	Threshold 24        : 0.0057
+	Threshold 25        : 0.0380
+	Threshold 26        : 0.0141
+	Threshold 27        : 0.0000
+	Threshold 28        : 0.0956
+	Threshold 29        : 0.0010
+	Threshold 30        : 0.0804
+	Threshold 31        : 0.0122
+	Threshold 32        : 0.0716
+	Threshold 33        : 0.0171
+	Threshold 34        : 0.0348
+	Threshold 35        : 0.0527
+	Threshold 36        : 0.1648
+	Threshold 37        : 0.0500
+	Threshold 38        : 0.0405
+	Threshold 39        : 0.0174
+	Threshold 40        : 0.0120
+	Threshold 41        : 0.0033
+	Threshold 42        : 0.0695
+	Threshold 43        : 0.0933
+	Threshold 44        : 0.0115
+	Threshold 45        : 0.0138
+	Threshold 46        : 0.0340
+	Threshold 47        : 0.1085
+	Threshold 48        : 0.0360
+	Threshold 49        : 0.0435
+	Threshold 50        : 0.0174
+	Threshold 51        : 0.0383
+	Threshold 52        : 0.0521
+	RO accuracy         : 0.9353
+	RO F1-score         : 0.9479
+	Rejecting Rate      : 0.4117
+	ANN accuracy        : 0.9053
+Multiple ratio threshold                : 0.9336
+---------------------------------------------------
+
