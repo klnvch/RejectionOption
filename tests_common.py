@@ -24,9 +24,7 @@ LEARNING_RATE = 0.01
 
 def test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets, n_epochs,
                   batch_size, print_step, show, path=None, suffix=None):
-    ds = ds.copy()
-    ds.add_outliers(rej)
-    ds.change_targets(targets)
+    ds = ds.modify(add_noise=rej, targets=targets)
     
     if clf == 'mlp-sft':
         mlp = MLP(LEARNING_RATE, [ds.n_features, units, ds.n_classes],

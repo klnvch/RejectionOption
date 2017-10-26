@@ -90,10 +90,10 @@ params_2 = [
 if __name__ == '__main__':
     #  misclassifications
     
-    # ds = DataSet(ds_id=9, n_samples=1000, split=[0.1, 0.1, 0.8])
-    # test_unit_mlp(ds=ds, clf='mlp-sft', rej=2, units=24,
-    #              beta=0.0001, dropout=1.0, es=0, targets=(0.0, 1.0),
-    #              n_epochs=1000, batch_size=32, print_step=100, show=True)
+    ds = DataSet.load_data(ds_id=9, n_samples=1000, split=[0.1, 0.1, 0.8])
+    test_unit_mlp(ds=ds, clf='mlp-sft', rej=0, units=24,
+                  beta=0.0001, dropout=1.0, es=0, targets=(0.0, 1.0),
+                  n_epochs=1000, batch_size=32, print_step=100, show=True)
     
     # ds = DataSet(ds_id=12, n_samples=1000, split=[0.1, 0.1, 0.8])
     # test_unit_RBF(ds, 12, 4.0, True)
@@ -106,9 +106,9 @@ if __name__ == '__main__':
     # blocks outliers
     # test_block_mlp(12, 'moons_separable', range(0,1), 1000, [0.1, 0.1, 0.8],
     #               params_1)
-    test_block_mlp(9, 'multiclass', range(0, 1), 1000, [0.1, 0.1, 0.8],
-                   params_1, random_state=47)
+    # test_block_mlp(9, 'multiclass', range(0, 1), 1000, [0.1, 0.1, 0.8],
+    #               params_1, random_state=47)
     # test_block_rbf(12, 'moons_separable', range(0,1), 1000, [0.1, 0.1, 0.8],
     #               params_2)
-    test_block_rbf(9, 'multiclass', range(0, 1), 1000, [0.1, 0.1, 0.8],
-                   params_2, random_state=47)
+    # test_block_rbf(9, 'multiclass', range(0, 1), 1000, [0.1, 0.1, 0.8],
+    #               params_2, random_state=47)

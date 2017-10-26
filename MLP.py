@@ -234,7 +234,7 @@ class MLP:
             else: raise ValueError('wrong function: ' + f)
         return [find_match(f) for f in functions]
     
-    def train(self, n_steps, trn, vld=None, keep_prob=1.0, early_stopping=None,
+    def train(self, n_epochs, trn, vld=None, keep_prob=1.0, early_stopping=None,
               print_step=100, log=True):
         """
         if early stopping not None output is
@@ -242,12 +242,15 @@ class MLP:
              best_area0, best_area1 and best_area2
         """
         log_msg = 'steps: {:d}, dropout: {:g}, early stopping: {:d}'
-        log_msg = log_msg.format(n_steps, keep_prob, early_stopping)
+        log_msg = log_msg.format(n_epochs, keep_prob, early_stopping)
         print(log_msg)
         self.clean_model_dir()
-        self.n_batches = int(trn.size / self.batch_size)
+        
+        trn = trn.batch(self.batch_size)
+        iterator = trn.make_one_shot_iterator()
+        next_element = iterator.get_next()
+        
         self.vld = vld
-        # self.log_init(steps, batch_size, log)
         
         saver = tf.train.Saver()
         save_path = 'saver/model.ckpt'
@@ -256,10 +259,6 @@ class MLP:
         best_vld_loss = 100000
         step = 0
         with tf.Session() as sess:
-            # if hasattr(self, 'centers') and hasattr(self, 'variances'):
-            #    c, v = get_kmeans_centers(trn.x, self.n_hidden[0])
-            #    self.centers = tf.assign(self.centers, c)
-            #    self.variances = tf.assign(self.variances, v)
             
             tf.global_variables_initializer().run()
             
@@ -267,27 +266,25 @@ class MLP:
                 print(sess.run(self.centers))
                 print(sess.run(self.variances))
             
-            for step in range(n_steps + 1):
-                # print(sess.run(self.variances, {self.x: trn.x}))
-                
+            for epoch in range(n_epochs + 1):
                 # train 
                 start_time = time.time()
-                x, y = shuffle(trn.x, trn.y)
-                if self.batch_size is None:
-                    sess.run(self.train_step,
-                             feed_dict={self.x: x, self.y_: y,
-                                        self.keep_prob: keep_prob})
-                else:
-                    for i in range(0, trn.x.shape[0], self.batch_size):
+                
+                while True:
+                    try:
+                        x, y = sess.run(next_element)
                         sess.run(self.train_step,
-                                 feed_dict={self.x: x[i:i + self.batch_size],
-                                            self.y_: y[i:i + self.batch_size],
-                                            self.keep_prob: keep_prob})
+                              feed_dict={self.x: x, self.y_: y,
+                                         self.keep_prob: keep_prob})
+                    except tf.errors.OutOfRangeError:
+                        break
+                
                 finish_time = time.time()
                 dt += (finish_time - start_time)
-                if step % print_step == 0:
+                
+                if epoch % print_step == 0:
                     trn_loss, trn_acc, vld_loss, vld_acc = \
-                        self.log_step_info(sess, step, trn, vld, dt, log)
+                        self.log_step_info(sess, epoch, trn, vld, dt, log)
                     dt = 0
                     # early stopping
                     if vld is not None and early_stopping > 0:
@@ -355,18 +352,20 @@ class MLP:
         print(log_msg)
     
     def log_step_info(self, sess, step, trn, vld, train_time, logging):
-        if trn.size < 8000:
-            trn_loss, trn_acc = sess.run([self.loss, self.accuracy],
-                feed_dict={self.x: trn.x, self.y_: trn.y,
-                           self.keep_prob: 1.0})
-        else:
-            trn_loss, trn_acc = sess.run([self.loss, self.accuracy],
-                feed_dict={self.x: trn.x[:8000], self.y_: trn.y[:8000],
-                           self.keep_prob: 1.0})
+        iterator = trn.make_one_shot_iterator()
+        x, y = sess.run(iterator.get_next())
+        
+        trn_loss, trn_acc = sess.run([self.loss, self.accuracy],
+            feed_dict={self.x: x, self.y_: y, self.keep_prob: 1.0})
+        
         if vld is not None:
+            iterator = vld.make_initializable_iterator()
+            sess.run(iterator.initializer)
+            x, y = sess.run(iterator.get_next())
+            
             vld_loss, vld_acc = sess.run([self.loss, self.accuracy],
-                               feed_dict={self.x: vld.x,
-                                          self.y_: vld.y,
+                               feed_dict={self.x: x,
+                                          self.y_: y,
                                           self.keep_prob: 1.0})
         else:
             vld_loss = 0

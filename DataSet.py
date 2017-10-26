@@ -14,7 +14,17 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 from input_data import get_data, read_marcin_file
 import numpy as np
+import tensorflow as tf
 
+
+def _scale(x_trn, x_tst):
+    scaler = preprocessing.StandardScaler().fit(x_trn)
+    x_trn = scaler.transform(x_trn)
+    x_tst = scaler.transform(x_tst)
+    return x_trn, x_tst
+
+def _print_info(x, y, label):
+    print('{:s} shapes: {:} and {:}'.format(label, x.shape, y.shape))
 
 class Set:
     def __init__(self, x, y):
@@ -77,9 +87,24 @@ class Set:
         return np.array(outliers)
 
 class DataSet:
+    """
+    Properties:
+        trn:           tf.data.Dataset
+        vld:           tf.data.Dataset
+        tst:           tf.data.Dataset
+        outliers:      tf.data.Dataset
+        ds_id:         int
+        n_features:    int
+        n_classes:     int
+        target_names   strings
+    """
     
-    def __init__(self, ds_id, n_samples=1000, split=[0.6, 0.1, 0.3],
-                 output=None, random_state=None):
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def load_data(cls, ds_id, n_samples=1000, split=[0.6, 0.1, 0.3],
+                 random_state=None):
         """
         Args:
             ds_id: index of the dataset.
@@ -100,49 +125,54 @@ class DataSet:
                 13 - Marcin Luckner Dataset
                 14 - MNIST Dataset
         """
-        self.ds_id = ds_id
+        ds = cls()
+        
+        ds.ds_id = ds_id
         if ds_id == 13:
-            self.load_marcin_dataset(0)
+            ds.load_marcin_dataset(0)
             return
         elif ds_id == 14:
-            self.load_mnist_data()
+            ds.load_mnist_data()
             return
         
         # load data
-        x, y, self.target_names = get_data(ds_id, n_samples, binarize=True,
+        x, y, ds.target_names = get_data(ds_id, n_samples, binarize=True,
                                            random_state=random_state)
-        self.n_features = x.shape[1]
-        self.n_classes = y.shape[1]
-        self.outliers = None
+        ds.n_features = x.shape[1]
+        ds.n_classes = y.shape[1]
+        ds.outliers = None
         # split into 60%, 10% and 30%
         if len(split) == 3:
             trn_size = split[0]
             vld_size = split[1]
             tst_size = split[2]
             
-            x_trn, x_tst, y_trn, y_tst = \
-                train_test_split(x, y, train_size=trn_size)
-            x_vld, x_tst, y_vld, y_tst = \
-                train_test_split(x_tst, y_tst, train_size=vld_size / (vld_size + tst_size))
+            assert trn_size + vld_size + tst_size == 1.0
             
-            self.trn = Set(x_trn, y_trn)
-            self.vld = Set(x_vld, y_vld)
-            self.tst = Set(x_tst, y_tst)
+            x_trn, x_tst, y_trn, y_tst = \
+                train_test_split(x, y, test_size=vld_size + tst_size)
+            
+            x_trn, x_tst = _scale(x_trn, x_tst)
+            
+            x_vld, x_tst, y_vld, y_tst = \
+                train_test_split(x_tst, y_tst, test_size=tst_size / (vld_size + tst_size))
+            
+            _print_info(x_trn, y_trn, 'trn')
+            _print_info(x_vld, y_vld, 'vld')
+            _print_info(x_tst, y_tst, 'tst')
+            
+            ds.trn = tf.data.Dataset.from_tensor_slices((x_trn, y_trn))
+            ds.vld = tf.data.Dataset.from_tensor_slices((x_vld, y_vld))
+            ds.tst = tf.data.Dataset.from_tensor_slices((x_tst, y_tst))
         elif len(split) == 2:
             splt1 = train_test_split(x, y, test_size=split[0])
-            self.trn = Set(splt1[1], splt1[3])
-            self.vld = None
-            self.tst = Set(splt1[0], splt1[2])
+            ds.trn = Set(splt1[1], splt1[3])
+            ds.vld = None
+            ds.tst = Set(splt1[0], splt1[2])
         
-        self.print_info()
-        
-        # preprocess
-        self.scale()
+        return ds
     
-    def copy(self):
-        return copy.deepcopy(self)
-    
-    def add_outliers(self, add_noise, noise_size=1.0):
+    def modify(self, add_noise, noise_size=1.0, targets=None):
         """
             add_noise: noise type
                 0: no outliers
@@ -164,6 +194,8 @@ class DataSet:
             self.load_marcin_dataset(add_noise)
             return
         
+        if add_noise == 0:
+            return self
         if add_noise == 1:
             self.add_noise_as_no_class(noise_size)
         elif add_noise == 2:
@@ -173,17 +205,12 @@ class DataSet:
                                           self.tst.x.max() + 1,
                                           [self.tst.size * 4, self.n_features])
         
-        self.print_info()
-    
-    def print_info(self):
-        if self.vld is None:
-            print('{:d}|{:d}'.format(self.trn.size, self.tst.size))
-        else:
-            print('trn: {:d}, vld: {:d}, tst: {:d}'.format(self.trn.size,
-                                                           self.vld.size,
-                                                           self.tst.size))
-        if self.outliers is not None:
-            print('outliers: {:s}'.format(str(self.outliers.shape)))
+#         
+#         neg_label, pos_label = targets
+#         y = self.trn.y
+#         y = y.astype(float)
+#         y[y == 0.0] = neg_label
+#         y[y == 1.0] = pos_label
     
     def add_noise_as_no_class(self, noise_size=1.0):
         """
@@ -241,14 +268,6 @@ class DataSet:
         
         self.print_info()
     
-    def change_targets(self, targets):
-        y = self.trn.y
-        
-        neg_label, pos_label = targets
-        y = y.astype(float)
-        y[y == 0.0] = neg_label
-        y[y == 1.0] = pos_label
-    
     def pca(self):
         pca = PCA(n_components=self.n_features).fit(self.trn.x)
         self.trn.x = pca.transform(self.trn.x)
@@ -257,15 +276,6 @@ class DataSet:
         self.tst.x = pca.transform(self.tst.x)
         if self.outliers is not None:
             self.outliers = pca.transform(self.outliers)
-    
-    def scale(self):
-        scaler = preprocessing.StandardScaler().fit(self.trn.x)
-        self.trn.x = scaler.transform(self.trn.x)
-        if self.vld is not None:
-            self.vld.x = scaler.transform(self.vld.x)
-        self.tst.x = scaler.transform(self.tst.x)
-        if self.outliers is not None:
-            self.outliers = scaler.transform(self.outliers)
     
     def load_marcin_dataset(self, add_noise):
         """

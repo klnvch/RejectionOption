@@ -215,7 +215,7 @@ def get_data(i, n_samples=1000, binarize=False, random_state=None):
     
     return np.array(x), np.array(y), classes
 
-def print_stats(x, clases):
+def print_stats(x):
     print(x.min(axis=0))
     print(x.max(axis=0))
     print(x.mean(axis=0))
@@ -229,8 +229,7 @@ def count_distribution(y):
     for i in y:
         d[i.argmax()] += 1
         
-    # d = np.asarray(d) / ds_y.shape[0]
-    print(d)
+    print('Class distributions: {:}'.format(d))
     return d
 
 def print_classes_stats(y, classes, path=None):
