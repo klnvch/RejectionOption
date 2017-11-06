@@ -8,19 +8,16 @@ Some common code between tests
 import csv
 import time
 
-from scipy.stats.stats import ranksums
-
 from DataSet import DataSet
 from MLP import MLP
 from RBF import RBF
 from klnvch.rejection_option.core import RejectionOption
 import numpy as np
-import pandas as pd
-
 
 # N_EPOCHS = 5000
 # BATCH_SIZE = 128
 LEARNING_RATE = 0.01
+
 
 def test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets, n_epochs,
                   batch_size, print_step, show, path=None, suffix=None):
@@ -77,6 +74,7 @@ def test_unit_mlp(ds, clf, rej, units, beta, dropout, es, targets, n_epochs,
     _, step, trn_loss, trn_acc, vld_acc = result
     return np.concatenate(([step, trn_loss, trn_acc, vld_acc], metrics))
 
+
 def test_block_mlp(ds_id, ds_name, attempts, n_samples, split, params,
                    random_state=None):
     filename = 'tests/{:s}/run_{:d}.csv'.format(ds_name, int(time.time()))
@@ -112,6 +110,7 @@ def test_block_mlp(ds_id, ds_name, attempts, n_samples, split, params,
                 writer = csv.writer(f)
                 writer.writerow(row)
 
+
 def test_unit_RBF(ds, n_hidden, beta=None, show=False, path=None, suffix=None):
     ds = ds.copy()
     ds.add_outliers(3)
@@ -137,6 +136,7 @@ def test_unit_RBF(ds, n_hidden, beta=None, show=False, path=None, suffix=None):
     ro.plot_multiclass_precision_recall()
     
     return np.concatenate(([trn_score], metrics))
+
 
 def test_block_rbf(ds_id, ds_name, attempts, n_samples, split, params,
                    random_state=None):
@@ -166,22 +166,3 @@ def test_block_rbf(ds_id, ds_name, attempts, n_samples, split, params,
             with open(filename, 'a+') as f:
                 writer = csv.writer(f)
                 writer.writerow(row)
-
-def wicoxon_test(filename, params):
-    df = pd.read_csv(filename)
-    print(df.keys())
-    
-    mrt = [df.loc[(
-        (df['Clf'] == param[1])
-        & (df['Units'] == param[3])
-        & (df['Beta'] == param[4])
-        & (df['DO'] == param[5])
-        & (df['ES'] == param[6])
-        & (df['Trgt'] == str(param[7]))
-        ), 'MDT'].values for param in params]
-    
-    print(mrt)
-    
-    A = [[ranksums(a, b) for a in mrt] for b in mrt]
-    
-    print('\n'.join([','.join(['{:4f} '.format(item) for item in row]) for row in A]))
